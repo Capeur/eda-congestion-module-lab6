@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lab 06 · Part 1 — A crowded chip lights up</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>@font-face{font-family:'Fraunces';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/fraunces-latin-700-normal.woff2) format('woff2')}@font-face{font-family:'IBM Plex Mono';font-weight:400;font-style:normal;font-display:swap;src:url(fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2')}@font-face{font-family:'IBM Plex Mono';font-weight:500;font-style:normal;font-display:swap;src:url(fonts/ibm-plex-mono-latin-500-normal.woff2) format('woff2')}@font-face{font-family:'Source Sans 3';font-weight:400;font-style:normal;font-display:swap;src:url(fonts/source-sans-3-latin-400-normal.woff2) format('woff2')}@font-face{font-family:'Source Sans 3';font-weight:600;font-style:normal;font-display:swap;src:url(fonts/source-sans-3-latin-600-normal.woff2) format('woff2')}@font-face{font-family:'Source Sans 3';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/source-sans-3-latin-700-normal.woff2) format('woff2')}</style>
+<meta name="lesson:title" content="A crowded chip lights up">
+<meta name="lesson:duration" content="128.6">
+<meta name="lesson:engine" content="5.1">
+<style>
+/* lesson.css — styles for the animated lesson player (lesson-engine.js).
+   Layout: one reading column. A 16:9 stage carries the lesson; captions and transport sit under it,
+   then chapters and the "your turn" bench. Group colours follow the course labs: the group holding
+   the first node name is blue, the next green, then amber and rose; cut edges are red. */
+:root {
+  --bg: #f3f5f2;
+  --surface: #ffffff;
+  --ink: #17201c;
+  --muted: #56625c;
+  --line: #d6ddd8;
+  --stage: #fbfcfa;
+  --edge: #7a8780;
+  --g0: #1d4ed8;
+  --g1: #0f6b5c;
+  --g2: #b45309;
+  --g3: #9f1239;
+  --cut: #dc2626;
+  --heavy: #b45309;
+  --copper: #a8662a;
+  --unplaced: #94a3b8;
+  --tint0: rgba(29, 78, 216, 0.07);
+  --tint1: rgba(15, 107, 92, 0.08);
+  --said: #17201c;
+  --unsaid: #9aa49f;
+  --mark: #fde68a;
+  --display: "Fraunces", Georgia, "Times New Roman", serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1412; --surface: #151d1a; --ink: #e6ece9; --muted: #9ba7a1; --line: #2a3531;
+    --stage: #111916; --edge: #85938c; --g0: #6f8fff; --g1: #36b39b; --g2: #f59e0b; --g3: #fb7185;
+    --cut: #f87171; --heavy: #f59e0b; --copper: #d39a5c; --unplaced: #66758a;
+    --tint0: rgba(111, 143, 255, 0.10); --tint1: rgba(54, 179, 155, 0.10);
+    --said: #e6ece9; --unsaid: #5f6b66; --mark: #78350f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1412; --surface: #151d1a; --ink: #e6ece9; --muted: #9ba7a1; --line: #2a3531;
+  --stage: #111916; --edge: #85938c; --g0: #6f8fff; --g1: #36b39b; --g2: #f59e0b; --g3: #fb7185;
+  --cut: #f87171; --heavy: #f59e0b; --copper: #d39a5c; --unplaced: #66758a;
+  --tint0: rgba(111, 143, 255, 0.10); --tint1: rgba(54, 179, 155, 0.10);
+  --said: #e6ece9; --unsaid: #5f6b66; --mark: #78350f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 48px; margin: 0;
+}
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 22px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 46px); line-height: 1.05; margin: 0; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 62ch; }
+.lede a, .note a { color: inherit; }
+
+/* ---------- player ---------- */
+.player { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.stage { position: relative; aspect-ratio: 16 / 9; max-width: 100%; background: var(--stage); container-type: inline-size; overflow: hidden; }
+.stage svg.scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.layer { position: absolute; inset: 0; pointer-events: none; }
+.ov { position: absolute; opacity: 0; will-change: opacity, transform; }
+.ov [data-a] { display: inline-block; opacity: 0; }
+
+.hl { font-family: var(--display); font-weight: 700; font-size: 4.3cqw; line-height: 1.08; letter-spacing: -0.01em; max-width: 60cqw; }
+.hl b, .tag b, .sub b, .qcard b { color: var(--g0); font-weight: 700; }
+.red { color: var(--cut); }
+.sub { font-family: var(--body); font-size: 2.1cqw; color: var(--muted); font-weight: 600; margin-top: .6cqw; }
+.term { display: grid; gap: .4cqw; background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 1.4cqw 1.8cqw; box-shadow: 0 .6cqw 2cqw rgba(0,0,0,.06); }
+.term .t { font-family: var(--display); font-size: 3.4cqw; font-weight: 700; }
+.term .d { font-size: 1.9cqw; color: var(--muted); }
+.chip { display: inline-block; font-family: var(--mono); font-size: 2.2cqw; font-weight: 500; padding: .5cqw 1.3cqw; border-radius: 99px; border: 2px solid var(--ink); background: var(--surface); }
+.tag { font-family: var(--body); font-weight: 700; font-size: 2.2cqw; background: var(--surface); border: 1px solid var(--line); border-radius: .9cqw; padding: .6cqw 1.2cqw; }
+.tags { display: grid; gap: 1cqw; justify-items: start; }
+.tag .n, .num { font-family: var(--mono); color: var(--heavy); }
+.label { font-family: var(--display); font-weight: 700; font-size: 2.8cqw; }
+.label.c0 { color: var(--g0); } .label.c1 { color: var(--g1); } .label.c2 { color: var(--g2); } .label.c3 { color: var(--g3); }
+.vocab { display: grid; gap: .8cqw; font-size: 2cqw; }
+.vocab div { background: var(--surface); border: 1px solid var(--line); border-radius: .8cqw; padding: .5cqw 1.1cqw; }
+.vocab b { font-family: var(--display); font-size: 2.3cqw; margin-right: .6cqw; }
+.eq { font-family: var(--mono); font-size: 3.4cqw; font-weight: 500; background: var(--surface); border: 1px solid var(--line); border-radius: 1cqw; padding: 1cqw 1.6cqw; white-space: nowrap; }
+.eq .red { font-weight: 700; }
+.stamp { font-family: var(--display); font-weight: 700; font-size: 6cqw; color: var(--cut); border: .45cqw solid var(--cut); border-radius: 1cqw; padding: .2cqw 1.6cqw; rotate: -9deg; letter-spacing: .06em; text-transform: uppercase; background: color-mix(in srgb, var(--stage) 80%, transparent); }
+.bigq { width: 100cqw; }
+.bigq .q { font-family: var(--display); font-size: 16cqw; font-weight: 700; line-height: 1; color: var(--muted); text-align: center; }
+.bigq .hl { max-width: none; text-align: center; font-size: 3.6cqw; }
+.cmp { display: grid; gap: 1cqw; background: var(--surface); border: 1px solid var(--line); border-radius: 1.4cqw; padding: 2cqw 2.4cqw; width: 62cqw; box-shadow: 0 .8cqw 3cqw rgba(0,0,0,.08); }
+.cmp .row { display: grid; grid-template-columns: 1.4fr .7fr 1.3fr; align-items: baseline; gap: 1.4cqw; font-size: 2.3cqw; }
+.cmp .row .k { font-family: var(--mono); font-size: 3cqw; font-weight: 500; }
+.cmp .bad .k { color: var(--cut); }
+.cmp .good .k { color: var(--g1); }
+.qcard { background: var(--surface); border: 2px solid var(--ink); border-radius: 1.4cqw; padding: 1.6cqw 2.2cqw; width: 44cqw; display: grid; gap: .6cqw; }
+.qcard .e { font-family: var(--mono); font-size: 1.7cqw; letter-spacing: .1em; text-transform: uppercase; color: var(--heavy); }
+.qcard .q { font-family: var(--display); font-size: 3.1cqw; font-weight: 700; line-height: 1.15; }
+.qcard .h { font-size: 1.8cqw; color: var(--muted); }
+.qbtns { display: none; gap: 1cqw; pointer-events: auto; flex-wrap: wrap; }
+.stage.asking .qbtns { display: flex; }
+.qbtns .btn { font-size: 1.8cqw; padding: .6cqw 1.3cqw; }
+.qans { color: var(--ink); font-size: 1.9cqw; }
+.qans:empty { display: none; }
+.thumbs { display: flex; gap: 2cqw; }
+.thumb { background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 1cqw; display: grid; gap: .4cqw; justify-items: center; width: 22cqw; position: relative; }
+.thumb svg { width: 100%; height: auto; display: block; }
+.thumb .c { font-family: var(--mono); font-size: 1.75cqw; font-weight: 500; white-space: nowrap; }
+.thumb.best { border: 2px solid var(--g1); }
+.thumb .ok { position: absolute; top: -1.6cqw; right: -1.2cqw; background: var(--g1); color: #fff; font-weight: 700; font-size: 1.7cqw; border-radius: 99px; padding: .3cqw 1cqw; }
+
+.counter { display: grid; justify-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: .9cqw 1.6cqw; min-width: 15cqw; }
+.counter .l, .balance .l { font-family: var(--mono); font-size: 1.6cqw; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.counter .v { font-family: var(--mono); font-size: 6.2cqw; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
+.counter.bad .v { color: var(--cut); }
+.counter.good .v { color: var(--g1); }
+.balance { display: grid; gap: .8cqw; background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 1.2cqw 1.6cqw; width: 19cqw; }
+.bars { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 1.6cqw; height: 15cqw; align-items: end; }
+.bar { background: var(--g0); border-radius: .5cqw .5cqw 0 0; height: 0; display: flex; justify-content: center; align-items: flex-start; color: #fff; font-family: var(--mono); font-size: 2cqw; padding-top: .3cqw; }
+.bar.c1 { background: var(--g1); } .bar.c2 { background: var(--g2); } .bar.c3 { background: var(--g3); }
+.cap { position: absolute; left: -.6cqw; right: -.6cqw; height: 0; border-top: .3cqw dashed var(--cut); opacity: 0; }
+.cap span { position: absolute; right: 0; top: -2.6cqw; font-family: var(--mono); font-size: 1.5cqw; color: var(--cut); }
+.verdict { font-weight: 700; font-size: 1.9cqw; min-height: 1.2em; }
+.verdict.no { color: var(--cut); }
+.verdict.yes { color: var(--g1); }
+.banner { position: absolute; left: 2cqw; top: 2cqw; display: none; gap: 1cqw; align-items: center; pointer-events: auto; font-size: 1.9cqw; }
+.stage.free .banner { display: flex; }
+.banner b { font-family: var(--display); font-size: 2.6cqw; }
+
+/* svg pieces */
+.node rect { transition: fill .45s, stroke .45s; }
+.g0 rect { fill: var(--g0); stroke: var(--g0); }
+.g1 rect { fill: var(--g1); stroke: var(--g1); }
+.g2 rect { fill: var(--g2); stroke: var(--g2); }
+.g3 rect { fill: var(--g3); stroke: var(--g3); }
+.nu rect { fill: var(--unplaced); stroke: var(--unplaced); }
+.ncell rect { fill: var(--surface); stroke: var(--copper); stroke-width: 3; }
+.node text { fill: #fff; font-family: var(--body); font-weight: 700; font-size: 21px; text-anchor: middle; dominant-baseline: central; }
+.ncell text { fill: var(--ink); }
+.node { cursor: pointer; }
+.node:focus-visible rect { stroke: var(--ink); stroke-width: 4; }
+.main { stroke: var(--edge); stroke-linecap: round; transition: stroke .35s; }
+.wire { stroke: var(--copper); stroke-width: 2.2; stroke-linecap: round; }
+.edge.cut .main { stroke: var(--cut); stroke-dasharray: 10 7; }
+.edge.heavy .main { stroke: var(--heavy); }
+.edge.pulse .main { animation: lesson-pulse 1s ease-in-out 2; }
+@keyframes lesson-pulse { 50% { stroke-width: 12; } }
+.wl rect { fill: var(--stage); stroke: var(--line); transition: fill .3s, stroke .3s; }
+.wl text { fill: var(--ink); font-family: var(--mono); font-size: 16px; font-weight: 500; text-anchor: middle; dominant-baseline: central; }
+.edge.cut .wl rect { stroke: var(--cut); }
+.edge.flash .wl rect { fill: var(--mark); stroke: var(--heavy); }
+.chipbody { fill: none; stroke: var(--copper); stroke-width: 3; }
+.pin { fill: var(--copper); }
+.divider { stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 8 8; }
+.tint0 { fill: var(--tint0); }
+.tint1 { fill: var(--tint1); }
+
+/* captions */
+.captions { padding: 14px 18px; border-top: 1px solid var(--line); min-height: 3.6em; font-size: 19px; line-height: 1.45; }
+.captions span { color: var(--unsaid); transition: color .15s; }
+.captions span.said { color: var(--said); }
+.player.nocc .captions { display: none; }
+
+/* transport */
+.transport { display: grid; grid-template-columns: auto 1fr auto; gap: 10px 14px; align-items: center; padding: 12px 16px 14px; border-top: 1px solid var(--line); }
+.play { width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--ink); color: var(--bg); font-size: 18px; cursor: pointer; display: grid; place-items: center; }
+.scrub { display: grid; gap: 4px; min-width: 0; }
+.scrub input { width: 100%; accent-color: var(--g0); }
+.time { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.opts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button, .tbtn { font-family: var(--mono); font-size: 13px; padding: 6px 9px; border: 0; background: var(--surface); color: var(--ink); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.tbtn { border: 1px solid var(--line); border-radius: 8px; }
+.tbtn[aria-pressed="false"] { color: var(--muted); text-decoration: line-through; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--g0); outline-offset: 2px; }
+@media (max-width: 620px) {
+  .transport { grid-template-columns: auto 1fr; }
+  .opts { grid-column: 1 / -1; justify-content: flex-start; }
+  .captions { font-size: 16px; }
+}
+
+/* chapters + bench */
+.chapters { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.chapters button { width: 100%; display: grid; grid-template-columns: 4.5em 1fr; gap: 10px; text-align: left; background: none; border: 0; border-left: 3px solid var(--line); padding: 6px 12px; font: inherit; color: var(--muted); cursor: pointer; }
+.chapters button .ts { font-family: var(--mono); font-size: 14px; font-variant-numeric: tabular-nums; }
+.chapters button[aria-current="true"] { border-left-color: var(--g0); color: var(--ink); font-weight: 600; }
+.cols { display: grid; grid-template-columns: 1fr 1.25fr; gap: 22px; align-items: start; }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+h2 { font-family: var(--display); font-size: 24px; margin: 0 0 8px; }
+.bench { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; gap: 14px; min-width: 0; }
+.bench.pulse { animation: lesson-benchin 1.2s ease 2; }
+@keyframes lesson-benchin { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--g0) 35%, transparent); } }
+.bench p { margin: 0; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn { font: 600 15px var(--body); padding: 8px 14px; border-radius: 9px; border: 1px solid var(--ink); background: var(--surface); color: var(--ink); cursor: pointer; }
+.btn.primary { background: var(--ink); color: var(--bg); }
+.seedbox { width: 5.5em; font: 500 15px var(--mono); padding: 7px 9px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.feedback { border-left: 3px solid var(--g1); padding: 4px 0 4px 12px; }
+.feedback:empty { display: none; }
+.readout { font-family: var(--mono); font-size: 14.5px; background: var(--bg); border-radius: 8px; padding: 10px 12px; font-variant-numeric: tabular-nums; }
+.note { font-size: 14px; color: var(--muted); max-width: 70ch; }
+.ok { color: var(--g1); font-weight: 700; } .no { color: var(--cut); font-weight: 700; }
+.norec .node rect, .norec .main, .norec .wl rect { transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .node rect, .main, .wl rect, .captions span { transition: none !important; }
+  .edge.pulse .main, .bench.pulse { animation: none; }
+}
+
+/* ---------- floorplan scene (B*-tree + floor of blocks) ----------
+   Block colours come from the lab (one fixed colour per block id, the course's paper palette) and are set inline.
+   Tree links: left child = solid ("next door"), right child = dashed ("upstairs"). The skyline is amber. */
+:root { --sky: #d97706; --waste: rgba(220, 38, 38, 0.10); --over: rgba(220, 38, 38, 0.13); --gridline: #e3e8e4; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --sky: #fbbf24; --waste: rgba(248, 113, 113, 0.14); --over: rgba(248, 113, 113, 0.16); --gridline: #1f2a26; } }
+:root[data-theme="dark"] { --sky: #fbbf24; --waste: rgba(248, 113, 113, 0.14); --over: rgba(248, 113, 113, 0.16); --gridline: #1f2a26; }
+.fp-gridlines line { stroke: var(--gridline); stroke-width: 1; }
+.fp-outline { fill: none; stroke: var(--ink); stroke-width: 2; stroke-dasharray: 9 6; opacity: .55; }
+.fp-outline-lab { font-family: var(--mono); font-size: 14px; fill: var(--muted); text-anchor: end; }
+.fp-floorline { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+.fp-axis text { font-family: var(--mono); font-size: 12.5px; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+.fp-axis .fp-axis-y { text-anchor: end; }
+.fp-overzone { fill: url(#fp-over); stroke: none; transition: opacity .3s; }
+.fp-over-line { stroke: var(--cut); stroke-width: 2.4; opacity: .55; }
+.fp-hatch-bg { fill: var(--waste); }
+.fp-hatch-line { stroke: var(--cut); stroke-width: 2; opacity: .35; }
+.fp-waste { fill: url(#fp-hatch); }
+.fpb rect { stroke-width: 2; fill-opacity: .92; }
+.fpb .fp-bid { fill: #fff; font-family: var(--body); font-weight: 700; font-size: 21px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.fpb .fp-dim { fill: #fff; font-family: var(--mono); font-size: 12.5px; text-anchor: middle; dominant-baseline: central; opacity: .9; pointer-events: none; }
+.fpb.out rect { stroke: var(--cut); stroke-width: 4; stroke-dasharray: 7 4; }
+.fpb.hl rect, .fpn.hl circle:not(.fp-ring) { stroke: var(--ink); stroke-width: 4; }
+.fp-sky { fill: none; stroke: var(--sky); stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
+.fp-bbox { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 10 6; }
+.fp-bboxlab rect { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+.fp-bboxlab text { font-family: var(--mono); font-size: 15px; font-weight: 500; fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
+.fp-coords circle { fill: var(--ink); }
+.fp-coords text { font-family: var(--mono); font-size: 13px; font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--stage); stroke-width: 4px; }
+.fp-edge { stroke: var(--edge); stroke-width: 3; stroke-linecap: round; }
+.fp-edge.right { stroke-dasharray: 8 6; }
+.fpn circle { stroke-width: 3; }
+.fpn .fp-ring { fill: none; stroke: var(--ink); stroke-width: 3; opacity: 0; }
+.fpn.hl .fp-ring { opacity: 1; }
+.fpn text { font-family: var(--body); font-weight: 700; font-size: 20px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.fpk { cursor: pointer; }
+.fpk:focus-visible { outline: none; }
+.fpk:focus-visible rect, .fpk:focus-visible circle:not(.fp-ring) { stroke: var(--ink); stroke-width: 4; }
+.fp-badges circle { fill: var(--ink); }
+.fp-badges text { fill: var(--bg); font-family: var(--mono); font-size: 12.5px; font-weight: 500; text-anchor: middle; dominant-baseline: central; }
+.fp-link rect { fill: var(--surface); stroke: var(--line); }
+.fp-link text { font-family: var(--body); font-size: 13px; font-weight: 600; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+.fp-legal { font-family: var(--body); font-weight: 700; font-size: 1.9cqw; background: var(--surface); border: 2px solid var(--line); border-radius: .9cqw; padding: .4cqw 1.1cqw; white-space: nowrap; }
+.fp-legal.yes { color: var(--g1); border-color: var(--g1); }
+.fp-legal.no { color: var(--cut); border-color: var(--cut); }
+.fp-counter { min-width: 17cqw; }
+.fp-thumb svg { max-height: 16cqw; }
+.fp-ops .btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.norec .fp-overzone { transition: none !important; }
+
+/* ---------- placement scene (v5) ---------- */
+.pl-chip { fill: var(--tint0); stroke: none; }
+.pl-gridlines line { stroke: var(--line); stroke-width: 1; opacity: .55; }
+/* v5.1 heat grid: the GCell lattice and one tile per GCell, painted from the deposit replay */
+.pl-glines line { stroke: var(--heavy); stroke-width: 1.4; stroke-dasharray: 6 4; opacity: .6; }
+.pl-tile { stroke: none; }
+.pl-tilering { fill: none; stroke: var(--ink); stroke-width: 3; opacity: 0; }
+.pl-tilering.hl { opacity: 1; }
+.pl-wall { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 10 6; opacity: .5; transition: stroke .15s, opacity .15s; }
+.pl-wall.hit { stroke: var(--cut); opacity: 1; }
+.pl-axis text { font-family: var(--mono); font-size: 12px; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+.pl-axis .pl-axis-y { text-anchor: end; }
+.pl-net rect { fill: var(--edge); fill-opacity: .05; stroke: var(--edge); stroke-width: 1.6; }
+.pl-net line { stroke: var(--copper); stroke-width: 2.4; stroke-linecap: round; opacity: .8; }
+.pl-net text { font-family: var(--mono); font-size: 13px; font-weight: 500; fill: var(--ink); text-anchor: middle; dominant-baseline: central; paint-order: stroke; stroke: var(--stage); stroke-width: 4px; }
+.pl-net.hot rect { stroke: var(--heavy); stroke-width: 2.6; fill: var(--heavy); fill-opacity: .08; }
+.pl-trial { fill: none; stroke: var(--heavy); stroke-width: 2; stroke-dasharray: 6 5; }
+.plk { cursor: grab; outline: none; touch-action: none; }
+.plk rect { stroke: var(--surface); stroke-width: 1.5; }
+.plk text, .pl-ghost text { fill: #fff; font-family: var(--body); font-weight: 700; font-size: 16px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.plk .pl-ring { fill: none; stroke: var(--ink); stroke-width: 2.5; opacity: 0; }
+.plk.hl .pl-ring, .plk:focus-visible .pl-ring { opacity: 1; }
+.plk.pad rect:not(.pl-ring) { stroke: var(--ink); stroke-width: 2.5; }
+.pl-ghost rect { fill: var(--heavy); fill-opacity: .35; stroke: var(--heavy); stroke-width: 2; stroke-dasharray: 5 4; }
+.pl-ghost.bad rect { fill: var(--cut); stroke: var(--cut); }
+.pl-ghost text { fill: var(--ink); }
+.pl-bestpos rect { fill: none; stroke-width: 2.2; stroke-dasharray: 4 4; }
+.pl-thermo .tube { fill: var(--surface); stroke: var(--line); stroke-width: 2; }
+.pl-thermo text { font-family: var(--mono); font-size: 13px; fill: var(--muted); text-anchor: middle; }
+.pl-thermo text.v { font-size: 14px; font-weight: 500; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.pl-card text { font-family: var(--body); font-size: 18px; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.pl-card .delta { font-family: var(--mono); font-size: 21px; font-weight: 500; }
+.pl-card .delta.worse, .pl-card .verdict.no { fill: var(--cut); }
+.pl-card .delta.better, .pl-card .verdict.yes { fill: var(--g1); }
+.pl-card .delta.free, .pl-card .verdict.free { fill: var(--muted); }
+.pl-card .verdict { font-weight: 700; font-size: 22px; text-anchor: end; }
+.pl-dice .track { fill: var(--line); fill-opacity: .55; stroke: var(--edge); stroke-width: 1.2; }
+.pl-dice .pfill { fill: var(--g1); opacity: .75; }
+.pl-dice .pfill.sure { opacity: .3; }
+.pl-dice text { font-family: var(--body); font-size: 15.5px; fill: var(--muted); }
+.pl-dice text.u { font-family: var(--mono); font-size: 13.5px; text-anchor: middle; fill: var(--ink); }
+.pl-dice .marker line { stroke: var(--ink); stroke-width: 2.5; }
+.pl-dice .marker circle { fill: var(--ink); stroke: var(--surface); stroke-width: 2; }
+.pl-dice .marker.yes circle { fill: var(--g1); } .pl-dice .marker.no circle { fill: var(--cut); }
+.pl-tally text { font-family: var(--body); font-size: 17px; font-weight: 600; fill: var(--ink); font-variant-numeric: tabular-nums; white-space: pre; }
+.pl-tally text.kinds { font-size: 15px; font-weight: 400; fill: var(--muted); }
+.pl-chart .axis, .pl-spread .axis { stroke: var(--edge); stroke-width: 1.5; }
+.pl-chart .cur { fill: none; stroke: var(--g0); stroke-width: 2.4; stroke-linejoin: round; }
+.pl-chart .best { fill: none; stroke: var(--g1); stroke-width: 2; stroke-dasharray: 5 4; }
+.pl-chart .dot { fill: var(--g0); stroke: var(--surface); stroke-width: 2; }
+.pl-chart .startline { stroke: var(--edge); stroke-width: 1; stroke-dasharray: 3 5; }
+.pl-chart text, .pl-spread text { font-family: var(--mono); font-size: 12.5px; fill: var(--muted); }
+.pl-chart .tick { text-anchor: end; dominant-baseline: central; }
+.pl-chart .tick.x, .pl-spread .tick.x { text-anchor: start; dominant-baseline: auto; }
+.pl-chart .tick.x.end { text-anchor: end; } .pl-spread .tick.x.mid { text-anchor: middle; }
+.pl-chart .lab.start { text-anchor: end; }
+.pl-chart .lab.bestl { fill: var(--g1); font-weight: 500; }
+.pl-spread .d { fill: var(--edge); }
+.pl-spread .d.hot { fill: var(--heavy); stroke: var(--surface); stroke-width: 1.5; }
+.pl-spread .median { stroke: var(--g0); stroke-width: 2; stroke-dasharray: 5 4; }
+.pl-spread .lab.med { fill: var(--g0); }
+.pl-spread .lab.hot { fill: var(--heavy); font-weight: 500; font-size: 13.5px; paint-order: stroke; stroke: var(--stage); stroke-width: 4px; }
+.pl-spread .lab.endl { text-anchor: end; }
+.pl-spread .lead { stroke: var(--heavy); stroke-width: 1.2; }
+.pl-spread .scap { font-family: var(--body); font-size: 15px; fill: var(--ink); }
+.pl-counter { min-width: 17cqw; }
+.pl-ops label { display: inline-flex; gap: 6px; align-items: center; font-size: 14.5px; }
+.pl-seed { width: 5.5em; font: inherit; padding: 5px 7px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.pl-thumb svg { width: 11cqw; }
+.pl-piles rect { fill: none; stroke: var(--cut); stroke-width: 3; }
+.pl-piles circle { fill: var(--cut); stroke: var(--surface); stroke-width: 2; }
+.pl-piles text { fill: #fff; font-family: var(--mono); font-weight: 500; font-size: 13px; text-anchor: middle; dominant-baseline: central; }
+.pl-land .ground { fill: var(--tint1); stroke: none; }
+.pl-land .line { fill: none; stroke: var(--g1); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.pl-land .ball { fill: var(--heavy); stroke: var(--surface); stroke-width: 2.5; }
+.pl-land .lab { font-family: var(--body); font-size: 15.5px; font-weight: 600; fill: var(--ink); text-anchor: middle; }
+
+/* ---------- inside the all-parts player ---------- */
+html.embedded body { background: transparent; padding: 0 2px 6px; margin: 0; }
+html.embedded .wrap > header .eyebrow { display: none; }
+html.embedded .wrap > header h1 { font-size: clamp(20px, 2.6vw, 28px); margin-top: 0; }
+
+/* ---------- subtitles menu ---------- */
+.subsel { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.subsel select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 5px 6px; }
+.captions:lang(zh) { font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif; letter-spacing: .02em; }
+
+/* ---------- sounds button ---------- */
+.sbtn { font-family: var(--mono); font-size: 13px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.sbtn[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.sbtn[aria-pressed="false"] { color: var(--muted); }
+.opts { flex-wrap: wrap; }
+
+</style>
+</head>
+<body>
+<div id="lesson-root"></div>
+<audio id="lesson-audio" preload="metadata" src="lesson-en.m4a"></audio>
+<script src="../lesson-engine.js"></script>
+<script>
+LessonEngine.mount({"sb": {"scene": "placement", "pageTitle": {"en": "Lab 06 · Part 1 — A crowded chip lights up", "fr": "Lab 06 · Partie 1 — Une puce encombrée s'allume"}, "eyebrow": {"en": "Lab 06 · animated lesson 1 of 5", "fr": "Lab 06 · leçon animée 1 sur 5"}, "title": {"en": "A crowded chip lights up", "fr": "Une puce encombrée s'allume"}, "lede": {"en": "Why does a chip need a heat map? Watch the seed placement paint the GCell grid as the six nets deposit their wire: demand seven, congestion 3.5, overflow 5 in tile (1,0). Drag a cell in the try-it panel to move the jam.", "fr": "Pourquoi une puce a-t-elle besoin d'une carte de chaleur ? Regardez le placement graine peindre la grille GCell pendant que les six réseaux déposent leur fil : demande sept, congestion 3,5, débordement 5 dans la tuile (1,0). Faites glisser une cellule dans le panneau d'essai pour déplacer le bouchon."}, "placement": {"run": "congested_seed", "floorBox": [36, 168, 344, 229.3], "claims": [{"positions": "start", "hpwl": 7}, {"positions": "start", "net": 0, "hpwl": 1}, {"positions": "start", "net": 1, "hpwl": 1}, {"positions": "start", "net": 2, "hpwl": 1}, {"positions": "start", "net": 3, "hpwl": 1}, {"positions": "start", "net": 4, "hpwl": 2}, {"positions": "start", "net": 5, "hpwl": 1}, {"run": "congested_seed", "start": 7, "demand": 7, "hottest": {"i": 1, "j": 0, "v": 3.5}, "ovtotal": 5, "ovmax": 5, "ovcount": 1}, {"run": "congested_seed", "event": 0, "net": 0, "pins": ["A", "B"], "bbox": [4, 2, 5, 2], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": {"1,0": 1}}, {"run": "congested_seed", "event": 1, "net": 1, "pins": ["C", "D"], "bbox": [4, 3, 5, 3], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": {"1,0": 2}}, {"run": "congested_seed", "event": 2, "net": 2, "pins": ["A", "C"], "bbox": [4, 2, 4, 3], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": {"1,0": 3}}, {"run": "congested_seed", "event": 3, "net": 3, "pins": ["B", "D"], "bbox": [5, 2, 5, 3], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": {"1,0": 4}}, {"run": "congested_seed", "event": 4, "net": 4, "pins": ["A", "B", "C", "D"], "bbox": [4, 2, 5, 3], "hpwl": 2, "share": 2, "tiles": [[1, 0]], "demandAfter": {"1,0": 6}}, {"run": "congested_seed", "event": 5, "net": 5, "pins": ["E", "F"], "bbox": [4.5, 2.5, 5.5, 2.5], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": {"1,0": 7}}], "data": {"runs": {"congested_seed": {"cells": ["A", "B", "C", "D", "E", "F"], "nets": [["A", "B"], ["C", "D"], ["A", "C"], ["B", "D"], ["A", "B", "C", "D"], ["E", "F"]], "start": {"A": {"x": 4.0, "y": 2.0}, "B": {"x": 5.0, "y": 2.0}, "C": {"x": 4.0, "y": 3.0}, "D": {"x": 5.0, "y": 3.0}, "E": {"x": 4.5, "y": 2.5}, "F": {"x": 5.5, "y": 2.5}}, "walls": {"min": 0, "max": 12.0}, "moves": 0, "seed": 0, "t0": 1, "cool": 1, "step": 1, "frozen": [], "events": [{"net": 0, "pins": ["A", "B"], "bbox": [4.0, 2.0, 5.0, 2.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [1.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 1, "pins": ["C", "D"], "bbox": [4.0, 3.0, 5.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [2.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 2, "pins": ["A", "C"], "bbox": [4.0, 2.0, 4.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [3.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 3, "pins": ["B", "D"], "bbox": [5.0, 2.0, 5.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [4.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 4, "pins": ["A", "B", "C", "D"], "bbox": [4.0, 2.0, 5.0, 3.0], "hpwl": 2.0, "tiles": [[1, 0]], "share": 2.0, "demandAfter": [[0.0, 0.0], [6.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 5, "pins": ["E", "F"], "bbox": [4.5, 2.5, 5.5, 2.5], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [7.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}], "demand": [[0.0, 0.0], [7.0, 0.0], [0.0, 0.0], [0.0, 0.0]], "congestion": [[0.0, 0.0], [3.5, 0.0], [0.0, 0.0], [0.0, 0.0]], "overflow": {"perCell": [[0.0, 0.0], [5.0, 0.0], [0.0, 0.0], [0.0, 0.0]], "total": 5.0, "max": 5.0, "count": 1}, "hottest": {"i": 1, "j": 0, "v": 3.5}, "heat": {"mode": "relative-to-max", "maxC": 3.5, "t": [[0.0, 0.0], [1.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, "capacity": 2.0}, "spread": {"cells": ["A", "B", "C", "D", "E", "F"], "nets": [["A", "B"], ["C", "D"], ["A", "C"], ["B", "D"], ["A", "B", "C", "D"], ["E", "F"]], "start": {"A": {"x": 1.0, "y": 1.0}, "B": {"x": 8.0, "y": 1.0}, "C": {"x": 1.0, "y": 5.0}, "D": {"x": 8.0, "y": 5.0}, "E": {"x": 5.0, "y": 3.0}, "F": {"x": 6.0, "y": 3.0}}, "walls": {"min": 0, "max": 12.0}, "moves": 0, "seed": 0, "t0": 1, "cool": 1, "step": 1, "frozen": [], "events": [{"net": 0, "pins": ["A", "B"], "bbox": [1.0, 1.0, 8.0, 1.0], "hpwl": 7.0, "tiles": [[0, 0], [1, 0], [2, 0]], "share": 2.33333333333, "demandAfter": [[2.33333333333, 0.0], [2.33333333333, 0.0], [2.33333333333, 0.0], [0.0, 0.0]]}, {"net": 1, "pins": ["C", "D"], "bbox": [1.0, 5.0, 8.0, 5.0], "hpwl": 7.0, "tiles": [[0, 1], [1, 1], [2, 1]], "share": 2.33333333333, "demandAfter": [[2.33333333333, 2.33333333333], [2.33333333333, 2.33333333333], [2.33333333333, 2.33333333333], [0.0, 0.0]]}, {"net": 2, "pins": ["A", "C"], "bbox": [1.0, 1.0, 1.0, 5.0], "hpwl": 4.0, "tiles": [[0, 0], [0, 1]], "share": 2.0, "demandAfter": [[4.33333333333, 4.33333333333], [2.33333333333, 2.33333333333], [2.33333333333, 2.33333333333], [0.0, 0.0]]}, {"net": 3, "pins": ["B", "D"], "bbox": [8.0, 1.0, 8.0, 5.0], "hpwl": 4.0, "tiles": [[2, 0], [2, 1]], "share": 2.0, "demandAfter": [[4.33333333333, 4.33333333333], [2.33333333333, 2.33333333333], [4.33333333333, 4.33333333333], [0.0, 0.0]]}, {"net": 4, "pins": ["A", "B", "C", "D"], "bbox": [1.0, 1.0, 8.0, 5.0], "hpwl": 11.0, "tiles": [[0, 0], [0, 1], [1, 0], [1, 1], [2, 0], [2, 1]], "share": 1.83333333333, "demandAfter": [[6.16666666667, 6.16666666667], [4.16666666667, 4.16666666667], [6.16666666667, 6.16666666667], [0.0, 0.0]]}, {"net": 5, "pins": ["E", "F"], "bbox": [5.0, 3.0, 6.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0], [2, 0]], "share": 0.5, "demandAfter": [[6.16666666667, 6.16666666667], [4.66666666667, 4.16666666667], [6.66666666667, 6.16666666667], [0.0, 0.0]]}], "demand": [[6.16666666667, 6.16666666667], [4.66666666667, 4.16666666667], [6.66666666667, 6.16666666667], [0.0, 0.0]], "congestion": [[3.08333333333, 3.08333333333], [2.33333333333, 2.08333333333], [3.33333333333, 3.08333333333], [0.0, 0.0]], "overflow": {"perCell": [[4.16666666667, 4.16666666667], [2.66666666667, 2.16666666667], [4.66666666667, 4.16666666667], [0.0, 0.0]], "total": 22.0, "max": 4.66666666667, "count": 6}, "hottest": {"i": 2, "j": 0, "v": 3.33333333333}, "heat": {"mode": "relative-to-max", "maxC": 3.33333333333, "t": [[0.925, 0.925], [0.7, 0.625], [1.0, 0.925], [0.0, 0.0]]}, "capacity": 2.0}}, "seeds": null, "heat": {"chip": {"W": 12, "H": 8}, "nx": 4, "ny": 2, "cellW": 3.0, "cellH": 4.0, "capacity": 2.0, "palette": [{"u": 0.0, "hex": "#ffffff", "rgb": [255, 255, 255]}, {"u": 0.333333333333, "hex": "#0f6b5c", "rgb": [15, 107, 92]}, {"u": 0.666666666667, "hex": "#b45309", "rgb": [180, 83, 9]}, {"u": 1.0, "hex": "#9f1239", "rgb": [159, 18, 57]}]}}, "heat": {"chip": {"W": 12, "H": 8}, "nx": 4, "ny": 2, "cellW": 3.0, "cellH": 4.0, "capacity": 2.0, "palette": [{"u": 0.0, "hex": "#ffffff", "rgb": [255, 255, 255]}, {"u": 0.333333333333, "hex": "#0f6b5c", "rgb": [15, 107, 92]}, {"u": 0.666666666667, "hex": "#b45309", "rgb": [180, 83, 9]}, {"u": 1.0, "hex": "#9f1239", "rgb": [159, 18, 57]}]}, "sizes": {"A": [2, 1], "B": [2, 1], "C": [2, 1], "D": [2, 1], "E": [1, 1], "F": [1, 1]}}, "anchors": {"six1": {"slide": 1, "en": "six", "fr": "six"}, "cells2": {"slide": 2, "en": "cells", "fr": "cellules"}, "units2": {"slide": 2, "en": "units", "fr": "unités"}, "nets2": {"slide": 2, "en": "nets", "fr": "réseaux"}, "gcells3": {"slide": 3, "en": "GCells", "fr": "GCells"}, "columns3": {"slide": 3, "en": "columns", "fr": "colonnes"}, "tiles3": {"slide": 3, "en": "tiles", "fr": "tuiles"}, "capacity4": {"slide": 4, "en": "capacity", "fr": "capacité"}, "demand4": {"slide": 4, "en": "demand", "fr": "demande"}, "congestion4": {"slide": 4, "en": "congestion", "fr": "congestion"}, "oversubscribed4": {"slide": 4, "en": "oversubscribed", "fr": "sursaturée"}, "seed5": {"slide": 5, "en": "seed", "fr": "graine"}, "seven5": {"slide": 5, "en": "seven", "fr": "sept"}, "three5": {"slide": 5, "en": "three", "fr": "trois"}, "five5": {"slide": 5, "en": "five#1", "fr": "cinq#1"}}, "pausing": {"between": 0.55, "scene": 0.9, "question": 1.3, "tail": 2.6}, "pauses": [{"after": "@three5", "sec": 1.2}], "initial": {"run": "congested_seed", "move": 0, "deposit": 0, "side": 0}, "timeline": [{"at": "@seven5", "deposit": "all"}, {"at": "slide:5:end+0.2", "dim": 0.12}], "show": [{"show": "nets", "from": "@cells2", "to": "end"}, {"show": "heat", "from": "@gcells3", "to": "end"}, {"show": "netlabels", "from": "@seed5", "to": "end"}, {"show": "counter", "from": "@seed5", "to": "@seven5", "metric": "hpwl", "label": {"en": "wirelength", "fr": "longueur de fil"}}, {"show": "counter", "from": "@seven5", "to": "@three5", "metric": "demand"}, {"show": "counter", "from": "@three5", "to": "@five5", "metric": "hottestTile"}, {"show": "counter", "from": "@five5", "to": "end", "metric": "ovtotal"}, {"show": "highlight", "from": "@three5", "to": "end", "ids": ["t1,0"]}], "overlays": [{"from": "start", "to": "slide:2", "x": 3, "y": 4, "type": "headline", "text": {"en": "Why a **heat map**?", "fr": "Pourquoi une **carte de chaleur** ?"}, "sub": {"en": "{six cells, six nets@six1}", "fr": "{six cellules, six réseaux@six1}"}}, {"from": "slide:2", "to": "@nets2", "x": 3, "y": 4, "type": "headline", "text": {"en": "The **chip** and its cells", "fr": "La **puce** et ses cellules"}, "sub": {"en": "{twelve units by eight@units2}", "fr": "{douze unités sur huit@units2}"}}, {"from": "@nets2", "to": "slide:3", "x": 3, "y": 4, "type": "term", "text": {"en": "Net", "fr": "Réseau"}, "sub": {"en": "a set of cells that one wire must connect", "fr": "un ensemble de cellules qu'un même fil doit connecter"}}, {"from": "slide:3", "to": "@tiles3", "x": 3, "y": 4, "type": "headline", "text": {"en": "Cut the chip into **tiles**", "fr": "Découper la puce en **tuiles**"}, "sub": {"en": "{four columns and two rows@columns3}", "fr": "{quatre colonnes et deux lignes@columns3}"}}, {"from": "@gcells3", "to": "slide:4", "x": 56, "y": 8, "type": "term", "text": {"en": "GCell", "fr": "GCell"}, "sub": {"en": "global cell, a coarse tile of the map", "fr": "global cell, une grosse tuile de la carte"}}, {"from": "@tiles3", "to": "slide:4", "x": 3, "y": 74, "type": "tag", "text": {"en": "each tile ##3## by ##4##", "fr": "chaque tuile fait ##3## sur ##4##"}}, {"from": "slide:4", "to": "slide:5", "x": 3, "y": 4, "type": "headline", "size": 3.6, "text": {"en": "Demand divided by **capacity**", "fr": "La **demande** divisée par la **capacité**"}}, {"from": "slide:4", "to": "slide:5", "x": 3, "y": 20, "type": "eq", "text": {"en": "{demand@demand4} / {capacity@capacity4} = {congestion@congestion4}", "fr": "{demande@demand4} / {capacité@capacity4} = {congestion@congestion4}"}}, {"from": "@congestion4", "to": "slide:5", "x": 70, "y": 8, "type": "term", "text": {"en": "Congestion", "fr": "Congestion"}, "sub": {"en": "demand divided by capacity", "fr": "la demande divisée par la capacité"}}, {"from": "@oversubscribed4", "to": "slide:5", "x": 70, "y": 36, "type": "tag", "text": {"en": "above one: !!oversubscribed!!", "fr": "au-dessus de un : !!sursaturée!!"}}, {"from": "slide:5", "to": "end", "x": 3, "y": 4, "type": "headline", "text": {"en": "The **seed** map", "fr": "La carte de la **graine**"}}, {"from": "slide:5", "to": "slide:5:end+0.2", "x": 44, "y": 24, "type": "tags", "items": [{"text": {"en": "tile column one, row zero", "fr": "tuile colonne un, ligne zéro"}, "at": "@seed5"}, {"text": {"en": "demand ##7##", "fr": "demande ##7##"}, "at": "@seven5"}, {"text": {"en": "congestion ##3.5##", "fr": "congestion ##3,5##"}, "at": "@three5"}, {"text": {"en": "overflow ##5##", "fr": "débordement ##5##"}, "at": "@five5"}]}, {"from": "slide:5:end+0.3", "to": "end", "x": 50, "y": 44, "type": "question"}], "question": {"at": "slide:5:end+0.3", "text": {"en": "Where does a **demand of seven** come from?", "fr": "D'où vient une **demande de sept** ?"}, "hint": {"en": "Each net drops some wire into the tiles it touches.", "fr": "Chaque réseau dépose du fil dans les tuiles qu'il touche."}, "options": [{"label": {"en": "All of it in one tile", "fr": "Tout dans une seule tuile"}, "reply": {"en": "Not quite: a wide net shares its wire over every tile its box touches. Part 2 shows the split.", "fr": "Pas tout à fait : un réseau large partage son fil sur chaque tuile touchée par sa boîte. La partie 2 montre le partage."}, "correct": false}, {"label": {"en": "Split evenly over the touched tiles", "fr": "Partagé également entre les tuiles touchées"}, "reply": {"en": "Right: wirelength divided by tile count. Part 2 replays it net by net.", "fr": "Exact : la longueur de fil divisée par le nombre de tuiles. La partie 2 la rejoue, réseau par réseau."}, "correct": true}, {"label": {"en": "A random share each time", "fr": "Une part aléatoire à chaque fois"}, "reply": {"en": "No randomness here: the split is even and the order is fixed, so maps are reproducible.", "fr": "Aucun hasard ici : le partage est égal et l'ordre est fixé, donc les cartes sont reproductibles."}, "correct": false}]}, "chapters": [{"at": "start", "title": {"en": "Why a heat map", "fr": "Pourquoi une carte de chaleur"}}, {"at": "slide:3", "title": {"en": "Tiles", "fr": "Tuiles"}}, {"at": "slide:4", "title": {"en": "The ratio", "fr": "Le ratio"}}, {"at": "slide:5", "title": {"en": "The seed map", "fr": "La carte de la graine"}}], "note": {"en": "Every number comes from the Lab 06 checker's --json (.cache/congestion-check.json, regenerated read-only from eda-learning-lab6-cg and byte-compared with the skill demo's copy); the engine recomputes every deposit event, and check_lesson.py --data compares every claim with the file at 12 significant digits.", "fr": "Chaque nombre vient du --json du vérificateur du Lab 06 (.cache/congestion-check.json, régénéré en lecture seule depuis eda-learning-lab6-cg et comparé octet par octet avec la copie de la démo de la compétence) ; le moteur recalcule chaque événement de dépôt, et check_lesson.py --data compare chaque affirmation au fichier avec 12 chiffres significatifs."}}, "timing": {"lang": "en", "slides": [1, 5], "source": "edge-tts", "voice": "en-US-AndrewMultilingualNeural", "rate": "-4%", "words": "exact", "duration": 128.604, "sentences": [{"slide": 1, "text": "Why does a chip need a heat map?", "start": 0.104, "end": 1.341, "pause_after": 1.3, "words": [{"w": "Why", "t": 0.104}, {"w": "does", "t": 0.195}, {"w": "a", "t": 0.299}, {"w": "chip", "t": 0.352}, {"w": "need", "t": 0.586}, {"w": "a", "t": 0.729}, {"w": "heat", "t": 0.755}, {"w": "map", "t": 0.977}]}, {"slide": 1, "text": "Picture six blocks of logic crowded into one small square of the chip.", "start": 3.276, "end": 8.485, "pause_after": 0.55, "words": [{"w": "Picture", "t": 3.276}, {"w": "six", "t": 3.641}, {"w": "blocks", "t": 4.031}, {"w": "of", "t": 4.63}, {"w": "logic", "t": 4.787}, {"w": "crowded", "t": 5.36}, {"w": "into", "t": 6.089}, {"w": "one", "t": 6.388}, {"w": "small", "t": 6.844}, {"w": "square", "t": 7.261}, {"w": "of", "t": 7.938}, {"w": "the", "t": 8.029}, {"w": "chip", "t": 8.094}]}, {"slide": 1, "text": "Real wires cannot all fit through that square.", "start": 9.514, "end": 12.457, "pause_after": 0.55, "words": [{"w": "Real", "t": 9.514}, {"w": "wires", "t": 9.814}, {"w": "cannot", "t": 10.217}, {"w": "all", "t": 10.738}, {"w": "fit", "t": 10.986}, {"w": "through", "t": 11.558}, {"w": "that", "t": 11.767}, {"w": "square", "t": 11.962}]}, {"slide": 1, "text": "A heat map of wire crowding paints that square red, so you see the jam before routing.", "start": 13.496, "end": 18.809, "pause_after": 0.55, "words": [{"w": "A", "t": 13.496}, {"w": "heat", "t": 13.535}, {"w": "map", "t": 13.835}, {"w": "of", "t": 14.329}, {"w": "wire", "t": 14.525}, {"w": "crowding", "t": 14.954}, {"w": "paints", "t": 15.384}, {"w": "that", "t": 15.814}, {"w": "square", "t": 15.944}, {"w": "red", "t": 16.478}, {"w": "so", "t": 17.181}, {"w": "you", "t": 17.285}, {"w": "see", "t": 17.389}, {"w": "the", "t": 17.572}, {"w": "jam", "t": 17.65}, {"w": "before", "t": 17.988}, {"w": "routing", "t": 18.392}]}, {"slide": 1, "text": "We call that map the congestion map.", "start": 19.83, "end": 22.044, "pause_after": 1.4500000000000002, "words": [{"w": "We", "t": 19.83}, {"w": "call", "t": 19.921}, {"w": "that", "t": 20.156}, {"w": "map", "t": 20.39}, {"w": "the", "t": 21.028}, {"w": "congestion", "t": 21.132}, {"w": "map", "t": 21.705}]}, {"slide": 2, "text": "Our chip is a rectangle twelve units wide and eight units tall.", "start": 23.979, "end": 28.354, "pause_after": 0.55, "words": [{"w": "Our", "t": 23.979}, {"w": "chip", "t": 24.135}, {"w": "is", "t": 24.643}, {"w": "a", "t": 24.773}, {"w": "rectangle", "t": 24.825}, {"w": "twelve", "t": 25.464}, {"w": "units", "t": 25.841}, {"w": "wide", "t": 26.258}, {"w": "and", "t": 27.091}, {"w": "eight", "t": 27.482}, {"w": "units", "t": 27.651}, {"w": "tall", "t": 27.977}]}, {"slide": 2, "text": "It holds six cells, named A to F.", "start": 29.39, "end": 32.059, "pause_after": 0.55, "words": [{"w": "It", "t": 29.39}, {"w": "holds", "t": 29.468}, {"w": "six", "t": 29.69}, {"w": "cells", "t": 30.015}, {"w": "named", "t": 30.796}, {"w": "A", "t": 31.304}, {"w": "to", "t": 31.408}, {"w": "F", "t": 31.578}]}, {"slide": 2, "text": "A cell is a block of logic that needs its own spot.", "start": 33.071, "end": 36.118, "pause_after": 0.55, "words": [{"w": "A", "t": 33.071}, {"w": "cell", "t": 33.123}, {"w": "is", "t": 33.397}, {"w": "a", "t": 33.488}, {"w": "block", "t": 33.553}, {"w": "of", "t": 33.931}, {"w": "logic", "t": 34.022}, {"w": "that", "t": 34.516}, {"w": "needs", "t": 34.699}, {"w": "its", "t": 35.037}, {"w": "own", "t": 35.259}, {"w": "spot", "t": 35.519}]}, {"slide": 2, "text": "The cells are joined in six groups called nets.", "start": 37.175, "end": 39.792, "pause_after": 0.55, "words": [{"w": "The", "t": 37.175}, {"w": "cells", "t": 37.227}, {"w": "are", "t": 37.488}, {"w": "joined", "t": 37.566}, {"w": "in", "t": 37.904}, {"w": "six", "t": 38.009}, {"w": "groups", "t": 38.347}, {"w": "called", "t": 38.959}, {"w": "nets", "t": 39.206}]}, {"slide": 2, "text": "A net is a set of cells that one wire must connect.", "start": 40.782, "end": 44.181, "pause_after": 0.55, "words": [{"w": "A", "t": 40.782}, {"w": "net", "t": 40.834}, {"w": "is", "t": 41.108}, {"w": "a", "t": 41.186}, {"w": "set", "t": 41.238}, {"w": "of", "t": 41.459}, {"w": "cells", "t": 41.55}, {"w": "that", "t": 42.019}, {"w": "one", "t": 42.214}, {"w": "wire", "t": 42.631}, {"w": "must", "t": 43.464}, {"w": "connect", "t": 43.725}]}, {"slide": 2, "text": "A placement says where every cell sits.", "start": 45.185, "end": 48.167, "pause_after": 1.4500000000000002, "words": [{"w": "A", "t": 45.185}, {"w": "placement", "t": 45.237}, {"w": "says", "t": 45.745}, {"w": "where", "t": 46.201}, {"w": "every", "t": 46.644}, {"w": "cell", "t": 47.034}, {"w": "sits", "t": 47.477}]}, {"slide": 3, "text": "Before routing, we cut the chip into big squares called GCells.", "start": 50.104, "end": 54.349, "pause_after": 0.55, "words": [{"w": "Before", "t": 50.104}, {"w": "routing", "t": 50.521}, {"w": "we", "t": 51.354}, {"w": "cut", "t": 51.497}, {"w": "the", "t": 51.706}, {"w": "chip", "t": 51.784}, {"w": "into", "t": 52.07}, {"w": "big", "t": 52.24}, {"w": "squares", "t": 52.539}, {"w": "called", "t": 53.073}, {"w": "GCells", "t": 53.451}]}, {"slide": 3, "text": "GCell stands for global cell, a coarse tile of the map.", "start": 55.382, "end": 59.523, "pause_after": 0.55, "words": [{"w": "GCell", "t": 55.382}, {"w": "stands", "t": 56.255}, {"w": "for", "t": 56.554}, {"w": "global", "t": 56.723}, {"w": "cell", "t": 57.257}, {"w": "a", "t": 58.156}, {"w": "coarse", "t": 58.221}, {"w": "tile", "t": 58.637}, {"w": "of", "t": 58.963}, {"w": "the", "t": 59.015}, {"w": "map", "t": 59.093}]}, {"slide": 3, "text": "Our grid has four columns and two rows, so eight tiles.", "start": 60.527, "end": 64.603, "pause_after": 0.55, "words": [{"w": "Our", "t": 60.527}, {"w": "grid", "t": 60.657}, {"w": "has", "t": 60.983}, {"w": "four", "t": 61.269}, {"w": "columns", "t": 61.595}, {"w": "and", "t": 62.272}, {"w": "two", "t": 62.441}, {"w": "rows", "t": 62.715}, {"w": "so", "t": 63.6}, {"w": "eight", "t": 63.782}, {"w": "tiles", "t": 63.965}]}, {"slide": 3, "text": "Each tile is three units wide and four units tall.", "start": 65.65, "end": 68.853, "pause_after": 0.55, "words": [{"w": "Each", "t": 65.65}, {"w": "tile", "t": 65.832}, {"w": "is", "t": 66.171}, {"w": "three", "t": 66.314}, {"w": "units", "t": 66.679}, {"w": "wide", "t": 67.043}, {"w": "and", "t": 67.525}, {"w": "four", "t": 67.707}, {"w": "units", "t": 68.176}, {"w": "tall", "t": 68.463}]}, {"slide": 3, "text": "We name a tile by its column and its row, counting from zero.", "start": 69.859, "end": 73.622, "pause_after": 1.4500000000000002, "words": [{"w": "We", "t": 69.859}, {"w": "name", "t": 69.95}, {"w": "a", "t": 70.08}, {"w": "tile", "t": 70.146}, {"w": "by", "t": 70.562}, {"w": "its", "t": 70.705}, {"w": "column", "t": 70.836}, {"w": "and", "t": 71.526}, {"w": "its", "t": 71.604}, {"w": "row", "t": 71.734}, {"w": "counting", "t": 72.594}, {"w": "from", "t": 72.932}, {"w": "zero", "t": 73.088}]}, {"slide": 4, "text": "Each tile has a capacity, the wire allowed to cross it.", "start": 75.533, "end": 78.971, "pause_after": 0.55, "words": [{"w": "Each", "t": 75.533}, {"w": "tile", "t": 75.702}, {"w": "has", "t": 75.989}, {"w": "a", "t": 76.145}, {"w": "capacity", "t": 76.197}, {"w": "the", "t": 77.265}, {"w": "wire", "t": 77.382}, {"w": "allowed", "t": 77.799}, {"w": "to", "t": 78.241}, {"w": "cross", "t": 78.307}, {"w": "it", "t": 78.775}]}, {"slide": 4, "text": "Our tiles allow two.", "start": 79.995, "end": 81.18, "pause_after": 0.55, "words": [{"w": "Our", "t": 79.995}, {"w": "tiles", "t": 80.099}, {"w": "allow", "t": 80.438}, {"w": "two", "t": 80.763}]}, {"slide": 4, "text": "The demand of a tile is the wire that wants to cross it.", "start": 82.43, "end": 85.607, "pause_after": 0.55, "words": [{"w": "The", "t": 82.43}, {"w": "demand", "t": 82.508}, {"w": "of", "t": 82.847}, {"w": "a", "t": 82.899}, {"w": "tile", "t": 82.964}, {"w": "is", "t": 83.784}, {"w": "the", "t": 83.941}, {"w": "wire", "t": 84.071}, {"w": "that", "t": 84.566}, {"w": "wants", "t": 84.709}, {"w": "to", "t": 84.904}, {"w": "cross", "t": 84.982}, {"w": "it", "t": 85.425}]}, {"slide": 4, "text": "Congestion is demand divided by capacity.", "start": 86.652, "end": 89.36, "pause_after": 0.55, "words": [{"w": "Congestion", "t": 86.652}, {"w": "is", "t": 87.42}, {"w": "demand", "t": 87.538}, {"w": "divided", "t": 88.045}, {"w": "by", "t": 88.449}, {"w": "capacity", "t": 88.605}]}, {"slide": 4, "text": "Above one, a tile is oversubscribed: more wire than room.", "start": 90.381, "end": 94.548, "pause_after": 1.4500000000000002, "words": [{"w": "Above", "t": 90.381}, {"w": "one", "t": 90.655}, {"w": "a", "t": 91.501}, {"w": "tile", "t": 91.553}, {"w": "is", "t": 91.931}, {"w": "oversubscribed", "t": 92.087}, {"w": "more", "t": 93.35}, {"w": "wire", "t": 93.675}, {"w": "than", "t": 94.04}, {"w": "room", "t": 94.235}]}, {"slide": 5, "text": "In our first placement, called the seed, all six cells sit in one tile.", "start": 96.487, "end": 101.123, "pause_after": 0.55, "words": [{"w": "In", "t": 96.487}, {"w": "our", "t": 96.552}, {"w": "first", "t": 96.669}, {"w": "placement", "t": 96.956}, {"w": "called", "t": 97.425}, {"w": "the", "t": 97.633}, {"w": "seed", "t": 97.711}, {"w": "all", "t": 98.466}, {"w": "six", "t": 98.727}, {"w": "cells", "t": 99.091}, {"w": "sit", "t": 99.742}, {"w": "in", "t": 100.159}, {"w": "one", "t": 100.328}, {"w": "tile", "t": 100.589}]}, {"slide": 5, "text": "That tile is column one, row zero, near the chip's middle.", "start": 102.175, "end": 106.329, "pause_after": 0.55, "words": [{"w": "That", "t": 102.175}, {"w": "tile", "t": 102.331}, {"w": "is", "t": 102.657}, {"w": "column", "t": 102.748}, {"w": "one", "t": 103.191}, {"w": "row", "t": 103.972}, {"w": "zero", "t": 104.272}, {"w": "near", "t": 105.417}, {"w": "the", "t": 105.574}, {"w": "chip's", "t": 105.652}, {"w": "middle", "t": 105.964}]}, {"slide": 5, "text": "All six nets drop their wire there, so its demand is seven.", "start": 107.368, "end": 110.923, "pause_after": 0.55, "words": [{"w": "All", "t": 107.368}, {"w": "six", "t": 107.524}, {"w": "nets", "t": 107.798}, {"w": "drop", "t": 108.045}, {"w": "their", "t": 108.449}, {"w": "wire", "t": 108.631}, {"w": "there", "t": 109.009}, {"w": "so", "t": 109.686}, {"w": "its", "t": 109.829}, {"w": "demand", "t": 109.933}, {"w": "is", "t": 110.389}, {"w": "seven", "t": 110.493}]}, {"slide": 5, "text": "Seven divided by two gives congestion three point five.", "start": 111.974, "end": 115.828, "pause_after": 1.2, "words": [{"w": "Seven", "t": 111.974}, {"w": "divided", "t": 112.274}, {"w": "by", "t": 112.703}, {"w": "two", "t": 112.873}, {"w": "gives", "t": 113.55}, {"w": "congestion", "t": 113.771}, {"w": "three", "t": 114.682}, {"w": "point", "t": 115.034}, {"w": "five", "t": 115.321}]}, {"slide": 5, "text": "Its overflow, demand minus capacity, is five.", "start": 117.494, "end": 121.27, "pause_after": 0.55, "words": [{"w": "Its", "t": 117.494}, {"w": "overflow", "t": 117.637}, {"w": "demand", "t": 118.666}, {"w": "minus", "t": 119.096}, {"w": "capacity", "t": 119.447}, {"w": "is", "t": 120.606}, {"w": "five", "t": 120.736}]}, {"slide": 5, "text": "Pause and guess: where does a demand of seven come from?", "start": 122.329, "end": 125.649, "pause_after": 2.6, "words": [{"w": "Pause", "t": 122.329}, {"w": "and", "t": 122.707}, {"w": "guess", "t": 122.785}, {"w": "where", "t": 123.827}, {"w": "does", "t": 123.944}, {"w": "a", "t": 124.061}, {"w": "demand", "t": 124.113}, {"w": "of", "t": 124.621}, {"w": "seven", "t": 124.699}, {"w": "come", "t": 125.077}, {"w": "from", "t": 125.311}]}]}, "lang": "en", "subs": {"fr": ["Pourquoi une puce a-t-elle besoin d'une carte de chaleur ?", "Imaginez six blocs de logique entassés dans un petit carré de la puce.", "Les vrais fils ne peuvent pas tous passer par ce carré.", "Une carte de chaleur de l'encombrement des fils peint ce carré en rouge, pour voir le bouchon avant le routage.", "Nous appelons cette carte la carte de congestion.", "Notre puce est un rectangle de douze unités de large et huit de haut.", "Elle contient six cellules, nommées A à F.", "Une cellule est un bloc de logique qui a besoin de sa propre place.", "Les cellules sont reliées en six groupes appelés réseaux.", "Un réseau est un ensemble de cellules qu'un même fil doit connecter.", "Un placement dit où chaque cellule se trouve.", "Avant le routage, nous coupons la puce en grandes cases appelées GCells.", "GCell signifie global cell, une grosse tuile de la carte.", "Notre grille a quatre colonnes et deux lignes, donc huit tuiles.", "Chaque tuile fait trois unités de large et quatre de haut.", "Nous nommons une tuile par sa colonne et sa ligne, en comptant à partir de zéro.", "Chaque tuile a une capacité, le fil autorisé à la traverser.", "Nos tuiles autorisent deux.", "La demande d'une tuile est le fil qui veut la traverser.", "La congestion est la demande divisée par la capacité.", "Au-dessus de un, une tuile est sursaturée : plus de fil que de place.", "Dans notre premier placement, appelé la graine, les six cellules sont dans une seule tuile.", "Cette tuile est la colonne un, ligne zéro, près du milieu de la puce.", "Les six réseaux y déposent leur fil, donc sa demande est sept.", "Sept divisé par deux donne une congestion de trois virgule cinq.", "Son débordement, demande moins capacité, vaut cinq.", "Faites une pause et devinez : d'où vient une demande de sept ?"], "zh": ["为什么芯片需要一张热力图？", "想象六个逻辑块挤在芯片的一个小方格里。", "真正的导线不可能全部穿过那个方格。", "导线拥挤的热力图会把那个方格涂成红色，让你在布线前就看到堵塞。", "我们把这张图叫作拥塞图。", "我们的芯片是一个宽十二个单位、高八个单位的矩形。", "芯片上有六个单元，命名为 A 到 F。", "单元是一块需要自己位置的逻辑块。", "这些单元被分成六组，叫作线网。", "线网是一组必须由同一根导线连接的单元。", "布局说明每个单元的位置。", "布线之前，我们把芯片切成名为 GCell 的大方块。", "GCell 是 global cell 的缩写，即地图上的粗粒度格子。", "我们的网格有四列两行，共八个格子。", "每个格子宽三个单位、高四个单位。", "我们按列和行给格子命名，从零开始计数。", "每个格子有一个容量，即允许穿过它的导线量。", "我们的格子允许二。", "格子的需求是想要穿过它的导线量。", "拥塞度等于需求除以容量。", "大于一时，格子就超载了：导线比空间多。", "在我们的第一个布局中，也就是种子布局，六个单元都在同一个格子里。", "那个格子是第 1 列第 0 行，靠近芯片中央。", "六个线网都把导线落在那里，所以它的需求是七。", "七除以二得到拥塞度三点五。", "它的溢出，即需求减容量，是五。", "暂停并猜一猜：需求七是从哪里来的？"]}, "storageKey": "lab6-lesson-speed"});
+</script>
+</body>
+</html>

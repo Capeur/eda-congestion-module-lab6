@@ -1,0 +1,171 @@
+{
+ "scene": "placement",
+ "pageTitle": {
+  "en": "Lab 06 · Part 1 — A crowded chip lights up",
+  "fr": "Lab 06 · Partie 1 — Une puce encombrée s'allume"
+ },
+ "eyebrow": {
+  "en": "Lab 06 · animated lesson 1 of 5",
+  "fr": "Lab 06 · leçon animée 1 sur 5"
+ },
+ "title": {
+  "en": "A crowded chip lights up",
+  "fr": "Une puce encombrée s'allume"
+ },
+ "lede": {
+  "en": "Why does a chip need a heat map? Watch the seed placement paint the GCell grid as the six nets deposit their wire: demand seven, congestion 3.5, overflow 5 in tile (1,0). Drag a cell in the try-it panel to move the jam.",
+  "fr": "Pourquoi une puce a-t-elle besoin d'une carte de chaleur ? Regardez le placement graine peindre la grille GCell pendant que les six réseaux déposent leur fil : demande sept, congestion 3,5, débordement 5 dans la tuile (1,0). Faites glisser une cellule dans le panneau d'essai pour déplacer le bouchon."
+ },
+ "placement": {
+  "run": "congested_seed",
+  "floorBox": [36, 168, 344, 229.3],
+  "claims": [
+   { "positions": "start", "hpwl": 7 },
+   { "positions": "start", "net": 0, "hpwl": 1 },
+   { "positions": "start", "net": 1, "hpwl": 1 },
+   { "positions": "start", "net": 2, "hpwl": 1 },
+   { "positions": "start", "net": 3, "hpwl": 1 },
+   { "positions": "start", "net": 4, "hpwl": 2 },
+   { "positions": "start", "net": 5, "hpwl": 1 },
+   { "run": "congested_seed", "start": 7, "demand": 7, "hottest": { "i": 1, "j": 0, "v": 3.5 }, "ovtotal": 5, "ovmax": 5, "ovcount": 1 },
+   { "run": "congested_seed", "event": 0, "net": 0, "pins": ["A", "B"], "bbox": [4, 2, 5, 2], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": { "1,0": 1 } },
+   { "run": "congested_seed", "event": 1, "net": 1, "pins": ["C", "D"], "bbox": [4, 3, 5, 3], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": { "1,0": 2 } },
+   { "run": "congested_seed", "event": 2, "net": 2, "pins": ["A", "C"], "bbox": [4, 2, 4, 3], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": { "1,0": 3 } },
+   { "run": "congested_seed", "event": 3, "net": 3, "pins": ["B", "D"], "bbox": [5, 2, 5, 3], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": { "1,0": 4 } },
+   { "run": "congested_seed", "event": 4, "net": 4, "pins": ["A", "B", "C", "D"], "bbox": [4, 2, 5, 3], "hpwl": 2, "share": 2, "tiles": [[1, 0]], "demandAfter": { "1,0": 6 } },
+   { "run": "congested_seed", "event": 5, "net": 5, "pins": ["E", "F"], "bbox": [4.5, 2.5, 5.5, 2.5], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": { "1,0": 7 } }
+  ]
+ },
+ "anchors": {
+  "six1": { "slide": 1, "en": "six", "fr": "six" },
+  "cells2": { "slide": 2, "en": "cells", "fr": "cellules" },
+  "units2": { "slide": 2, "en": "units", "fr": "unités" },
+  "nets2": { "slide": 2, "en": "nets", "fr": "réseaux" },
+  "gcells3": { "slide": 3, "en": "GCells", "fr": "GCells" },
+  "columns3": { "slide": 3, "en": "columns", "fr": "colonnes" },
+  "tiles3": { "slide": 3, "en": "tiles", "fr": "tuiles" },
+  "capacity4": { "slide": 4, "en": "capacity", "fr": "capacité" },
+  "demand4": { "slide": 4, "en": "demand", "fr": "demande" },
+  "congestion4": { "slide": 4, "en": "congestion", "fr": "congestion" },
+  "oversubscribed4": { "slide": 4, "en": "oversubscribed", "fr": "sursaturée" },
+  "seed5": { "slide": 5, "en": "seed", "fr": "graine" },
+  "seven5": { "slide": 5, "en": "seven", "fr": "sept" },
+  "three5": { "slide": 5, "en": "three", "fr": "trois" },
+  "five5": { "slide": 5, "en": "five#1", "fr": "cinq#1" }
+ },
+ "pausing": { "between": 0.55, "scene": 0.9, "question": 1.3, "tail": 2.6 },
+ "pauses": [
+  { "after": "@three5", "sec": 1.2 }
+ ],
+ "initial": { "run": "congested_seed", "move": 0, "deposit": 0, "side": 0 },
+ "timeline": [
+  { "at": "@seven5", "deposit": "all" },
+  { "at": "slide:5:end+0.2", "dim": 0.12 }
+ ],
+ "show": [
+  { "show": "nets", "from": "@cells2", "to": "end" },
+  { "show": "heat", "from": "@gcells3", "to": "end" },
+  { "show": "netlabels", "from": "@seed5", "to": "end" },
+  { "show": "counter", "from": "@seed5", "to": "@seven5", "metric": "hpwl", "label": { "en": "wirelength", "fr": "longueur de fil" } },
+  { "show": "counter", "from": "@seven5", "to": "@three5", "metric": "demand" },
+  { "show": "counter", "from": "@three5", "to": "@five5", "metric": "hottestTile" },
+  { "show": "counter", "from": "@five5", "to": "end", "metric": "ovtotal" },
+  { "show": "highlight", "from": "@three5", "to": "end", "ids": ["t1,0"] }
+ ],
+ "overlays": [
+  {
+   "from": "start", "to": "slide:2", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "Why a **heat map**?", "fr": "Pourquoi une **carte de chaleur** ?" },
+   "sub": { "en": "{six cells, six nets@six1}", "fr": "{six cellules, six réseaux@six1}" }
+  },
+  {
+   "from": "slide:2", "to": "@nets2", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "The **chip** and its cells", "fr": "La **puce** et ses cellules" },
+   "sub": { "en": "{twelve units by eight@units2}", "fr": "{douze unités sur huit@units2}" }
+  },
+  {
+   "from": "@nets2", "to": "slide:3", "x": 3, "y": 4, "type": "term",
+   "text": { "en": "Net", "fr": "Réseau" },
+   "sub": { "en": "a set of cells that one wire must connect", "fr": "un ensemble de cellules qu'un même fil doit connecter" }
+  },
+  {
+   "from": "slide:3", "to": "@tiles3", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "Cut the chip into **tiles**", "fr": "Découper la puce en **tuiles**" },
+   "sub": { "en": "{four columns and two rows@columns3}", "fr": "{quatre colonnes et deux lignes@columns3}" }
+  },
+  {
+   "from": "@gcells3", "to": "slide:4", "x": 56, "y": 8, "type": "term",
+   "text": { "en": "GCell", "fr": "GCell" },
+   "sub": { "en": "global cell, a coarse tile of the map", "fr": "global cell, une grosse tuile de la carte" }
+  },
+  {
+   "from": "@tiles3", "to": "slide:4", "x": 3, "y": 74, "type": "tag",
+   "text": { "en": "each tile ##3## by ##4##", "fr": "chaque tuile fait ##3## sur ##4##" }
+  },
+  {
+   "from": "slide:4", "to": "slide:5", "x": 3, "y": 4, "type": "headline", "size": 3.6,
+   "text": { "en": "Demand divided by **capacity**", "fr": "La **demande** divisée par la **capacité**" }
+  },
+  {
+   "from": "slide:4", "to": "slide:5", "x": 3, "y": 20, "type": "eq",
+   "text": { "en": "{demand@demand4} / {capacity@capacity4} = {congestion@congestion4}", "fr": "{demande@demand4} / {capacité@capacity4} = {congestion@congestion4}" }
+  },
+  {
+   "from": "@congestion4", "to": "slide:5", "x": 70, "y": 8, "type": "term",
+   "text": { "en": "Congestion", "fr": "Congestion" },
+   "sub": { "en": "demand divided by capacity", "fr": "la demande divisée par la capacité" }
+  },
+  {
+   "from": "@oversubscribed4", "to": "slide:5", "x": 70, "y": 36, "type": "tag",
+   "text": { "en": "above one: !!oversubscribed!!", "fr": "au-dessus de un : !!sursaturée!!" }
+  },
+  {
+   "from": "slide:5", "to": "end", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "The **seed** map", "fr": "La carte de la **graine**" }
+  },
+  {
+   "from": "slide:5", "to": "slide:5:end+0.2", "x": 44, "y": 24, "type": "tags",
+   "items": [
+    { "text": { "en": "tile column one, row zero", "fr": "tuile colonne un, ligne zéro" }, "at": "@seed5" },
+    { "text": { "en": "demand ##7##", "fr": "demande ##7##" }, "at": "@seven5" },
+    { "text": { "en": "congestion ##3.5##", "fr": "congestion ##3,5##" }, "at": "@three5" },
+    { "text": { "en": "overflow ##5##", "fr": "débordement ##5##" }, "at": "@five5" }
+   ]
+  },
+  {
+   "from": "slide:5:end+0.3", "to": "end", "x": 50, "y": 44, "type": "question"
+  }
+ ],
+ "question": {
+  "at": "slide:5:end+0.3",
+  "text": { "en": "Where does a **demand of seven** come from?", "fr": "D'où vient une **demande de sept** ?" },
+  "hint": { "en": "Each net drops some wire into the tiles it touches.", "fr": "Chaque réseau dépose du fil dans les tuiles qu'il touche." },
+  "options": [
+   {
+    "label": { "en": "All of it in one tile", "fr": "Tout dans une seule tuile" },
+    "reply": { "en": "Not quite: a wide net shares its wire over every tile its box touches. Part 2 shows the split.", "fr": "Pas tout à fait : un réseau large partage son fil sur chaque tuile touchée par sa boîte. La partie 2 montre le partage." },
+    "correct": false
+   },
+   {
+    "label": { "en": "Split evenly over the touched tiles", "fr": "Partagé également entre les tuiles touchées" },
+    "reply": { "en": "Right: wirelength divided by tile count. Part 2 replays it net by net.", "fr": "Exact : la longueur de fil divisée par le nombre de tuiles. La partie 2 la rejoue, réseau par réseau." },
+    "correct": true
+   },
+   {
+    "label": { "en": "A random share each time", "fr": "Une part aléatoire à chaque fois" },
+    "reply": { "en": "No randomness here: the split is even and the order is fixed, so maps are reproducible.", "fr": "Aucun hasard ici : le partage est égal et l'ordre est fixé, donc les cartes sont reproductibles." },
+    "correct": false
+   }
+  ]
+ },
+ "chapters": [
+  { "at": "start", "title": { "en": "Why a heat map", "fr": "Pourquoi une carte de chaleur" } },
+  { "at": "slide:3", "title": { "en": "Tiles", "fr": "Tuiles" } },
+  { "at": "slide:4", "title": { "en": "The ratio", "fr": "Le ratio" } },
+  { "at": "slide:5", "title": { "en": "The seed map", "fr": "La carte de la graine" } }
+ ],
+ "note": {
+  "en": "Every number comes from the Lab 06 checker's --json (.cache/congestion-check.json, regenerated read-only from eda-learning-lab6-cg and byte-compared with the skill demo's copy); the engine recomputes every deposit event, and check_lesson.py --data compares every claim with the file at 12 significant digits.",
+  "fr": "Chaque nombre vient du --json du vérificateur du Lab 06 (.cache/congestion-check.json, régénéré en lecture seule depuis eda-learning-lab6-cg et comparé octet par octet avec la copie de la démo de la compétence) ; le moteur recalcule chaque événement de dépôt, et check_lesson.py --data compare chaque affirmation au fichier avec 12 chiffres significatifs."
+ }
+}
