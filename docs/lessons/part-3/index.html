@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lab 06 · Part 3 — The hottest tile</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>@font-face{font-family:'Fraunces';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/fraunces-latin-700-normal.woff2) format('woff2')}@font-face{font-family:'IBM Plex Mono';font-weight:400;font-style:normal;font-display:swap;src:url(fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2')}@font-face{font-family:'IBM Plex Mono';font-weight:500;font-style:normal;font-display:swap;src:url(fonts/ibm-plex-mono-latin-500-normal.woff2) format('woff2')}@font-face{font-family:'Source Sans 3';font-weight:400;font-style:normal;font-display:swap;src:url(fonts/source-sans-3-latin-400-normal.woff2) format('woff2')}@font-face{font-family:'Source Sans 3';font-weight:600;font-style:normal;font-display:swap;src:url(fonts/source-sans-3-latin-600-normal.woff2) format('woff2')}@font-face{font-family:'Source Sans 3';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/source-sans-3-latin-700-normal.woff2) format('woff2')}</style>
+<meta name="lesson:title" content="The hottest tile">
+<meta name="lesson:duration" content="96.1">
+<meta name="lesson:engine" content="5.1">
+<style>
+/* lesson.css — styles for the animated lesson player (lesson-engine.js).
+   Layout: one reading column. A 16:9 stage carries the lesson; captions and transport sit under it,
+   then chapters and the "your turn" bench. Group colours follow the course labs: the group holding
+   the first node name is blue, the next green, then amber and rose; cut edges are red. */
+:root {
+  --bg: #f3f5f2;
+  --surface: #ffffff;
+  --ink: #17201c;
+  --muted: #56625c;
+  --line: #d6ddd8;
+  --stage: #fbfcfa;
+  --edge: #7a8780;
+  --g0: #1d4ed8;
+  --g1: #0f6b5c;
+  --g2: #b45309;
+  --g3: #9f1239;
+  --cut: #dc2626;
+  --heavy: #b45309;
+  --copper: #a8662a;
+  --unplaced: #94a3b8;
+  --tint0: rgba(29, 78, 216, 0.07);
+  --tint1: rgba(15, 107, 92, 0.08);
+  --said: #17201c;
+  --unsaid: #9aa49f;
+  --mark: #fde68a;
+  --display: "Fraunces", Georgia, "Times New Roman", serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1412; --surface: #151d1a; --ink: #e6ece9; --muted: #9ba7a1; --line: #2a3531;
+    --stage: #111916; --edge: #85938c; --g0: #6f8fff; --g1: #36b39b; --g2: #f59e0b; --g3: #fb7185;
+    --cut: #f87171; --heavy: #f59e0b; --copper: #d39a5c; --unplaced: #66758a;
+    --tint0: rgba(111, 143, 255, 0.10); --tint1: rgba(54, 179, 155, 0.10);
+    --said: #e6ece9; --unsaid: #5f6b66; --mark: #78350f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1412; --surface: #151d1a; --ink: #e6ece9; --muted: #9ba7a1; --line: #2a3531;
+  --stage: #111916; --edge: #85938c; --g0: #6f8fff; --g1: #36b39b; --g2: #f59e0b; --g3: #fb7185;
+  --cut: #f87171; --heavy: #f59e0b; --copper: #d39a5c; --unplaced: #66758a;
+  --tint0: rgba(111, 143, 255, 0.10); --tint1: rgba(54, 179, 155, 0.10);
+  --said: #e6ece9; --unsaid: #5f6b66; --mark: #78350f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 48px; margin: 0;
+}
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 22px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 46px); line-height: 1.05; margin: 0; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 62ch; }
+.lede a, .note a { color: inherit; }
+
+/* ---------- player ---------- */
+.player { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.stage { position: relative; aspect-ratio: 16 / 9; max-width: 100%; background: var(--stage); container-type: inline-size; overflow: hidden; }
+.stage svg.scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.layer { position: absolute; inset: 0; pointer-events: none; }
+.ov { position: absolute; opacity: 0; will-change: opacity, transform; }
+.ov [data-a] { display: inline-block; opacity: 0; }
+
+.hl { font-family: var(--display); font-weight: 700; font-size: 4.3cqw; line-height: 1.08; letter-spacing: -0.01em; max-width: 60cqw; }
+.hl b, .tag b, .sub b, .qcard b { color: var(--g0); font-weight: 700; }
+.red { color: var(--cut); }
+.sub { font-family: var(--body); font-size: 2.1cqw; color: var(--muted); font-weight: 600; margin-top: .6cqw; }
+.term { display: grid; gap: .4cqw; background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 1.4cqw 1.8cqw; box-shadow: 0 .6cqw 2cqw rgba(0,0,0,.06); }
+.term .t { font-family: var(--display); font-size: 3.4cqw; font-weight: 700; }
+.term .d { font-size: 1.9cqw; color: var(--muted); }
+.chip { display: inline-block; font-family: var(--mono); font-size: 2.2cqw; font-weight: 500; padding: .5cqw 1.3cqw; border-radius: 99px; border: 2px solid var(--ink); background: var(--surface); }
+.tag { font-family: var(--body); font-weight: 700; font-size: 2.2cqw; background: var(--surface); border: 1px solid var(--line); border-radius: .9cqw; padding: .6cqw 1.2cqw; }
+.tags { display: grid; gap: 1cqw; justify-items: start; }
+.tag .n, .num { font-family: var(--mono); color: var(--heavy); }
+.label { font-family: var(--display); font-weight: 700; font-size: 2.8cqw; }
+.label.c0 { color: var(--g0); } .label.c1 { color: var(--g1); } .label.c2 { color: var(--g2); } .label.c3 { color: var(--g3); }
+.vocab { display: grid; gap: .8cqw; font-size: 2cqw; }
+.vocab div { background: var(--surface); border: 1px solid var(--line); border-radius: .8cqw; padding: .5cqw 1.1cqw; }
+.vocab b { font-family: var(--display); font-size: 2.3cqw; margin-right: .6cqw; }
+.eq { font-family: var(--mono); font-size: 3.4cqw; font-weight: 500; background: var(--surface); border: 1px solid var(--line); border-radius: 1cqw; padding: 1cqw 1.6cqw; white-space: nowrap; }
+.eq .red { font-weight: 700; }
+.stamp { font-family: var(--display); font-weight: 700; font-size: 6cqw; color: var(--cut); border: .45cqw solid var(--cut); border-radius: 1cqw; padding: .2cqw 1.6cqw; rotate: -9deg; letter-spacing: .06em; text-transform: uppercase; background: color-mix(in srgb, var(--stage) 80%, transparent); }
+.bigq { width: 100cqw; }
+.bigq .q { font-family: var(--display); font-size: 16cqw; font-weight: 700; line-height: 1; color: var(--muted); text-align: center; }
+.bigq .hl { max-width: none; text-align: center; font-size: 3.6cqw; }
+.cmp { display: grid; gap: 1cqw; background: var(--surface); border: 1px solid var(--line); border-radius: 1.4cqw; padding: 2cqw 2.4cqw; width: 62cqw; box-shadow: 0 .8cqw 3cqw rgba(0,0,0,.08); }
+.cmp .row { display: grid; grid-template-columns: 1.4fr .7fr 1.3fr; align-items: baseline; gap: 1.4cqw; font-size: 2.3cqw; }
+.cmp .row .k { font-family: var(--mono); font-size: 3cqw; font-weight: 500; }
+.cmp .bad .k { color: var(--cut); }
+.cmp .good .k { color: var(--g1); }
+.qcard { background: var(--surface); border: 2px solid var(--ink); border-radius: 1.4cqw; padding: 1.6cqw 2.2cqw; width: 44cqw; display: grid; gap: .6cqw; }
+.qcard .e { font-family: var(--mono); font-size: 1.7cqw; letter-spacing: .1em; text-transform: uppercase; color: var(--heavy); }
+.qcard .q { font-family: var(--display); font-size: 3.1cqw; font-weight: 700; line-height: 1.15; }
+.qcard .h { font-size: 1.8cqw; color: var(--muted); }
+.qbtns { display: none; gap: 1cqw; pointer-events: auto; flex-wrap: wrap; }
+.stage.asking .qbtns { display: flex; }
+.qbtns .btn { font-size: 1.8cqw; padding: .6cqw 1.3cqw; }
+.qans { color: var(--ink); font-size: 1.9cqw; }
+.qans:empty { display: none; }
+.thumbs { display: flex; gap: 2cqw; }
+.thumb { background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 1cqw; display: grid; gap: .4cqw; justify-items: center; width: 22cqw; position: relative; }
+.thumb svg { width: 100%; height: auto; display: block; }
+.thumb .c { font-family: var(--mono); font-size: 1.75cqw; font-weight: 500; white-space: nowrap; }
+.thumb.best { border: 2px solid var(--g1); }
+.thumb .ok { position: absolute; top: -1.6cqw; right: -1.2cqw; background: var(--g1); color: #fff; font-weight: 700; font-size: 1.7cqw; border-radius: 99px; padding: .3cqw 1cqw; }
+
+.counter { display: grid; justify-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: .9cqw 1.6cqw; min-width: 15cqw; }
+.counter .l, .balance .l { font-family: var(--mono); font-size: 1.6cqw; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.counter .v { font-family: var(--mono); font-size: 6.2cqw; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
+.counter.bad .v { color: var(--cut); }
+.counter.good .v { color: var(--g1); }
+.balance { display: grid; gap: .8cqw; background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 1.2cqw 1.6cqw; width: 19cqw; }
+.bars { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 1.6cqw; height: 15cqw; align-items: end; }
+.bar { background: var(--g0); border-radius: .5cqw .5cqw 0 0; height: 0; display: flex; justify-content: center; align-items: flex-start; color: #fff; font-family: var(--mono); font-size: 2cqw; padding-top: .3cqw; }
+.bar.c1 { background: var(--g1); } .bar.c2 { background: var(--g2); } .bar.c3 { background: var(--g3); }
+.cap { position: absolute; left: -.6cqw; right: -.6cqw; height: 0; border-top: .3cqw dashed var(--cut); opacity: 0; }
+.cap span { position: absolute; right: 0; top: -2.6cqw; font-family: var(--mono); font-size: 1.5cqw; color: var(--cut); }
+.verdict { font-weight: 700; font-size: 1.9cqw; min-height: 1.2em; }
+.verdict.no { color: var(--cut); }
+.verdict.yes { color: var(--g1); }
+.banner { position: absolute; left: 2cqw; top: 2cqw; display: none; gap: 1cqw; align-items: center; pointer-events: auto; font-size: 1.9cqw; }
+.stage.free .banner { display: flex; }
+.banner b { font-family: var(--display); font-size: 2.6cqw; }
+
+/* svg pieces */
+.node rect { transition: fill .45s, stroke .45s; }
+.g0 rect { fill: var(--g0); stroke: var(--g0); }
+.g1 rect { fill: var(--g1); stroke: var(--g1); }
+.g2 rect { fill: var(--g2); stroke: var(--g2); }
+.g3 rect { fill: var(--g3); stroke: var(--g3); }
+.nu rect { fill: var(--unplaced); stroke: var(--unplaced); }
+.ncell rect { fill: var(--surface); stroke: var(--copper); stroke-width: 3; }
+.node text { fill: #fff; font-family: var(--body); font-weight: 700; font-size: 21px; text-anchor: middle; dominant-baseline: central; }
+.ncell text { fill: var(--ink); }
+.node { cursor: pointer; }
+.node:focus-visible rect { stroke: var(--ink); stroke-width: 4; }
+.main { stroke: var(--edge); stroke-linecap: round; transition: stroke .35s; }
+.wire { stroke: var(--copper); stroke-width: 2.2; stroke-linecap: round; }
+.edge.cut .main { stroke: var(--cut); stroke-dasharray: 10 7; }
+.edge.heavy .main { stroke: var(--heavy); }
+.edge.pulse .main { animation: lesson-pulse 1s ease-in-out 2; }
+@keyframes lesson-pulse { 50% { stroke-width: 12; } }
+.wl rect { fill: var(--stage); stroke: var(--line); transition: fill .3s, stroke .3s; }
+.wl text { fill: var(--ink); font-family: var(--mono); font-size: 16px; font-weight: 500; text-anchor: middle; dominant-baseline: central; }
+.edge.cut .wl rect { stroke: var(--cut); }
+.edge.flash .wl rect { fill: var(--mark); stroke: var(--heavy); }
+.chipbody { fill: none; stroke: var(--copper); stroke-width: 3; }
+.pin { fill: var(--copper); }
+.divider { stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 8 8; }
+.tint0 { fill: var(--tint0); }
+.tint1 { fill: var(--tint1); }
+
+/* captions */
+.captions { padding: 14px 18px; border-top: 1px solid var(--line); min-height: 3.6em; font-size: 19px; line-height: 1.45; }
+.captions span { color: var(--unsaid); transition: color .15s; }
+.captions span.said { color: var(--said); }
+.player.nocc .captions { display: none; }
+
+/* transport */
+.transport { display: grid; grid-template-columns: auto 1fr auto; gap: 10px 14px; align-items: center; padding: 12px 16px 14px; border-top: 1px solid var(--line); }
+.play { width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--ink); color: var(--bg); font-size: 18px; cursor: pointer; display: grid; place-items: center; }
+.scrub { display: grid; gap: 4px; min-width: 0; }
+.scrub input { width: 100%; accent-color: var(--g0); }
+.time { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.opts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button, .tbtn { font-family: var(--mono); font-size: 13px; padding: 6px 9px; border: 0; background: var(--surface); color: var(--ink); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.tbtn { border: 1px solid var(--line); border-radius: 8px; }
+.tbtn[aria-pressed="false"] { color: var(--muted); text-decoration: line-through; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--g0); outline-offset: 2px; }
+@media (max-width: 620px) {
+  .transport { grid-template-columns: auto 1fr; }
+  .opts { grid-column: 1 / -1; justify-content: flex-start; }
+  .captions { font-size: 16px; }
+}
+
+/* chapters + bench */
+.chapters { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.chapters button { width: 100%; display: grid; grid-template-columns: 4.5em 1fr; gap: 10px; text-align: left; background: none; border: 0; border-left: 3px solid var(--line); padding: 6px 12px; font: inherit; color: var(--muted); cursor: pointer; }
+.chapters button .ts { font-family: var(--mono); font-size: 14px; font-variant-numeric: tabular-nums; }
+.chapters button[aria-current="true"] { border-left-color: var(--g0); color: var(--ink); font-weight: 600; }
+.cols { display: grid; grid-template-columns: 1fr 1.25fr; gap: 22px; align-items: start; }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+h2 { font-family: var(--display); font-size: 24px; margin: 0 0 8px; }
+.bench { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; gap: 14px; min-width: 0; }
+.bench.pulse { animation: lesson-benchin 1.2s ease 2; }
+@keyframes lesson-benchin { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--g0) 35%, transparent); } }
+.bench p { margin: 0; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn { font: 600 15px var(--body); padding: 8px 14px; border-radius: 9px; border: 1px solid var(--ink); background: var(--surface); color: var(--ink); cursor: pointer; }
+.btn.primary { background: var(--ink); color: var(--bg); }
+.seedbox { width: 5.5em; font: 500 15px var(--mono); padding: 7px 9px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.feedback { border-left: 3px solid var(--g1); padding: 4px 0 4px 12px; }
+.feedback:empty { display: none; }
+.readout { font-family: var(--mono); font-size: 14.5px; background: var(--bg); border-radius: 8px; padding: 10px 12px; font-variant-numeric: tabular-nums; }
+.note { font-size: 14px; color: var(--muted); max-width: 70ch; }
+.ok { color: var(--g1); font-weight: 700; } .no { color: var(--cut); font-weight: 700; }
+.norec .node rect, .norec .main, .norec .wl rect { transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .node rect, .main, .wl rect, .captions span { transition: none !important; }
+  .edge.pulse .main, .bench.pulse { animation: none; }
+}
+
+/* ---------- floorplan scene (B*-tree + floor of blocks) ----------
+   Block colours come from the lab (one fixed colour per block id, the course's paper palette) and are set inline.
+   Tree links: left child = solid ("next door"), right child = dashed ("upstairs"). The skyline is amber. */
+:root { --sky: #d97706; --waste: rgba(220, 38, 38, 0.10); --over: rgba(220, 38, 38, 0.13); --gridline: #e3e8e4; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --sky: #fbbf24; --waste: rgba(248, 113, 113, 0.14); --over: rgba(248, 113, 113, 0.16); --gridline: #1f2a26; } }
+:root[data-theme="dark"] { --sky: #fbbf24; --waste: rgba(248, 113, 113, 0.14); --over: rgba(248, 113, 113, 0.16); --gridline: #1f2a26; }
+.fp-gridlines line { stroke: var(--gridline); stroke-width: 1; }
+.fp-outline { fill: none; stroke: var(--ink); stroke-width: 2; stroke-dasharray: 9 6; opacity: .55; }
+.fp-outline-lab { font-family: var(--mono); font-size: 14px; fill: var(--muted); text-anchor: end; }
+.fp-floorline { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+.fp-axis text { font-family: var(--mono); font-size: 12.5px; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+.fp-axis .fp-axis-y { text-anchor: end; }
+.fp-overzone { fill: url(#fp-over); stroke: none; transition: opacity .3s; }
+.fp-over-line { stroke: var(--cut); stroke-width: 2.4; opacity: .55; }
+.fp-hatch-bg { fill: var(--waste); }
+.fp-hatch-line { stroke: var(--cut); stroke-width: 2; opacity: .35; }
+.fp-waste { fill: url(#fp-hatch); }
+.fpb rect { stroke-width: 2; fill-opacity: .92; }
+.fpb .fp-bid { fill: #fff; font-family: var(--body); font-weight: 700; font-size: 21px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.fpb .fp-dim { fill: #fff; font-family: var(--mono); font-size: 12.5px; text-anchor: middle; dominant-baseline: central; opacity: .9; pointer-events: none; }
+.fpb.out rect { stroke: var(--cut); stroke-width: 4; stroke-dasharray: 7 4; }
+.fpb.hl rect, .fpn.hl circle:not(.fp-ring) { stroke: var(--ink); stroke-width: 4; }
+.fp-sky { fill: none; stroke: var(--sky); stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
+.fp-bbox { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 10 6; }
+.fp-bboxlab rect { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+.fp-bboxlab text { font-family: var(--mono); font-size: 15px; font-weight: 500; fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
+.fp-coords circle { fill: var(--ink); }
+.fp-coords text { font-family: var(--mono); font-size: 13px; font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--stage); stroke-width: 4px; }
+.fp-edge { stroke: var(--edge); stroke-width: 3; stroke-linecap: round; }
+.fp-edge.right { stroke-dasharray: 8 6; }
+.fpn circle { stroke-width: 3; }
+.fpn .fp-ring { fill: none; stroke: var(--ink); stroke-width: 3; opacity: 0; }
+.fpn.hl .fp-ring { opacity: 1; }
+.fpn text { font-family: var(--body); font-weight: 700; font-size: 20px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.fpk { cursor: pointer; }
+.fpk:focus-visible { outline: none; }
+.fpk:focus-visible rect, .fpk:focus-visible circle:not(.fp-ring) { stroke: var(--ink); stroke-width: 4; }
+.fp-badges circle { fill: var(--ink); }
+.fp-badges text { fill: var(--bg); font-family: var(--mono); font-size: 12.5px; font-weight: 500; text-anchor: middle; dominant-baseline: central; }
+.fp-link rect { fill: var(--surface); stroke: var(--line); }
+.fp-link text { font-family: var(--body); font-size: 13px; font-weight: 600; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+.fp-legal { font-family: var(--body); font-weight: 700; font-size: 1.9cqw; background: var(--surface); border: 2px solid var(--line); border-radius: .9cqw; padding: .4cqw 1.1cqw; white-space: nowrap; }
+.fp-legal.yes { color: var(--g1); border-color: var(--g1); }
+.fp-legal.no { color: var(--cut); border-color: var(--cut); }
+.fp-counter { min-width: 17cqw; }
+.fp-thumb svg { max-height: 16cqw; }
+.fp-ops .btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.norec .fp-overzone { transition: none !important; }
+
+/* ---------- placement scene (v5) ---------- */
+.pl-chip { fill: var(--tint0); stroke: none; }
+.pl-gridlines line { stroke: var(--line); stroke-width: 1; opacity: .55; }
+/* v5.1 heat grid: the GCell lattice and one tile per GCell, painted from the deposit replay */
+.pl-glines line { stroke: var(--heavy); stroke-width: 1.4; stroke-dasharray: 6 4; opacity: .6; }
+.pl-tile { stroke: none; }
+.pl-tilering { fill: none; stroke: var(--ink); stroke-width: 3; opacity: 0; }
+.pl-tilering.hl { opacity: 1; }
+.pl-wall { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 10 6; opacity: .5; transition: stroke .15s, opacity .15s; }
+.pl-wall.hit { stroke: var(--cut); opacity: 1; }
+.pl-axis text { font-family: var(--mono); font-size: 12px; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+.pl-axis .pl-axis-y { text-anchor: end; }
+.pl-net rect { fill: var(--edge); fill-opacity: .05; stroke: var(--edge); stroke-width: 1.6; }
+.pl-net line { stroke: var(--copper); stroke-width: 2.4; stroke-linecap: round; opacity: .8; }
+.pl-net text { font-family: var(--mono); font-size: 13px; font-weight: 500; fill: var(--ink); text-anchor: middle; dominant-baseline: central; paint-order: stroke; stroke: var(--stage); stroke-width: 4px; }
+.pl-net.hot rect { stroke: var(--heavy); stroke-width: 2.6; fill: var(--heavy); fill-opacity: .08; }
+.pl-trial { fill: none; stroke: var(--heavy); stroke-width: 2; stroke-dasharray: 6 5; }
+.plk { cursor: grab; outline: none; touch-action: none; }
+.plk rect { stroke: var(--surface); stroke-width: 1.5; }
+.plk text, .pl-ghost text { fill: #fff; font-family: var(--body); font-weight: 700; font-size: 16px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.plk .pl-ring { fill: none; stroke: var(--ink); stroke-width: 2.5; opacity: 0; }
+.plk.hl .pl-ring, .plk:focus-visible .pl-ring { opacity: 1; }
+.plk.pad rect:not(.pl-ring) { stroke: var(--ink); stroke-width: 2.5; }
+.pl-ghost rect { fill: var(--heavy); fill-opacity: .35; stroke: var(--heavy); stroke-width: 2; stroke-dasharray: 5 4; }
+.pl-ghost.bad rect { fill: var(--cut); stroke: var(--cut); }
+.pl-ghost text { fill: var(--ink); }
+.pl-bestpos rect { fill: none; stroke-width: 2.2; stroke-dasharray: 4 4; }
+.pl-thermo .tube { fill: var(--surface); stroke: var(--line); stroke-width: 2; }
+.pl-thermo text { font-family: var(--mono); font-size: 13px; fill: var(--muted); text-anchor: middle; }
+.pl-thermo text.v { font-size: 14px; font-weight: 500; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.pl-card text { font-family: var(--body); font-size: 18px; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.pl-card .delta { font-family: var(--mono); font-size: 21px; font-weight: 500; }
+.pl-card .delta.worse, .pl-card .verdict.no { fill: var(--cut); }
+.pl-card .delta.better, .pl-card .verdict.yes { fill: var(--g1); }
+.pl-card .delta.free, .pl-card .verdict.free { fill: var(--muted); }
+.pl-card .verdict { font-weight: 700; font-size: 22px; text-anchor: end; }
+.pl-dice .track { fill: var(--line); fill-opacity: .55; stroke: var(--edge); stroke-width: 1.2; }
+.pl-dice .pfill { fill: var(--g1); opacity: .75; }
+.pl-dice .pfill.sure { opacity: .3; }
+.pl-dice text { font-family: var(--body); font-size: 15.5px; fill: var(--muted); }
+.pl-dice text.u { font-family: var(--mono); font-size: 13.5px; text-anchor: middle; fill: var(--ink); }
+.pl-dice .marker line { stroke: var(--ink); stroke-width: 2.5; }
+.pl-dice .marker circle { fill: var(--ink); stroke: var(--surface); stroke-width: 2; }
+.pl-dice .marker.yes circle { fill: var(--g1); } .pl-dice .marker.no circle { fill: var(--cut); }
+.pl-tally text { font-family: var(--body); font-size: 17px; font-weight: 600; fill: var(--ink); font-variant-numeric: tabular-nums; white-space: pre; }
+.pl-tally text.kinds { font-size: 15px; font-weight: 400; fill: var(--muted); }
+.pl-chart .axis, .pl-spread .axis { stroke: var(--edge); stroke-width: 1.5; }
+.pl-chart .cur { fill: none; stroke: var(--g0); stroke-width: 2.4; stroke-linejoin: round; }
+.pl-chart .best { fill: none; stroke: var(--g1); stroke-width: 2; stroke-dasharray: 5 4; }
+.pl-chart .dot { fill: var(--g0); stroke: var(--surface); stroke-width: 2; }
+.pl-chart .startline { stroke: var(--edge); stroke-width: 1; stroke-dasharray: 3 5; }
+.pl-chart text, .pl-spread text { font-family: var(--mono); font-size: 12.5px; fill: var(--muted); }
+.pl-chart .tick { text-anchor: end; dominant-baseline: central; }
+.pl-chart .tick.x, .pl-spread .tick.x { text-anchor: start; dominant-baseline: auto; }
+.pl-chart .tick.x.end { text-anchor: end; } .pl-spread .tick.x.mid { text-anchor: middle; }
+.pl-chart .lab.start { text-anchor: end; }
+.pl-chart .lab.bestl { fill: var(--g1); font-weight: 500; }
+.pl-spread .d { fill: var(--edge); }
+.pl-spread .d.hot { fill: var(--heavy); stroke: var(--surface); stroke-width: 1.5; }
+.pl-spread .median { stroke: var(--g0); stroke-width: 2; stroke-dasharray: 5 4; }
+.pl-spread .lab.med { fill: var(--g0); }
+.pl-spread .lab.hot { fill: var(--heavy); font-weight: 500; font-size: 13.5px; paint-order: stroke; stroke: var(--stage); stroke-width: 4px; }
+.pl-spread .lab.endl { text-anchor: end; }
+.pl-spread .lead { stroke: var(--heavy); stroke-width: 1.2; }
+.pl-spread .scap { font-family: var(--body); font-size: 15px; fill: var(--ink); }
+.pl-counter { min-width: 17cqw; }
+.pl-ops label { display: inline-flex; gap: 6px; align-items: center; font-size: 14.5px; }
+.pl-seed { width: 5.5em; font: inherit; padding: 5px 7px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.pl-thumb svg { width: 11cqw; }
+.pl-piles rect { fill: none; stroke: var(--cut); stroke-width: 3; }
+.pl-piles circle { fill: var(--cut); stroke: var(--surface); stroke-width: 2; }
+.pl-piles text { fill: #fff; font-family: var(--mono); font-weight: 500; font-size: 13px; text-anchor: middle; dominant-baseline: central; }
+.pl-land .ground { fill: var(--tint1); stroke: none; }
+.pl-land .line { fill: none; stroke: var(--g1); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.pl-land .ball { fill: var(--heavy); stroke: var(--surface); stroke-width: 2.5; }
+.pl-land .lab { font-family: var(--body); font-size: 15.5px; font-weight: 600; fill: var(--ink); text-anchor: middle; }
+
+/* ---------- inside the all-parts player ---------- */
+html.embedded body { background: transparent; padding: 0 2px 6px; margin: 0; }
+html.embedded .wrap > header .eyebrow { display: none; }
+html.embedded .wrap > header h1 { font-size: clamp(20px, 2.6vw, 28px); margin-top: 0; }
+
+/* ---------- subtitles menu ---------- */
+.subsel { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.subsel select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 5px 6px; }
+.captions:lang(zh) { font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif; letter-spacing: .02em; }
+
+/* ---------- sounds button ---------- */
+.sbtn { font-family: var(--mono); font-size: 13px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.sbtn[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.sbtn[aria-pressed="false"] { color: var(--muted); }
+.opts { flex-wrap: wrap; }
+
+</style>
+</head>
+<body>
+<div id="lesson-root"></div>
+<audio id="lesson-audio" preload="metadata" src="lesson-en.m4a"></audio>
+<script src="../lesson-engine.js"></script>
+<script>
+LessonEngine.mount({"sb": {"scene": "placement", "pageTitle": {"en": "Lab 06 · Part 3 — The hottest tile", "fr": "Lab 06 · Partie 3 — La tuile la plus chaude"}, "eyebrow": {"en": "Lab 06 · animated lesson 3 of 5", "fr": "Lab 06 · leçon animée 3 sur 5"}, "title": {"en": "The hottest tile", "fr": "La tuile la plus chaude"}, "lede": {"en": "The argmax scan finds the hottest tile: on the spread map it is column two, row zero, at congestion 3.33; on the seed map, column one, row zero, at 3.5. A tie must be broken by a written rule: scan column by column, row by row, strictly greater wins. Drag cells in the try-it panel and watch the wirelength and overflow readout.", "fr": "Le balayage argmax trouve la tuile la plus chaude : sur la carte dispersée, c'est la colonne deux, ligne zéro, à congestion 3,33 ; sur la carte de la graine, la colonne un, ligne zéro, à 3,5. Un ex aequo doit être tranché par une règle écrite : balayage colonne par colonne, puis ligne par ligne, strictement plus grand gagne. Faites glisser des cellules dans le panneau d'essai et regardez la longueur de fil et le débordement."}, "placement": {"run": "spread", "floorBox": [36, 168, 344, 229.3], "claims": [{"run": "spread", "start": 34, "demand": 34, "hottest": {"i": 2, "j": 0, "v": 3.33333333333}, "ovtotal": 22, "ovmax": 4.66666666667, "ovcount": 6}, {"run": "congested_seed", "start": 7, "demand": 7, "hottest": {"i": 1, "j": 0, "v": 3.5}, "ovtotal": 5, "ovmax": 5, "ovcount": 1}, {"positions": {"A": {"x": 1, "y": 1}, "B": {"x": 8, "y": 1}, "C": {"x": 1, "y": 5}, "D": {"x": 8, "y": 5}, "E": {"x": 5, "y": 3}, "F": {"x": 6, "y": 3}}, "hpwl": 34}, {"positions": {"A": {"x": 4, "y": 2}, "B": {"x": 5, "y": 2}, "C": {"x": 4, "y": 3}, "D": {"x": 5, "y": 3}, "E": {"x": 4.5, "y": 2.5}, "F": {"x": 5.5, "y": 2.5}}, "hpwl": 7, "demand": 7, "hottest": {"i": 1, "j": 0, "v": 3.5}, "ovtotal": 5, "ovmax": 5, "ovcount": 1}], "data": {"runs": {"congested_seed": {"cells": ["A", "B", "C", "D", "E", "F"], "nets": [["A", "B"], ["C", "D"], ["A", "C"], ["B", "D"], ["A", "B", "C", "D"], ["E", "F"]], "start": {"A": {"x": 4.0, "y": 2.0}, "B": {"x": 5.0, "y": 2.0}, "C": {"x": 4.0, "y": 3.0}, "D": {"x": 5.0, "y": 3.0}, "E": {"x": 4.5, "y": 2.5}, "F": {"x": 5.5, "y": 2.5}}, "walls": {"min": 0, "max": 12.0}, "moves": 0, "seed": 0, "t0": 1, "cool": 1, "step": 1, "frozen": [], "events": [{"net": 0, "pins": ["A", "B"], "bbox": [4.0, 2.0, 5.0, 2.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [1.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 1, "pins": ["C", "D"], "bbox": [4.0, 3.0, 5.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [2.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 2, "pins": ["A", "C"], "bbox": [4.0, 2.0, 4.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [3.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 3, "pins": ["B", "D"], "bbox": [5.0, 2.0, 5.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [4.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 4, "pins": ["A", "B", "C", "D"], "bbox": [4.0, 2.0, 5.0, 3.0], "hpwl": 2.0, "tiles": [[1, 0]], "share": 2.0, "demandAfter": [[0.0, 0.0], [6.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 5, "pins": ["E", "F"], "bbox": [4.5, 2.5, 5.5, 2.5], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [7.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}], "demand": [[0.0, 0.0], [7.0, 0.0], [0.0, 0.0], [0.0, 0.0]], "congestion": [[0.0, 0.0], [3.5, 0.0], [0.0, 0.0], [0.0, 0.0]], "overflow": {"perCell": [[0.0, 0.0], [5.0, 0.0], [0.0, 0.0], [0.0, 0.0]], "total": 5.0, "max": 5.0, "count": 1}, "hottest": {"i": 1, "j": 0, "v": 3.5}, "heat": {"mode": "relative-to-max", "maxC": 3.5, "t": [[0.0, 0.0], [1.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, "capacity": 2.0}, "spread": {"cells": ["A", "B", "C", "D", "E", "F"], "nets": [["A", "B"], ["C", "D"], ["A", "C"], ["B", "D"], ["A", "B", "C", "D"], ["E", "F"]], "start": {"A": {"x": 1.0, "y": 1.0}, "B": {"x": 8.0, "y": 1.0}, "C": {"x": 1.0, "y": 5.0}, "D": {"x": 8.0, "y": 5.0}, "E": {"x": 5.0, "y": 3.0}, "F": {"x": 6.0, "y": 3.0}}, "walls": {"min": 0, "max": 12.0}, "moves": 0, "seed": 0, "t0": 1, "cool": 1, "step": 1, "frozen": [], "events": [{"net": 0, "pins": ["A", "B"], "bbox": [1.0, 1.0, 8.0, 1.0], "hpwl": 7.0, "tiles": [[0, 0], [1, 0], [2, 0]], "share": 2.33333333333, "demandAfter": [[2.33333333333, 0.0], [2.33333333333, 0.0], [2.33333333333, 0.0], [0.0, 0.0]]}, {"net": 1, "pins": ["C", "D"], "bbox": [1.0, 5.0, 8.0, 5.0], "hpwl": 7.0, "tiles": [[0, 1], [1, 1], [2, 1]], "share": 2.33333333333, "demandAfter": [[2.33333333333, 2.33333333333], [2.33333333333, 2.33333333333], [2.33333333333, 2.33333333333], [0.0, 0.0]]}, {"net": 2, "pins": ["A", "C"], "bbox": [1.0, 1.0, 1.0, 5.0], "hpwl": 4.0, "tiles": [[0, 0], [0, 1]], "share": 2.0, "demandAfter": [[4.33333333333, 4.33333333333], [2.33333333333, 2.33333333333], [2.33333333333, 2.33333333333], [0.0, 0.0]]}, {"net": 3, "pins": ["B", "D"], "bbox": [8.0, 1.0, 8.0, 5.0], "hpwl": 4.0, "tiles": [[2, 0], [2, 1]], "share": 2.0, "demandAfter": [[4.33333333333, 4.33333333333], [2.33333333333, 2.33333333333], [4.33333333333, 4.33333333333], [0.0, 0.0]]}, {"net": 4, "pins": ["A", "B", "C", "D"], "bbox": [1.0, 1.0, 8.0, 5.0], "hpwl": 11.0, "tiles": [[0, 0], [0, 1], [1, 0], [1, 1], [2, 0], [2, 1]], "share": 1.83333333333, "demandAfter": [[6.16666666667, 6.16666666667], [4.16666666667, 4.16666666667], [6.16666666667, 6.16666666667], [0.0, 0.0]]}, {"net": 5, "pins": ["E", "F"], "bbox": [5.0, 3.0, 6.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0], [2, 0]], "share": 0.5, "demandAfter": [[6.16666666667, 6.16666666667], [4.66666666667, 4.16666666667], [6.66666666667, 6.16666666667], [0.0, 0.0]]}], "demand": [[6.16666666667, 6.16666666667], [4.66666666667, 4.16666666667], [6.66666666667, 6.16666666667], [0.0, 0.0]], "congestion": [[3.08333333333, 3.08333333333], [2.33333333333, 2.08333333333], [3.33333333333, 3.08333333333], [0.0, 0.0]], "overflow": {"perCell": [[4.16666666667, 4.16666666667], [2.66666666667, 2.16666666667], [4.66666666667, 4.16666666667], [0.0, 0.0]], "total": 22.0, "max": 4.66666666667, "count": 6}, "hottest": {"i": 2, "j": 0, "v": 3.33333333333}, "heat": {"mode": "relative-to-max", "maxC": 3.33333333333, "t": [[0.925, 0.925], [0.7, 0.625], [1.0, 0.925], [0.0, 0.0]]}, "capacity": 2.0}}, "seeds": null, "heat": {"chip": {"W": 12, "H": 8}, "nx": 4, "ny": 2, "cellW": 3.0, "cellH": 4.0, "capacity": 2.0, "palette": [{"u": 0.0, "hex": "#ffffff", "rgb": [255, 255, 255]}, {"u": 0.333333333333, "hex": "#0f6b5c", "rgb": [15, 107, 92]}, {"u": 0.666666666667, "hex": "#b45309", "rgb": [180, 83, 9]}, {"u": 1.0, "hex": "#9f1239", "rgb": [159, 18, 57]}]}}, "heat": {"chip": {"W": 12, "H": 8}, "nx": 4, "ny": 2, "cellW": 3.0, "cellH": 4.0, "capacity": 2.0, "palette": [{"u": 0.0, "hex": "#ffffff", "rgb": [255, 255, 255]}, {"u": 0.333333333333, "hex": "#0f6b5c", "rgb": [15, 107, 92]}, {"u": 0.666666666667, "hex": "#b45309", "rgb": [180, 83, 9]}, {"u": 1.0, "hex": "#9f1239", "rgb": [159, 18, 57]}]}, "sizes": {"A": [2, 1], "B": [2, 1], "C": [2, 1], "D": [2, 1], "E": [1, 1], "F": [1, 1]}}, "anchors": {"hottest12": {"slide": 12, "en": "hottest", "fr": "chaude"}, "scan12": {"slide": 12, "en": "scan", "fr": "balayons"}, "argmax12": {"slide": 12, "en": "argmax", "fr": "argmax"}, "colcol13": {"slide": 13, "en": "column by column", "fr": "colonne par colonne"}, "strictly13": {"slide": 13, "en": "strictly", "fr": "strictement"}, "firstmax13": {"slide": 13, "en": "first maximum", "fr": "premier maximum"}, "colzero14": {"slide": 14, "en": "Column zero holds", "fr": "colonne zéro contient"}, "colthree14": {"slide": 14, "en": "Column three holds", "fr": "colonne trois contient"}, "tieat14": {"slide": 14, "en": "tie at two", "fr": "égalité à deux"}, "reaches14": {"slide": 14, "en": "reaches column zero", "fr": "atteint la colonne zéro"}, "seedmap15": {"slide": 15, "en": "seed map", "fr": "carte de la graine"}, "argmax15": {"slide": 15, "en": "argmax", "fr": "argmax"}, "goldens16": {"slide": 16, "en": "goldens", "fr": "résultats de référence"}}, "pausing": {"between": 0.55, "scene": 0.9, "question": 1.3, "tail": 2.6}, "pauses": [{"after": "@reaches14", "sec": 1.2}], "initial": {"run": "spread", "move": 0, "deposit": "all", "side": 0}, "timeline": [{"at": "@seedmap15", "run": "congested_seed"}, {"at": "slide:16:end+0.2", "dim": 0.12}], "show": [{"show": "heat", "from": "start", "to": "end"}, {"show": "nets", "from": "start", "to": "end"}, {"show": "netlabels", "from": "start", "to": "end"}, {"show": "counter", "from": "start", "to": "@hottest12", "metric": "hpwl", "label": {"en": "wirelength", "fr": "longueur de fil"}}, {"show": "counter", "from": "@hottest12", "to": "@seedmap15", "metric": "hottestTile"}, {"show": "counter", "from": "@seedmap15", "to": "@argmax15", "metric": "hpwl", "label": {"en": "wirelength", "fr": "longueur de fil"}}, {"show": "counter", "from": "@argmax15", "to": "end", "metric": "hottestTile"}, {"show": "highlight", "from": "@hottest12", "to": "@seedmap15", "ids": ["t2,0"]}, {"show": "highlight", "from": "@seedmap15", "to": "end", "ids": ["t1,0"]}], "overlays": [{"from": "start", "to": "slide:13", "x": 3, "y": 4, "type": "headline", "text": {"en": "The **hottest** tile", "fr": "La tuile la plus **chaude**"}}, {"from": "@hottest12", "to": "slide:13", "x": 44, "y": 40, "type": "tags", "items": [{"text": {"en": "column two, row zero, congestion ##3.33##", "fr": "colonne deux, ligne zéro, congestion ##3,33##"}, "at": "@hottest12"}, {"text": {"en": "scan every tile, keep the largest", "fr": "balayer chaque tuile, garder la plus grande"}, "at": "@scan12"}]}, {"from": "@argmax12", "to": "slide:13", "x": 56, "y": 8, "type": "term", "text": {"en": "Argmax", "fr": "Argmax"}, "sub": {"en": "the tile of the maximum", "fr": "la tuile du maximum"}}, {"from": "slide:13", "to": "slide:14", "x": 3, "y": 4, "type": "headline", "text": {"en": "A tie must be **written down**", "fr": "Un ex aequo doit être **écrit**"}}, {"from": "@colcol13", "to": "slide:14", "x": 44, "y": 40, "type": "tags", "items": [{"text": {"en": "scan column by column, then row by row", "fr": "balayage colonne par colonne, puis ligne par ligne"}, "at": "@colcol13"}, {"text": {"en": "strictly greater wins", "fr": "strictement plus grand gagne"}, "at": "@strictly13"}, {"text": {"en": "first maximum in scan order wins", "fr": "le premier maximum dans l'ordre de balayage gagne"}, "at": "@firstmax13"}]}, {"from": "slide:14", "to": "slide:15", "x": 3, "y": 4, "type": "headline", "text": {"en": "A **tie** example", "fr": "Un exemple d'ex aequo"}}, {"from": "@colzero14", "to": "slide:15", "x": 44, "y": 40, "type": "tags", "items": [{"text": {"en": "column zero holds ##1## and ##2##", "fr": "la colonne zéro contient ##1## et ##2##"}, "at": "@colzero14"}, {"text": {"en": "column three holds ##2## and ##0##", "fr": "la colonne trois contient ##2## et ##0##"}, "at": "@colthree14"}, {"text": {"en": "two tiles tie at ##2##: (0,1) and (3,0)", "fr": "deux tuiles à égalité à ##2## : (0,1) et (3,0)"}, "at": "@tieat14"}, {"text": {"en": "scan reaches column zero first: (0,1) wins", "fr": "le balayage atteint la colonne zéro en premier : (0,1) gagne"}, "at": "@reaches14"}]}, {"from": "slide:15", "to": "slide:16", "x": 3, "y": 4, "type": "headline", "text": {"en": "The **seed** map", "fr": "La carte de la **graine**"}}, {"from": "@seedmap15", "to": "slide:16", "x": 44, "y": 40, "type": "tags", "items": [{"text": {"en": "only tile (1,0) is nonzero, ##3.5##", "fr": "seule la tuile (1,0) est non nulle, ##3,5##"}, "at": "@seedmap15"}, {"text": {"en": "argmax: column one, row zero, ##3.5##", "fr": "argmax : colonne un, ligne zéro, ##3,5##"}, "at": "@argmax15"}]}, {"from": "slide:16", "to": "slide:16:end+0.2", "x": 3, "y": 4, "type": "headline", "text": {"en": "Why the rule is **on paper**", "fr": "Pourquoi la règle est **sur le papier**"}}, {"from": "@goldens16", "to": "slide:16:end+0.2", "x": 44, "y": 40, "type": "tag", "text": {"en": "the checker's goldens need it", "fr": "les résultats de référence du vérificateur en ont besoin"}}, {"from": "slide:16:end+0.3", "to": "end", "x": 50, "y": 44, "type": "question"}], "question": {"at": "slide:16:end+0.3", "text": {"en": "Spreading lowered the **peak**. Did the total overflow fall too?", "fr": "La dispersion a fait baisser le **pic**. Le débordement total a-t-il aussi baissé ?"}, "hint": {"en": "Compare five with twenty-two.", "fr": "Comparez cinq et vingt-deux."}, "options": [{"label": {"en": "Yes, everything improved", "fr": "Oui, tout s'est amélioré"}, "reply": {"en": "Not the total: it rose from five to twenty-two. Part 4 has the full map.", "fr": "Pas le total : il est monté de cinq à vingt-deux. La partie 4 a la carte complète."}, "correct": false}, {"label": {"en": "No, the total went up", "fr": "Non, le total a augmenté"}, "reply": {"en": "Right: five to twenty-two, and the count one to six. Part 4 shows it.", "fr": "Exact : de cinq à vingt-deux, et le compte de un à six. La partie 4 le montre."}, "correct": true}, {"label": {"en": "The total stayed at five", "fr": "Le total est resté à cinq"}, "reply": {"en": "No: spreading pours wire over more tiles; the total rose to twenty-two.", "fr": "Non : la dispersion répartit le fil sur plus de tuiles ; le total est monté à vingt-deux."}, "correct": false}]}, "chapters": [{"at": "start", "title": {"en": "Argmax", "fr": "Argmax"}}, {"at": "slide:13", "title": {"en": "The tie-break", "fr": "La règle de départage"}}, {"at": "slide:14", "title": {"en": "A tie", "fr": "Un ex aequo"}}, {"at": "slide:15", "title": {"en": "The seed", "fr": "La graine"}}], "note": {"en": "Every number comes from the Lab 06 checker's --json (.cache/congestion-check.json, regenerated read-only from eda-learning-lab6-cg and byte-compared with the skill demo's copy); the engine recomputes every deposit event, and check_lesson.py --data compares every claim with the file at 12 significant digits.", "fr": "Chaque nombre vient du --json du vérificateur du Lab 06 (.cache/congestion-check.json, régénéré en lecture seule depuis eda-learning-lab6-cg et comparé octet par octet avec la copie de la démo de la compétence) ; le moteur recalcule chaque événement de dépôt, et check_lesson.py --data compare chaque affirmation au fichier avec 12 chiffres significatifs."}}, "timing": {"lang": "en", "slides": [12, 16], "source": "edge-tts", "voice": "en-US-AndrewMultilingualNeural", "rate": "-4%", "words": "exact", "duration": 96.076, "sentences": [{"slide": 12, "text": "The hottest tile is column two, row zero, at three point three three.", "start": 0.117, "end": 4.974, "pause_after": 0.55, "words": [{"w": "The", "t": 0.117}, {"w": "hottest", "t": 0.169}, {"w": "tile", "t": 0.521}, {"w": "is", "t": 0.82}, {"w": "column", "t": 0.911}, {"w": "two", "t": 1.341}, {"w": "row", "t": 2.057}, {"w": "zero", "t": 2.396}, {"w": "at", "t": 3.281}, {"w": "three", "t": 3.425}, {"w": "point", "t": 3.815}, {"w": "three", "t": 4.154}, {"w": "three", "t": 4.479}]}, {"slide": 12, "text": "To find it, we scan every tile and keep the largest value.", "start": 6.006, "end": 10.173, "pause_after": 0.55, "words": [{"w": "To", "t": 6.006}, {"w": "find", "t": 6.071}, {"w": "it", "t": 6.436}, {"w": "we", "t": 7.1}, {"w": "scan", "t": 7.243}, {"w": "every", "t": 7.543}, {"w": "tile", "t": 7.829}, {"w": "and", "t": 8.649}, {"w": "keep", "t": 8.767}, {"w": "the", "t": 9.027}, {"w": "largest", "t": 9.118}, {"w": "value", "t": 9.691}]}, {"slide": 12, "text": "That winner is the argmax, the tile of the maximum.", "start": 11.201, "end": 14.508, "pause_after": 1.4500000000000002, "words": [{"w": "That", "t": 11.201}, {"w": "winner", "t": 11.37}, {"w": "is", "t": 11.904}, {"w": "the", "t": 12.021}, {"w": "argmax", "t": 12.256}, {"w": "the", "t": 13.324}, {"w": "tile", "t": 13.428}, {"w": "of", "t": 13.805}, {"w": "the", "t": 13.857}, {"w": "maximum", "t": 13.936}]}, {"slide": 13, "text": "Two tiles can tie for the maximum.", "start": 16.43, "end": 18.396, "pause_after": 0.55, "words": [{"w": "Two", "t": 16.43}, {"w": "tiles", "t": 16.599}, {"w": "can", "t": 16.977}, {"w": "tie", "t": 17.107}, {"w": "for", "t": 17.602}, {"w": "the", "t": 17.706}, {"w": "maximum", "t": 17.784}]}, {"slide": 13, "text": "If code picks either one, two correct programs can disagree.", "start": 19.428, "end": 23.204, "pause_after": 0.55, "words": [{"w": "If", "t": 19.428}, {"w": "code", "t": 19.545}, {"w": "picks", "t": 19.962}, {"w": "either", "t": 20.6}, {"w": "one", "t": 20.834}, {"w": "two", "t": 21.433}, {"w": "correct", "t": 21.655}, {"w": "programs", "t": 21.98}, {"w": "can", "t": 22.488}, {"w": "disagree", "t": 22.618}]}, {"slide": 13, "text": "So the tie-break is written down.", "start": 24.25, "end": 26.307, "pause_after": 0.55, "words": [{"w": "So", "t": 24.25}, {"w": "the", "t": 24.393}, {"w": "tie-break", "t": 24.485}, {"w": "is", "t": 25.409}, {"w": "written", "t": 25.578}, {"w": "down", "t": 25.878}]}, {"slide": 13, "text": "We scan column by column, then row by row.", "start": 27.344, "end": 30.105, "pause_after": 0.55, "words": [{"w": "We", "t": 27.344}, {"w": "scan", "t": 27.435}, {"w": "column", "t": 27.683}, {"w": "by", "t": 28.047}, {"w": "column", "t": 28.204}, {"w": "then", "t": 29.154}, {"w": "row", "t": 29.336}, {"w": "by", "t": 29.506}, {"w": "row", "t": 29.688}]}, {"slide": 13, "text": "A tile wins only if strictly greater than the best so far.", "start": 31.134, "end": 34.845, "pause_after": 0.55, "words": [{"w": "A", "t": 31.134}, {"w": "tile", "t": 31.186}, {"w": "wins", "t": 31.525}, {"w": "only", "t": 31.994}, {"w": "if", "t": 32.384}, {"w": "strictly", "t": 32.54}, {"w": "greater", "t": 33.191}, {"w": "than", "t": 33.712}, {"w": "the", "t": 33.803}, {"w": "best", "t": 33.895}, {"w": "so", "t": 34.194}, {"w": "far", "t": 34.363}]}, {"slide": 13, "text": "The first maximum in that order wins.", "start": 35.884, "end": 37.954, "pause_after": 1.4500000000000002, "words": [{"w": "The", "t": 35.884}, {"w": "first", "t": 35.949}, {"w": "maximum", "t": 36.236}, {"w": "in", "t": 36.952}, {"w": "that", "t": 37.043}, {"w": "order", "t": 37.225}, {"w": "wins", "t": 37.447}]}, {"slide": 14, "text": "Here is a tie.", "start": 39.915, "end": 40.605, "pause_after": 0.55, "words": [{"w": "Here", "t": 39.915}, {"w": "is", "t": 40.071}, {"w": "a", "t": 40.176}, {"w": "tie", "t": 40.215}]}, {"slide": 14, "text": "Column zero holds one and two.", "start": 42.311, "end": 44.499, "pause_after": 0.55, "words": [{"w": "Column", "t": 42.311}, {"w": "zero", "t": 42.624}, {"w": "holds", "t": 42.988}, {"w": "one", "t": 43.405}, {"w": "and", "t": 43.952}, {"w": "two", "t": 44.069}]}, {"slide": 14, "text": "Columns one and two hold zeros.", "start": 45.514, "end": 47.975, "pause_after": 0.55, "words": [{"w": "Columns", "t": 45.514}, {"w": "one", "t": 45.918}, {"w": "and", "t": 46.491}, {"w": "two", "t": 46.699}, {"w": "hold", "t": 47.051}, {"w": "zeros", "t": 47.324}]}, {"slide": 14, "text": "Column three holds two and zero.", "start": 49.003, "end": 51.477, "pause_after": 0.55, "words": [{"w": "Column", "t": 49.003}, {"w": "three", "t": 49.355}, {"w": "holds", "t": 49.732}, {"w": "two", "t": 50.045}, {"w": "and", "t": 50.722}, {"w": "zero", "t": 50.93}]}, {"slide": 14, "text": "Two tiles tie at two: column zero row one, and column three row zero.", "start": 52.505, "end": 58.182, "pause_after": 0.55, "words": [{"w": "Two", "t": 52.505}, {"w": "tiles", "t": 52.635}, {"w": "tie", "t": 53.052}, {"w": "at", "t": 53.325}, {"w": "two", "t": 53.482}, {"w": "column", "t": 54.536}, {"w": "zero", "t": 54.875}, {"w": "row", "t": 55.357}, {"w": "one", "t": 55.604}, {"w": "and", "t": 56.307}, {"w": "column", "t": 56.411}, {"w": "three", "t": 57.023}, {"w": "row", "t": 57.375}, {"w": "zero", "t": 57.596}]}, {"slide": 14, "text": "The scan reaches column zero first, so that tile wins.", "start": 59.212, "end": 62.819, "pause_after": 1.2, "words": [{"w": "The", "t": 59.212}, {"w": "scan", "t": 59.29}, {"w": "reaches", "t": 59.603}, {"w": "column", "t": 59.902}, {"w": "zero", "t": 60.254}, {"w": "first", "t": 60.644}, {"w": "so", "t": 61.66}, {"w": "that", "t": 61.777}, {"w": "tile", "t": 61.973}, {"w": "wins", "t": 62.311}]}, {"slide": 15, "text": "On the seed map, only tile one zero is nonzero.", "start": 64.503, "end": 68.188, "pause_after": 0.55, "words": [{"w": "On", "t": 64.503}, {"w": "the", "t": 64.581}, {"w": "seed", "t": 64.672}, {"w": "map", "t": 64.998}, {"w": "only", "t": 65.792}, {"w": "tile", "t": 66.001}, {"w": "one", "t": 66.339}, {"w": "zero", "t": 66.521}, {"w": "is", "t": 67.29}, {"w": "nonzero", "t": 67.407}]}, {"slide": 15, "text": "Its value is three point five.", "start": 69.218, "end": 71.067, "pause_after": 0.55, "words": [{"w": "Its", "t": 69.218}, {"w": "value", "t": 69.335}, {"w": "is", "t": 69.752}, {"w": "three", "t": 69.882}, {"w": "point", "t": 70.221}, {"w": "five", "t": 70.546}]}, {"slide": 15, "text": "One nonzero tile cannot tie.", "start": 72.096, "end": 74.375, "pause_after": 0.55, "words": [{"w": "One", "t": 72.096}, {"w": "nonzero", "t": 72.265}, {"w": "tile", "t": 72.864}, {"w": "cannot", "t": 73.555}, {"w": "tie", "t": 73.958}]}, {"slide": 15, "text": "The argmax of the seed is column one, row zero, at three point five.", "start": 75.406, "end": 80.081, "pause_after": 1.4500000000000002, "words": [{"w": "The", "t": 75.406}, {"w": "argmax", "t": 75.484}, {"w": "of", "t": 75.953}, {"w": "the", "t": 76.018}, {"w": "seed", "t": 76.083}, {"w": "is", "t": 76.448}, {"w": "column", "t": 76.539}, {"w": "one", "t": 76.969}, {"w": "row", "t": 77.711}, {"w": "zero", "t": 77.984}, {"w": "at", "t": 78.844}, {"w": "three", "t": 78.974}, {"w": "point", "t": 79.299}, {"w": "five", "t": 79.586}]}, {"slide": 16, "text": "The checker's goldens need the tie-break, so all correct programs agree.", "start": 82.029, "end": 86.573, "pause_after": 0.55, "words": [{"w": "The", "t": 82.029}, {"w": "checker's", "t": 82.081}, {"w": "goldens", "t": 82.511}, {"w": "need", "t": 83.227}, {"w": "the", "t": 83.553}, {"w": "tie-break", "t": 83.631}, {"w": "so", "t": 84.633}, {"w": "all", "t": 84.933}, {"w": "correct", "t": 85.167}, {"w": "programs", "t": 85.597}, {"w": "agree", "t": 86.183}]}, {"slide": 16, "text": "Pause and guess: spreading lowered the peak.", "start": 87.619, "end": 90.184, "pause_after": 0.55, "words": [{"w": "Pause", "t": 87.619}, {"w": "and", "t": 87.971}, {"w": "guess", "t": 88.062}, {"w": "spreading", "t": 89.012}, {"w": "lowered", "t": 89.39}, {"w": "the", "t": 89.663}, {"w": "peak", "t": 89.729}]}, {"slide": 16, "text": "Did the total overflow fall too?", "start": 91.228, "end": 93.116, "pause_after": 2.6, "words": [{"w": "Did", "t": 91.228}, {"w": "the", "t": 91.332}, {"w": "total", "t": 91.41}, {"w": "overflow", "t": 91.788}, {"w": "fall", "t": 92.413}, {"w": "too", "t": 92.765}]}]}, "lang": "en", "subs": {"fr": ["La tuile la plus chaude est la colonne deux, ligne zéro, à trois virgule trois trois.", "Pour la trouver, nous balayons chaque tuile et gardons la plus grande valeur.", "Ce gagnant est l'argmax, la tuile du maximum.", "Deux tuiles peuvent égaler le maximum.", "Si le code choisit l'une ou l'autre, deux programmes corrects peuvent diverger.", "Alors la règle de départage est écrite.", "Nous balayons colonne par colonne, puis ligne par ligne.", "Une tuile ne gagne que si elle est strictement plus grande que la meilleure vue.", "Le premier maximum dans cet ordre gagne.", "Voici un ex aequo.", "La colonne zéro contient un et deux.", "Les colonnes un et deux contiennent des zéros.", "La colonne trois contient deux et zéro.", "Deux tuiles sont à égalité à deux : colonne zéro ligne un, et colonne trois ligne zéro.", "Le balayage atteint la colonne zéro en premier, donc cette tuile gagne.", "Sur la carte de la graine, seule la tuile un zéro est non nulle.", "Sa valeur est trois virgule cinq.", "Une seule tuile non nulle ne peut pas égaler.", "L'argmax de la graine est la colonne un, ligne zéro, à trois virgule cinq.", "Les résultats de référence du vérificateur ont besoin de la règle de départage, pour que tous les programmes corrects s'accordent.", "Faites une pause et devinez : la dispersion a fait baisser le pic.", "Le débordement total a-t-il aussi baissé ?"], "zh": ["最热的格子是第 2 列第 0 行，值为三点三三。", "为了找到它，我们扫描每个格子并保留最大值。", "这个优胜者就是 argmax，即最大值所在的格子。", "两个格子可能并列最大值。", "如果代码随便选一个，两个正确的程序就会给出不同结果。", "所以平局规则要写下来。", "我们先按列扫描，再按行扫描。", "只有严格大于当前最大值的格子才能获胜。", "这个顺序中的第一个最大值获胜。", "这里有一个平局。", "第 0 列放的是一和二。", "第 1 列和第 2 列放的是零。", "第 3 列放的是二和零。", "有两个格子并列为二：第 0 列第 1 行，和第 3 列第 0 行。", "扫描先到达第 0 列，所以那个格子获胜。", "在种子地图上，只有格子 (1,0) 非零。", "它的值是三点五。", "只有一个非零格子，不可能有平局。", "种子的 argmax 是第 1 列第 0 行，值为三点五。", "检查器的标准答案需要平局规则，这样所有正确的程序才能一致。", "暂停并猜一猜：分散布局降低了峰值。", "总溢出也下降了吗？"]}, "storageKey": "lab6-lesson-speed"});
+</script>
+</body>
+</html>

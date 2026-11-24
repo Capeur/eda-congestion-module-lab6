@@ -1,0 +1,161 @@
+{
+ "scene": "placement",
+ "pageTitle": {
+  "en": "Lab 06 · Part 3 — The hottest tile",
+  "fr": "Lab 06 · Partie 3 — La tuile la plus chaude"
+ },
+ "eyebrow": {
+  "en": "Lab 06 · animated lesson 3 of 5",
+  "fr": "Lab 06 · leçon animée 3 sur 5"
+ },
+ "title": {
+  "en": "The hottest tile",
+  "fr": "La tuile la plus chaude"
+ },
+ "lede": {
+  "en": "The argmax scan finds the hottest tile: on the spread map it is column two, row zero, at congestion 3.33; on the seed map, column one, row zero, at 3.5. A tie must be broken by a written rule: scan column by column, row by row, strictly greater wins. Drag cells in the try-it panel and watch the wirelength and overflow readout.",
+  "fr": "Le balayage argmax trouve la tuile la plus chaude : sur la carte dispersée, c'est la colonne deux, ligne zéro, à congestion 3,33 ; sur la carte de la graine, la colonne un, ligne zéro, à 3,5. Un ex aequo doit être tranché par une règle écrite : balayage colonne par colonne, puis ligne par ligne, strictement plus grand gagne. Faites glisser des cellules dans le panneau d'essai et regardez la longueur de fil et le débordement."
+ },
+ "placement": {
+  "run": "spread",
+  "floorBox": [36, 168, 344, 229.3],
+  "claims": [
+   { "run": "spread", "start": 34, "demand": 34, "hottest": { "i": 2, "j": 0, "v": 3.33333333333 }, "ovtotal": 22, "ovmax": 4.66666666667, "ovcount": 6 },
+   { "run": "congested_seed", "start": 7, "demand": 7, "hottest": { "i": 1, "j": 0, "v": 3.5 }, "ovtotal": 5, "ovmax": 5, "ovcount": 1 },
+   { "positions": { "A": { "x": 1, "y": 1 }, "B": { "x": 8, "y": 1 }, "C": { "x": 1, "y": 5 }, "D": { "x": 8, "y": 5 }, "E": { "x": 5, "y": 3 }, "F": { "x": 6, "y": 3 } }, "hpwl": 34 },
+   { "positions": { "A": { "x": 4, "y": 2 }, "B": { "x": 5, "y": 2 }, "C": { "x": 4, "y": 3 }, "D": { "x": 5, "y": 3 }, "E": { "x": 4.5, "y": 2.5 }, "F": { "x": 5.5, "y": 2.5 } }, "hpwl": 7, "demand": 7, "hottest": { "i": 1, "j": 0, "v": 3.5 }, "ovtotal": 5, "ovmax": 5, "ovcount": 1 }
+  ]
+ },
+ "anchors": {
+  "hottest12": { "slide": 12, "en": "hottest", "fr": "chaude" },
+  "scan12": { "slide": 12, "en": "scan", "fr": "balayons" },
+  "argmax12": { "slide": 12, "en": "argmax", "fr": "argmax" },
+  "colcol13": { "slide": 13, "en": "column by column", "fr": "colonne par colonne" },
+  "strictly13": { "slide": 13, "en": "strictly", "fr": "strictement" },
+  "firstmax13": { "slide": 13, "en": "first maximum", "fr": "premier maximum" },
+  "colzero14": { "slide": 14, "en": "Column zero holds", "fr": "colonne zéro contient" },
+  "colthree14": { "slide": 14, "en": "Column three holds", "fr": "colonne trois contient" },
+  "tieat14": { "slide": 14, "en": "tie at two", "fr": "égalité à deux" },
+  "reaches14": { "slide": 14, "en": "reaches column zero", "fr": "atteint la colonne zéro" },
+  "seedmap15": { "slide": 15, "en": "seed map", "fr": "carte de la graine" },
+  "argmax15": { "slide": 15, "en": "argmax", "fr": "argmax" },
+  "goldens16": { "slide": 16, "en": "goldens", "fr": "résultats de référence" }
+ },
+ "pausing": { "between": 0.55, "scene": 0.9, "question": 1.3, "tail": 2.6 },
+ "pauses": [
+  { "after": "@reaches14", "sec": 1.2 }
+ ],
+ "initial": { "run": "spread", "move": 0, "deposit": "all", "side": 0 },
+ "timeline": [
+  { "at": "@seedmap15", "run": "congested_seed" },
+  { "at": "slide:16:end+0.2", "dim": 0.12 }
+ ],
+ "show": [
+  { "show": "heat", "from": "start", "to": "end" },
+  { "show": "nets", "from": "start", "to": "end" },
+  { "show": "netlabels", "from": "start", "to": "end" },
+  { "show": "counter", "from": "start", "to": "@hottest12", "metric": "hpwl", "label": { "en": "wirelength", "fr": "longueur de fil" } },
+  { "show": "counter", "from": "@hottest12", "to": "@seedmap15", "metric": "hottestTile" },
+  { "show": "counter", "from": "@seedmap15", "to": "@argmax15", "metric": "hpwl", "label": { "en": "wirelength", "fr": "longueur de fil" } },
+  { "show": "counter", "from": "@argmax15", "to": "end", "metric": "hottestTile" },
+  { "show": "highlight", "from": "@hottest12", "to": "@seedmap15", "ids": ["t2,0"] },
+  { "show": "highlight", "from": "@seedmap15", "to": "end", "ids": ["t1,0"] }
+ ],
+ "overlays": [
+  {
+   "from": "start", "to": "slide:13", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "The **hottest** tile", "fr": "La tuile la plus **chaude**" }
+  },
+  {
+   "from": "@hottest12", "to": "slide:13", "x": 44, "y": 40, "type": "tags",
+   "items": [
+    { "text": { "en": "column two, row zero, congestion ##3.33##", "fr": "colonne deux, ligne zéro, congestion ##3,33##" }, "at": "@hottest12" },
+    { "text": { "en": "scan every tile, keep the largest", "fr": "balayer chaque tuile, garder la plus grande" }, "at": "@scan12" }
+   ]
+  },
+  {
+   "from": "@argmax12", "to": "slide:13", "x": 56, "y": 8, "type": "term",
+   "text": { "en": "Argmax", "fr": "Argmax" },
+   "sub": { "en": "the tile of the maximum", "fr": "la tuile du maximum" }
+  },
+  {
+   "from": "slide:13", "to": "slide:14", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "A tie must be **written down**", "fr": "Un ex aequo doit être **écrit**" }
+  },
+  {
+   "from": "@colcol13", "to": "slide:14", "x": 44, "y": 40, "type": "tags",
+   "items": [
+    { "text": { "en": "scan column by column, then row by row", "fr": "balayage colonne par colonne, puis ligne par ligne" }, "at": "@colcol13" },
+    { "text": { "en": "strictly greater wins", "fr": "strictement plus grand gagne" }, "at": "@strictly13" },
+    { "text": { "en": "first maximum in scan order wins", "fr": "le premier maximum dans l'ordre de balayage gagne" }, "at": "@firstmax13" }
+   ]
+  },
+  {
+   "from": "slide:14", "to": "slide:15", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "A **tie** example", "fr": "Un exemple d'ex aequo" }
+  },
+  {
+   "from": "@colzero14", "to": "slide:15", "x": 44, "y": 40, "type": "tags",
+   "items": [
+    { "text": { "en": "column zero holds ##1## and ##2##", "fr": "la colonne zéro contient ##1## et ##2##" }, "at": "@colzero14" },
+    { "text": { "en": "column three holds ##2## and ##0##", "fr": "la colonne trois contient ##2## et ##0##" }, "at": "@colthree14" },
+    { "text": { "en": "two tiles tie at ##2##: (0,1) and (3,0)", "fr": "deux tuiles à égalité à ##2## : (0,1) et (3,0)" }, "at": "@tieat14" },
+    { "text": { "en": "scan reaches column zero first: (0,1) wins", "fr": "le balayage atteint la colonne zéro en premier : (0,1) gagne" }, "at": "@reaches14" }
+   ]
+  },
+  {
+   "from": "slide:15", "to": "slide:16", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "The **seed** map", "fr": "La carte de la **graine**" }
+  },
+  {
+   "from": "@seedmap15", "to": "slide:16", "x": 44, "y": 40, "type": "tags",
+   "items": [
+    { "text": { "en": "only tile (1,0) is nonzero, ##3.5##", "fr": "seule la tuile (1,0) est non nulle, ##3,5##" }, "at": "@seedmap15" },
+    { "text": { "en": "argmax: column one, row zero, ##3.5##", "fr": "argmax : colonne un, ligne zéro, ##3,5##" }, "at": "@argmax15" }
+   ]
+  },
+  {
+   "from": "slide:16", "to": "slide:16:end+0.2", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "Why the rule is **on paper**", "fr": "Pourquoi la règle est **sur le papier**" }
+  },
+  {
+   "from": "@goldens16", "to": "slide:16:end+0.2", "x": 44, "y": 40, "type": "tag",
+   "text": { "en": "the checker's goldens need it", "fr": "les résultats de référence du vérificateur en ont besoin" }
+  },
+  {
+   "from": "slide:16:end+0.3", "to": "end", "x": 50, "y": 44, "type": "question"
+  }
+ ],
+ "question": {
+  "at": "slide:16:end+0.3",
+  "text": { "en": "Spreading lowered the **peak**. Did the total overflow fall too?", "fr": "La dispersion a fait baisser le **pic**. Le débordement total a-t-il aussi baissé ?" },
+  "hint": { "en": "Compare five with twenty-two.", "fr": "Comparez cinq et vingt-deux." },
+  "options": [
+   {
+    "label": { "en": "Yes, everything improved", "fr": "Oui, tout s'est amélioré" },
+    "reply": { "en": "Not the total: it rose from five to twenty-two. Part 4 has the full map.", "fr": "Pas le total : il est monté de cinq à vingt-deux. La partie 4 a la carte complète." },
+    "correct": false
+   },
+   {
+    "label": { "en": "No, the total went up", "fr": "Non, le total a augmenté" },
+    "reply": { "en": "Right: five to twenty-two, and the count one to six. Part 4 shows it.", "fr": "Exact : de cinq à vingt-deux, et le compte de un à six. La partie 4 le montre." },
+    "correct": true
+   },
+   {
+    "label": { "en": "The total stayed at five", "fr": "Le total est resté à cinq" },
+    "reply": { "en": "No: spreading pours wire over more tiles; the total rose to twenty-two.", "fr": "Non : la dispersion répartit le fil sur plus de tuiles ; le total est monté à vingt-deux." },
+    "correct": false
+   }
+  ]
+ },
+ "chapters": [
+  { "at": "start", "title": { "en": "Argmax", "fr": "Argmax" } },
+  { "at": "slide:13", "title": { "en": "The tie-break", "fr": "La règle de départage" } },
+  { "at": "slide:14", "title": { "en": "A tie", "fr": "Un ex aequo" } },
+  { "at": "slide:15", "title": { "en": "The seed", "fr": "La graine" } }
+ ],
+ "note": {
+  "en": "Every number comes from the Lab 06 checker's --json (.cache/congestion-check.json, regenerated read-only from eda-learning-lab6-cg and byte-compared with the skill demo's copy); the engine recomputes every deposit event, and check_lesson.py --data compares every claim with the file at 12 significant digits.",
+  "fr": "Chaque nombre vient du --json du vérificateur du Lab 06 (.cache/congestion-check.json, régénéré en lecture seule depuis eda-learning-lab6-cg et comparé octet par octet avec la copie de la démo de la compétence) ; le moteur recalcule chaque événement de dépôt, et check_lesson.py --data compare chaque affirmation au fichier avec 12 chiffres significatifs."
+ }
+}
