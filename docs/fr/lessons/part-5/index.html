@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lab 06 · Partie 5 — Refroidie, pas froide</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>@font-face{font-family:'Fraunces';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/fraunces-latin-700-normal.woff2) format('woff2')}@font-face{font-family:'IBM Plex Mono';font-weight:400;font-style:normal;font-display:swap;src:url(fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2')}@font-face{font-family:'IBM Plex Mono';font-weight:500;font-style:normal;font-display:swap;src:url(fonts/ibm-plex-mono-latin-500-normal.woff2) format('woff2')}@font-face{font-family:'Source Sans 3';font-weight:400;font-style:normal;font-display:swap;src:url(fonts/source-sans-3-latin-400-normal.woff2) format('woff2')}@font-face{font-family:'Source Sans 3';font-weight:600;font-style:normal;font-display:swap;src:url(fonts/source-sans-3-latin-600-normal.woff2) format('woff2')}@font-face{font-family:'Source Sans 3';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/source-sans-3-latin-700-normal.woff2) format('woff2')}</style>
+<meta name="lesson:title" content="Refroidie, pas froide">
+<meta name="lesson:duration" content="110.9">
+<meta name="lesson:engine" content="5.1">
+<style>
+/* lesson.css — styles for the animated lesson player (lesson-engine.js).
+   Layout: one reading column. A 16:9 stage carries the lesson; captions and transport sit under it,
+   then chapters and the "your turn" bench. Group colours follow the course labs: the group holding
+   the first node name is blue, the next green, then amber and rose; cut edges are red. */
+:root {
+  --bg: #f3f5f2;
+  --surface: #ffffff;
+  --ink: #17201c;
+  --muted: #56625c;
+  --line: #d6ddd8;
+  --stage: #fbfcfa;
+  --edge: #7a8780;
+  --g0: #1d4ed8;
+  --g1: #0f6b5c;
+  --g2: #b45309;
+  --g3: #9f1239;
+  --cut: #dc2626;
+  --heavy: #b45309;
+  --copper: #a8662a;
+  --unplaced: #94a3b8;
+  --tint0: rgba(29, 78, 216, 0.07);
+  --tint1: rgba(15, 107, 92, 0.08);
+  --said: #17201c;
+  --unsaid: #9aa49f;
+  --mark: #fde68a;
+  --display: "Fraunces", Georgia, "Times New Roman", serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1412; --surface: #151d1a; --ink: #e6ece9; --muted: #9ba7a1; --line: #2a3531;
+    --stage: #111916; --edge: #85938c; --g0: #6f8fff; --g1: #36b39b; --g2: #f59e0b; --g3: #fb7185;
+    --cut: #f87171; --heavy: #f59e0b; --copper: #d39a5c; --unplaced: #66758a;
+    --tint0: rgba(111, 143, 255, 0.10); --tint1: rgba(54, 179, 155, 0.10);
+    --said: #e6ece9; --unsaid: #5f6b66; --mark: #78350f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1412; --surface: #151d1a; --ink: #e6ece9; --muted: #9ba7a1; --line: #2a3531;
+  --stage: #111916; --edge: #85938c; --g0: #6f8fff; --g1: #36b39b; --g2: #f59e0b; --g3: #fb7185;
+  --cut: #f87171; --heavy: #f59e0b; --copper: #d39a5c; --unplaced: #66758a;
+  --tint0: rgba(111, 143, 255, 0.10); --tint1: rgba(54, 179, 155, 0.10);
+  --said: #e6ece9; --unsaid: #5f6b66; --mark: #78350f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 48px; margin: 0;
+}
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 22px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 46px); line-height: 1.05; margin: 0; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 62ch; }
+.lede a, .note a { color: inherit; }
+
+/* ---------- player ---------- */
+.player { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.stage { position: relative; aspect-ratio: 16 / 9; max-width: 100%; background: var(--stage); container-type: inline-size; overflow: hidden; }
+.stage svg.scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.layer { position: absolute; inset: 0; pointer-events: none; }
+.ov { position: absolute; opacity: 0; will-change: opacity, transform; }
+.ov [data-a] { display: inline-block; opacity: 0; }
+
+.hl { font-family: var(--display); font-weight: 700; font-size: 4.3cqw; line-height: 1.08; letter-spacing: -0.01em; max-width: 60cqw; }
+.hl b, .tag b, .sub b, .qcard b { color: var(--g0); font-weight: 700; }
+.red { color: var(--cut); }
+.sub { font-family: var(--body); font-size: 2.1cqw; color: var(--muted); font-weight: 600; margin-top: .6cqw; }
+.term { display: grid; gap: .4cqw; background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 1.4cqw 1.8cqw; box-shadow: 0 .6cqw 2cqw rgba(0,0,0,.06); }
+.term .t { font-family: var(--display); font-size: 3.4cqw; font-weight: 700; }
+.term .d { font-size: 1.9cqw; color: var(--muted); }
+.chip { display: inline-block; font-family: var(--mono); font-size: 2.2cqw; font-weight: 500; padding: .5cqw 1.3cqw; border-radius: 99px; border: 2px solid var(--ink); background: var(--surface); }
+.tag { font-family: var(--body); font-weight: 700; font-size: 2.2cqw; background: var(--surface); border: 1px solid var(--line); border-radius: .9cqw; padding: .6cqw 1.2cqw; }
+.tags { display: grid; gap: 1cqw; justify-items: start; }
+.tag .n, .num { font-family: var(--mono); color: var(--heavy); }
+.label { font-family: var(--display); font-weight: 700; font-size: 2.8cqw; }
+.label.c0 { color: var(--g0); } .label.c1 { color: var(--g1); } .label.c2 { color: var(--g2); } .label.c3 { color: var(--g3); }
+.vocab { display: grid; gap: .8cqw; font-size: 2cqw; }
+.vocab div { background: var(--surface); border: 1px solid var(--line); border-radius: .8cqw; padding: .5cqw 1.1cqw; }
+.vocab b { font-family: var(--display); font-size: 2.3cqw; margin-right: .6cqw; }
+.eq { font-family: var(--mono); font-size: 3.4cqw; font-weight: 500; background: var(--surface); border: 1px solid var(--line); border-radius: 1cqw; padding: 1cqw 1.6cqw; white-space: nowrap; }
+.eq .red { font-weight: 700; }
+.stamp { font-family: var(--display); font-weight: 700; font-size: 6cqw; color: var(--cut); border: .45cqw solid var(--cut); border-radius: 1cqw; padding: .2cqw 1.6cqw; rotate: -9deg; letter-spacing: .06em; text-transform: uppercase; background: color-mix(in srgb, var(--stage) 80%, transparent); }
+.bigq { width: 100cqw; }
+.bigq .q { font-family: var(--display); font-size: 16cqw; font-weight: 700; line-height: 1; color: var(--muted); text-align: center; }
+.bigq .hl { max-width: none; text-align: center; font-size: 3.6cqw; }
+.cmp { display: grid; gap: 1cqw; background: var(--surface); border: 1px solid var(--line); border-radius: 1.4cqw; padding: 2cqw 2.4cqw; width: 62cqw; box-shadow: 0 .8cqw 3cqw rgba(0,0,0,.08); }
+.cmp .row { display: grid; grid-template-columns: 1.4fr .7fr 1.3fr; align-items: baseline; gap: 1.4cqw; font-size: 2.3cqw; }
+.cmp .row .k { font-family: var(--mono); font-size: 3cqw; font-weight: 500; }
+.cmp .bad .k { color: var(--cut); }
+.cmp .good .k { color: var(--g1); }
+.qcard { background: var(--surface); border: 2px solid var(--ink); border-radius: 1.4cqw; padding: 1.6cqw 2.2cqw; width: 44cqw; display: grid; gap: .6cqw; }
+.qcard .e { font-family: var(--mono); font-size: 1.7cqw; letter-spacing: .1em; text-transform: uppercase; color: var(--heavy); }
+.qcard .q { font-family: var(--display); font-size: 3.1cqw; font-weight: 700; line-height: 1.15; }
+.qcard .h { font-size: 1.8cqw; color: var(--muted); }
+.qbtns { display: none; gap: 1cqw; pointer-events: auto; flex-wrap: wrap; }
+.stage.asking .qbtns { display: flex; }
+.qbtns .btn { font-size: 1.8cqw; padding: .6cqw 1.3cqw; }
+.qans { color: var(--ink); font-size: 1.9cqw; }
+.qans:empty { display: none; }
+.thumbs { display: flex; gap: 2cqw; }
+.thumb { background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 1cqw; display: grid; gap: .4cqw; justify-items: center; width: 22cqw; position: relative; }
+.thumb svg { width: 100%; height: auto; display: block; }
+.thumb .c { font-family: var(--mono); font-size: 1.75cqw; font-weight: 500; white-space: nowrap; }
+.thumb.best { border: 2px solid var(--g1); }
+.thumb .ok { position: absolute; top: -1.6cqw; right: -1.2cqw; background: var(--g1); color: #fff; font-weight: 700; font-size: 1.7cqw; border-radius: 99px; padding: .3cqw 1cqw; }
+
+.counter { display: grid; justify-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: .9cqw 1.6cqw; min-width: 15cqw; }
+.counter .l, .balance .l { font-family: var(--mono); font-size: 1.6cqw; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.counter .v { font-family: var(--mono); font-size: 6.2cqw; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
+.counter.bad .v { color: var(--cut); }
+.counter.good .v { color: var(--g1); }
+.balance { display: grid; gap: .8cqw; background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 1.2cqw 1.6cqw; width: 19cqw; }
+.bars { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 1.6cqw; height: 15cqw; align-items: end; }
+.bar { background: var(--g0); border-radius: .5cqw .5cqw 0 0; height: 0; display: flex; justify-content: center; align-items: flex-start; color: #fff; font-family: var(--mono); font-size: 2cqw; padding-top: .3cqw; }
+.bar.c1 { background: var(--g1); } .bar.c2 { background: var(--g2); } .bar.c3 { background: var(--g3); }
+.cap { position: absolute; left: -.6cqw; right: -.6cqw; height: 0; border-top: .3cqw dashed var(--cut); opacity: 0; }
+.cap span { position: absolute; right: 0; top: -2.6cqw; font-family: var(--mono); font-size: 1.5cqw; color: var(--cut); }
+.verdict { font-weight: 700; font-size: 1.9cqw; min-height: 1.2em; }
+.verdict.no { color: var(--cut); }
+.verdict.yes { color: var(--g1); }
+.banner { position: absolute; left: 2cqw; top: 2cqw; display: none; gap: 1cqw; align-items: center; pointer-events: auto; font-size: 1.9cqw; }
+.stage.free .banner { display: flex; }
+.banner b { font-family: var(--display); font-size: 2.6cqw; }
+
+/* svg pieces */
+.node rect { transition: fill .45s, stroke .45s; }
+.g0 rect { fill: var(--g0); stroke: var(--g0); }
+.g1 rect { fill: var(--g1); stroke: var(--g1); }
+.g2 rect { fill: var(--g2); stroke: var(--g2); }
+.g3 rect { fill: var(--g3); stroke: var(--g3); }
+.nu rect { fill: var(--unplaced); stroke: var(--unplaced); }
+.ncell rect { fill: var(--surface); stroke: var(--copper); stroke-width: 3; }
+.node text { fill: #fff; font-family: var(--body); font-weight: 700; font-size: 21px; text-anchor: middle; dominant-baseline: central; }
+.ncell text { fill: var(--ink); }
+.node { cursor: pointer; }
+.node:focus-visible rect { stroke: var(--ink); stroke-width: 4; }
+.main { stroke: var(--edge); stroke-linecap: round; transition: stroke .35s; }
+.wire { stroke: var(--copper); stroke-width: 2.2; stroke-linecap: round; }
+.edge.cut .main { stroke: var(--cut); stroke-dasharray: 10 7; }
+.edge.heavy .main { stroke: var(--heavy); }
+.edge.pulse .main { animation: lesson-pulse 1s ease-in-out 2; }
+@keyframes lesson-pulse { 50% { stroke-width: 12; } }
+.wl rect { fill: var(--stage); stroke: var(--line); transition: fill .3s, stroke .3s; }
+.wl text { fill: var(--ink); font-family: var(--mono); font-size: 16px; font-weight: 500; text-anchor: middle; dominant-baseline: central; }
+.edge.cut .wl rect { stroke: var(--cut); }
+.edge.flash .wl rect { fill: var(--mark); stroke: var(--heavy); }
+.chipbody { fill: none; stroke: var(--copper); stroke-width: 3; }
+.pin { fill: var(--copper); }
+.divider { stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 8 8; }
+.tint0 { fill: var(--tint0); }
+.tint1 { fill: var(--tint1); }
+
+/* captions */
+.captions { padding: 14px 18px; border-top: 1px solid var(--line); min-height: 3.6em; font-size: 19px; line-height: 1.45; }
+.captions span { color: var(--unsaid); transition: color .15s; }
+.captions span.said { color: var(--said); }
+.player.nocc .captions { display: none; }
+
+/* transport */
+.transport { display: grid; grid-template-columns: auto 1fr auto; gap: 10px 14px; align-items: center; padding: 12px 16px 14px; border-top: 1px solid var(--line); }
+.play { width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--ink); color: var(--bg); font-size: 18px; cursor: pointer; display: grid; place-items: center; }
+.scrub { display: grid; gap: 4px; min-width: 0; }
+.scrub input { width: 100%; accent-color: var(--g0); }
+.time { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.opts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button, .tbtn { font-family: var(--mono); font-size: 13px; padding: 6px 9px; border: 0; background: var(--surface); color: var(--ink); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.tbtn { border: 1px solid var(--line); border-radius: 8px; }
+.tbtn[aria-pressed="false"] { color: var(--muted); text-decoration: line-through; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--g0); outline-offset: 2px; }
+@media (max-width: 620px) {
+  .transport { grid-template-columns: auto 1fr; }
+  .opts { grid-column: 1 / -1; justify-content: flex-start; }
+  .captions { font-size: 16px; }
+}
+
+/* chapters + bench */
+.chapters { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.chapters button { width: 100%; display: grid; grid-template-columns: 4.5em 1fr; gap: 10px; text-align: left; background: none; border: 0; border-left: 3px solid var(--line); padding: 6px 12px; font: inherit; color: var(--muted); cursor: pointer; }
+.chapters button .ts { font-family: var(--mono); font-size: 14px; font-variant-numeric: tabular-nums; }
+.chapters button[aria-current="true"] { border-left-color: var(--g0); color: var(--ink); font-weight: 600; }
+.cols { display: grid; grid-template-columns: 1fr 1.25fr; gap: 22px; align-items: start; }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+h2 { font-family: var(--display); font-size: 24px; margin: 0 0 8px; }
+.bench { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; gap: 14px; min-width: 0; }
+.bench.pulse { animation: lesson-benchin 1.2s ease 2; }
+@keyframes lesson-benchin { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--g0) 35%, transparent); } }
+.bench p { margin: 0; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn { font: 600 15px var(--body); padding: 8px 14px; border-radius: 9px; border: 1px solid var(--ink); background: var(--surface); color: var(--ink); cursor: pointer; }
+.btn.primary { background: var(--ink); color: var(--bg); }
+.seedbox { width: 5.5em; font: 500 15px var(--mono); padding: 7px 9px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.feedback { border-left: 3px solid var(--g1); padding: 4px 0 4px 12px; }
+.feedback:empty { display: none; }
+.readout { font-family: var(--mono); font-size: 14.5px; background: var(--bg); border-radius: 8px; padding: 10px 12px; font-variant-numeric: tabular-nums; }
+.note { font-size: 14px; color: var(--muted); max-width: 70ch; }
+.ok { color: var(--g1); font-weight: 700; } .no { color: var(--cut); font-weight: 700; }
+.norec .node rect, .norec .main, .norec .wl rect { transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .node rect, .main, .wl rect, .captions span { transition: none !important; }
+  .edge.pulse .main, .bench.pulse { animation: none; }
+}
+
+/* ---------- floorplan scene (B*-tree + floor of blocks) ----------
+   Block colours come from the lab (one fixed colour per block id, the course's paper palette) and are set inline.
+   Tree links: left child = solid ("next door"), right child = dashed ("upstairs"). The skyline is amber. */
+:root { --sky: #d97706; --waste: rgba(220, 38, 38, 0.10); --over: rgba(220, 38, 38, 0.13); --gridline: #e3e8e4; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --sky: #fbbf24; --waste: rgba(248, 113, 113, 0.14); --over: rgba(248, 113, 113, 0.16); --gridline: #1f2a26; } }
+:root[data-theme="dark"] { --sky: #fbbf24; --waste: rgba(248, 113, 113, 0.14); --over: rgba(248, 113, 113, 0.16); --gridline: #1f2a26; }
+.fp-gridlines line { stroke: var(--gridline); stroke-width: 1; }
+.fp-outline { fill: none; stroke: var(--ink); stroke-width: 2; stroke-dasharray: 9 6; opacity: .55; }
+.fp-outline-lab { font-family: var(--mono); font-size: 14px; fill: var(--muted); text-anchor: end; }
+.fp-floorline { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+.fp-axis text { font-family: var(--mono); font-size: 12.5px; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+.fp-axis .fp-axis-y { text-anchor: end; }
+.fp-overzone { fill: url(#fp-over); stroke: none; transition: opacity .3s; }
+.fp-over-line { stroke: var(--cut); stroke-width: 2.4; opacity: .55; }
+.fp-hatch-bg { fill: var(--waste); }
+.fp-hatch-line { stroke: var(--cut); stroke-width: 2; opacity: .35; }
+.fp-waste { fill: url(#fp-hatch); }
+.fpb rect { stroke-width: 2; fill-opacity: .92; }
+.fpb .fp-bid { fill: #fff; font-family: var(--body); font-weight: 700; font-size: 21px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.fpb .fp-dim { fill: #fff; font-family: var(--mono); font-size: 12.5px; text-anchor: middle; dominant-baseline: central; opacity: .9; pointer-events: none; }
+.fpb.out rect { stroke: var(--cut); stroke-width: 4; stroke-dasharray: 7 4; }
+.fpb.hl rect, .fpn.hl circle:not(.fp-ring) { stroke: var(--ink); stroke-width: 4; }
+.fp-sky { fill: none; stroke: var(--sky); stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
+.fp-bbox { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 10 6; }
+.fp-bboxlab rect { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+.fp-bboxlab text { font-family: var(--mono); font-size: 15px; font-weight: 500; fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
+.fp-coords circle { fill: var(--ink); }
+.fp-coords text { font-family: var(--mono); font-size: 13px; font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--stage); stroke-width: 4px; }
+.fp-edge { stroke: var(--edge); stroke-width: 3; stroke-linecap: round; }
+.fp-edge.right { stroke-dasharray: 8 6; }
+.fpn circle { stroke-width: 3; }
+.fpn .fp-ring { fill: none; stroke: var(--ink); stroke-width: 3; opacity: 0; }
+.fpn.hl .fp-ring { opacity: 1; }
+.fpn text { font-family: var(--body); font-weight: 700; font-size: 20px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.fpk { cursor: pointer; }
+.fpk:focus-visible { outline: none; }
+.fpk:focus-visible rect, .fpk:focus-visible circle:not(.fp-ring) { stroke: var(--ink); stroke-width: 4; }
+.fp-badges circle { fill: var(--ink); }
+.fp-badges text { fill: var(--bg); font-family: var(--mono); font-size: 12.5px; font-weight: 500; text-anchor: middle; dominant-baseline: central; }
+.fp-link rect { fill: var(--surface); stroke: var(--line); }
+.fp-link text { font-family: var(--body); font-size: 13px; font-weight: 600; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+.fp-legal { font-family: var(--body); font-weight: 700; font-size: 1.9cqw; background: var(--surface); border: 2px solid var(--line); border-radius: .9cqw; padding: .4cqw 1.1cqw; white-space: nowrap; }
+.fp-legal.yes { color: var(--g1); border-color: var(--g1); }
+.fp-legal.no { color: var(--cut); border-color: var(--cut); }
+.fp-counter { min-width: 17cqw; }
+.fp-thumb svg { max-height: 16cqw; }
+.fp-ops .btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.norec .fp-overzone { transition: none !important; }
+
+/* ---------- placement scene (v5) ---------- */
+.pl-chip { fill: var(--tint0); stroke: none; }
+.pl-gridlines line { stroke: var(--line); stroke-width: 1; opacity: .55; }
+/* v5.1 heat grid: the GCell lattice and one tile per GCell, painted from the deposit replay */
+.pl-glines line { stroke: var(--heavy); stroke-width: 1.4; stroke-dasharray: 6 4; opacity: .6; }
+.pl-tile { stroke: none; }
+.pl-tilering { fill: none; stroke: var(--ink); stroke-width: 3; opacity: 0; }
+.pl-tilering.hl { opacity: 1; }
+.pl-wall { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 10 6; opacity: .5; transition: stroke .15s, opacity .15s; }
+.pl-wall.hit { stroke: var(--cut); opacity: 1; }
+.pl-axis text { font-family: var(--mono); font-size: 12px; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+.pl-axis .pl-axis-y { text-anchor: end; }
+.pl-net rect { fill: var(--edge); fill-opacity: .05; stroke: var(--edge); stroke-width: 1.6; }
+.pl-net line { stroke: var(--copper); stroke-width: 2.4; stroke-linecap: round; opacity: .8; }
+.pl-net text { font-family: var(--mono); font-size: 13px; font-weight: 500; fill: var(--ink); text-anchor: middle; dominant-baseline: central; paint-order: stroke; stroke: var(--stage); stroke-width: 4px; }
+.pl-net.hot rect { stroke: var(--heavy); stroke-width: 2.6; fill: var(--heavy); fill-opacity: .08; }
+.pl-trial { fill: none; stroke: var(--heavy); stroke-width: 2; stroke-dasharray: 6 5; }
+.plk { cursor: grab; outline: none; touch-action: none; }
+.plk rect { stroke: var(--surface); stroke-width: 1.5; }
+.plk text, .pl-ghost text { fill: #fff; font-family: var(--body); font-weight: 700; font-size: 16px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.plk .pl-ring { fill: none; stroke: var(--ink); stroke-width: 2.5; opacity: 0; }
+.plk.hl .pl-ring, .plk:focus-visible .pl-ring { opacity: 1; }
+.plk.pad rect:not(.pl-ring) { stroke: var(--ink); stroke-width: 2.5; }
+.pl-ghost rect { fill: var(--heavy); fill-opacity: .35; stroke: var(--heavy); stroke-width: 2; stroke-dasharray: 5 4; }
+.pl-ghost.bad rect { fill: var(--cut); stroke: var(--cut); }
+.pl-ghost text { fill: var(--ink); }
+.pl-bestpos rect { fill: none; stroke-width: 2.2; stroke-dasharray: 4 4; }
+.pl-thermo .tube { fill: var(--surface); stroke: var(--line); stroke-width: 2; }
+.pl-thermo text { font-family: var(--mono); font-size: 13px; fill: var(--muted); text-anchor: middle; }
+.pl-thermo text.v { font-size: 14px; font-weight: 500; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.pl-card text { font-family: var(--body); font-size: 18px; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.pl-card .delta { font-family: var(--mono); font-size: 21px; font-weight: 500; }
+.pl-card .delta.worse, .pl-card .verdict.no { fill: var(--cut); }
+.pl-card .delta.better, .pl-card .verdict.yes { fill: var(--g1); }
+.pl-card .delta.free, .pl-card .verdict.free { fill: var(--muted); }
+.pl-card .verdict { font-weight: 700; font-size: 22px; text-anchor: end; }
+.pl-dice .track { fill: var(--line); fill-opacity: .55; stroke: var(--edge); stroke-width: 1.2; }
+.pl-dice .pfill { fill: var(--g1); opacity: .75; }
+.pl-dice .pfill.sure { opacity: .3; }
+.pl-dice text { font-family: var(--body); font-size: 15.5px; fill: var(--muted); }
+.pl-dice text.u { font-family: var(--mono); font-size: 13.5px; text-anchor: middle; fill: var(--ink); }
+.pl-dice .marker line { stroke: var(--ink); stroke-width: 2.5; }
+.pl-dice .marker circle { fill: var(--ink); stroke: var(--surface); stroke-width: 2; }
+.pl-dice .marker.yes circle { fill: var(--g1); } .pl-dice .marker.no circle { fill: var(--cut); }
+.pl-tally text { font-family: var(--body); font-size: 17px; font-weight: 600; fill: var(--ink); font-variant-numeric: tabular-nums; white-space: pre; }
+.pl-tally text.kinds { font-size: 15px; font-weight: 400; fill: var(--muted); }
+.pl-chart .axis, .pl-spread .axis { stroke: var(--edge); stroke-width: 1.5; }
+.pl-chart .cur { fill: none; stroke: var(--g0); stroke-width: 2.4; stroke-linejoin: round; }
+.pl-chart .best { fill: none; stroke: var(--g1); stroke-width: 2; stroke-dasharray: 5 4; }
+.pl-chart .dot { fill: var(--g0); stroke: var(--surface); stroke-width: 2; }
+.pl-chart .startline { stroke: var(--edge); stroke-width: 1; stroke-dasharray: 3 5; }
+.pl-chart text, .pl-spread text { font-family: var(--mono); font-size: 12.5px; fill: var(--muted); }
+.pl-chart .tick { text-anchor: end; dominant-baseline: central; }
+.pl-chart .tick.x, .pl-spread .tick.x { text-anchor: start; dominant-baseline: auto; }
+.pl-chart .tick.x.end { text-anchor: end; } .pl-spread .tick.x.mid { text-anchor: middle; }
+.pl-chart .lab.start { text-anchor: end; }
+.pl-chart .lab.bestl { fill: var(--g1); font-weight: 500; }
+.pl-spread .d { fill: var(--edge); }
+.pl-spread .d.hot { fill: var(--heavy); stroke: var(--surface); stroke-width: 1.5; }
+.pl-spread .median { stroke: var(--g0); stroke-width: 2; stroke-dasharray: 5 4; }
+.pl-spread .lab.med { fill: var(--g0); }
+.pl-spread .lab.hot { fill: var(--heavy); font-weight: 500; font-size: 13.5px; paint-order: stroke; stroke: var(--stage); stroke-width: 4px; }
+.pl-spread .lab.endl { text-anchor: end; }
+.pl-spread .lead { stroke: var(--heavy); stroke-width: 1.2; }
+.pl-spread .scap { font-family: var(--body); font-size: 15px; fill: var(--ink); }
+.pl-counter { min-width: 17cqw; }
+.pl-ops label { display: inline-flex; gap: 6px; align-items: center; font-size: 14.5px; }
+.pl-seed { width: 5.5em; font: inherit; padding: 5px 7px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.pl-thumb svg { width: 11cqw; }
+.pl-piles rect { fill: none; stroke: var(--cut); stroke-width: 3; }
+.pl-piles circle { fill: var(--cut); stroke: var(--surface); stroke-width: 2; }
+.pl-piles text { fill: #fff; font-family: var(--mono); font-weight: 500; font-size: 13px; text-anchor: middle; dominant-baseline: central; }
+.pl-land .ground { fill: var(--tint1); stroke: none; }
+.pl-land .line { fill: none; stroke: var(--g1); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.pl-land .ball { fill: var(--heavy); stroke: var(--surface); stroke-width: 2.5; }
+.pl-land .lab { font-family: var(--body); font-size: 15.5px; font-weight: 600; fill: var(--ink); text-anchor: middle; }
+
+/* ---------- inside the all-parts player ---------- */
+html.embedded body { background: transparent; padding: 0 2px 6px; margin: 0; }
+html.embedded .wrap > header .eyebrow { display: none; }
+html.embedded .wrap > header h1 { font-size: clamp(20px, 2.6vw, 28px); margin-top: 0; }
+
+/* ---------- subtitles menu ---------- */
+.subsel { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.subsel select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 5px 6px; }
+.captions:lang(zh) { font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif; letter-spacing: .02em; }
+
+/* ---------- sounds button ---------- */
+.sbtn { font-family: var(--mono); font-size: 13px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.sbtn[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.sbtn[aria-pressed="false"] { color: var(--muted); }
+.opts { flex-wrap: wrap; }
+
+</style>
+</head>
+<body>
+<div id="lesson-root"></div>
+<audio id="lesson-audio" preload="metadata" src="lesson-fr.m4a"></audio>
+<script src="../lesson-engine.js"></script>
+<script>
+LessonEngine.mount({"sb": {"scene": "placement", "pageTitle": {"en": "Lab 06 · Part 5 — Cooled, not cold", "fr": "Lab 06 · Partie 5 — Refroidie, pas froide"}, "eyebrow": {"en": "Lab 06 · animated lesson 5 of 5", "fr": "Lab 06 · leçon animée 5 sur 5"}, "title": {"en": "Cooled, not cold", "fr": "Refroidie, pas froide"}, "lede": {"en": "One feedback pass cooled the seed: no tile is oversubscribed, the count is zero, and the hottest tile sits exactly at capacity — cooled, not cold. Remember the six words of the lab, then it is your turn: the browser lab for the heat map, Python for your own map, and one last question whose answer is peak against total. Drag a cell in the try-it panel and watch the wirelength and overflow readout; the player's next button then opens the browser lab and the quiz sits on the site page.", "fr": "Une passe de rétroaction a refroidi la graine : aucune tuile n'est sursaturée, le compte est zéro, et la tuile la plus chaude est exactement à la capacité — refroidie, pas froide. Retenez les six mots du lab, puis à vous : le labo navigateur pour la carte de chaleur, Python pour votre propre carte, et une dernière question dont la réponse oppose le pic au total. Faites glisser une cellule dans le panneau d'essai et regardez la longueur de fil et le débordement ; le bouton suivant du lecteur ouvre le labo navigateur, et le quiz est sur la page du site."}, "placement": {"run": "after", "floorBox": [36, 168, 344, 229.3], "data": {"runs": {"after": {"cells": ["A", "B", "C", "D", "E", "F"], "nets": [["A", "B"], ["C", "D"], ["A", "C"], ["B", "D"], ["A", "B", "C", "D"], ["E", "F"]], "start": {"A": {"x": 5.75, "y": 2.0}, "B": {"x": 6.25, "y": 2.0}, "C": {"x": 5.75, "y": 2.5}, "D": {"x": 6.25, "y": 2.5}, "E": {"x": 6.0, "y": 2.25}, "F": {"x": 6.5, "y": 2.25}}, "walls": {"min": 0, "max": 12.0}, "moves": 0, "seed": 0, "t0": 1, "cool": 1, "step": 1, "frozen": [], "events": [{"net": 0, "pins": ["A", "B"], "bbox": [5.75, 2.0, 6.25, 2.0], "hpwl": 0.5, "tiles": [[1, 0], [2, 0]], "share": 0.25, "demandAfter": [[0.0, 0.0], [0.25, 0.0], [0.25, 0.0], [0.0, 0.0]]}, {"net": 1, "pins": ["C", "D"], "bbox": [5.75, 2.5, 6.25, 2.5], "hpwl": 0.5, "tiles": [[1, 0], [2, 0]], "share": 0.25, "demandAfter": [[0.0, 0.0], [0.5, 0.0], [0.5, 0.0], [0.0, 0.0]]}, {"net": 2, "pins": ["A", "C"], "bbox": [5.75, 2.0, 5.75, 2.5], "hpwl": 0.5, "tiles": [[1, 0]], "share": 0.5, "demandAfter": [[0.0, 0.0], [1.0, 0.0], [0.5, 0.0], [0.0, 0.0]]}, {"net": 3, "pins": ["B", "D"], "bbox": [6.25, 2.0, 6.25, 2.5], "hpwl": 0.5, "tiles": [[2, 0]], "share": 0.5, "demandAfter": [[0.0, 0.0], [1.0, 0.0], [1.0, 0.0], [0.0, 0.0]]}, {"net": 4, "pins": ["A", "B", "C", "D"], "bbox": [5.75, 2.0, 6.25, 2.5], "hpwl": 1.0, "tiles": [[1, 0], [2, 0]], "share": 0.5, "demandAfter": [[0.0, 0.0], [1.5, 0.0], [1.5, 0.0], [0.0, 0.0]]}, {"net": 5, "pins": ["E", "F"], "bbox": [6.0, 2.25, 6.5, 2.25], "hpwl": 0.5, "tiles": [[2, 0]], "share": 0.5, "demandAfter": [[0.0, 0.0], [1.5, 0.0], [2.0, 0.0], [0.0, 0.0]]}], "demand": [[0.0, 0.0], [1.5, 0.0], [2.0, 0.0], [0.0, 0.0]], "congestion": [[0.0, 0.0], [0.75, 0.0], [1.0, 0.0], [0.0, 0.0]], "overflow": {"perCell": [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], "total": 0.0, "max": 0.0, "count": 0}, "hottest": {"i": 2, "j": 0, "v": 1.0}, "heat": {"mode": "relative-to-max", "maxC": 1.0, "t": [[0.0, 0.0], [0.75, 0.0], [1.0, 0.0], [0.0, 0.0]]}, "capacity": 2.0}, "congested_seed": {"cells": ["A", "B", "C", "D", "E", "F"], "nets": [["A", "B"], ["C", "D"], ["A", "C"], ["B", "D"], ["A", "B", "C", "D"], ["E", "F"]], "start": {"A": {"x": 4.0, "y": 2.0}, "B": {"x": 5.0, "y": 2.0}, "C": {"x": 4.0, "y": 3.0}, "D": {"x": 5.0, "y": 3.0}, "E": {"x": 4.5, "y": 2.5}, "F": {"x": 5.5, "y": 2.5}}, "walls": {"min": 0, "max": 12.0}, "moves": 0, "seed": 0, "t0": 1, "cool": 1, "step": 1, "frozen": [], "events": [{"net": 0, "pins": ["A", "B"], "bbox": [4.0, 2.0, 5.0, 2.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [1.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 1, "pins": ["C", "D"], "bbox": [4.0, 3.0, 5.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [2.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 2, "pins": ["A", "C"], "bbox": [4.0, 2.0, 4.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [3.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 3, "pins": ["B", "D"], "bbox": [5.0, 2.0, 5.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [4.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 4, "pins": ["A", "B", "C", "D"], "bbox": [4.0, 2.0, 5.0, 3.0], "hpwl": 2.0, "tiles": [[1, 0]], "share": 2.0, "demandAfter": [[0.0, 0.0], [6.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 5, "pins": ["E", "F"], "bbox": [4.5, 2.5, 5.5, 2.5], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [7.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}], "demand": [[0.0, 0.0], [7.0, 0.0], [0.0, 0.0], [0.0, 0.0]], "congestion": [[0.0, 0.0], [3.5, 0.0], [0.0, 0.0], [0.0, 0.0]], "overflow": {"perCell": [[0.0, 0.0], [5.0, 0.0], [0.0, 0.0], [0.0, 0.0]], "total": 5.0, "max": 5.0, "count": 1}, "hottest": {"i": 1, "j": 0, "v": 3.5}, "heat": {"mode": "relative-to-max", "maxC": 3.5, "t": [[0.0, 0.0], [1.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, "capacity": 2.0}, "spread": {"cells": ["A", "B", "C", "D", "E", "F"], "nets": [["A", "B"], ["C", "D"], ["A", "C"], ["B", "D"], ["A", "B", "C", "D"], ["E", "F"]], "start": {"A": {"x": 1.0, "y": 1.0}, "B": {"x": 8.0, "y": 1.0}, "C": {"x": 1.0, "y": 5.0}, "D": {"x": 8.0, "y": 5.0}, "E": {"x": 5.0, "y": 3.0}, "F": {"x": 6.0, "y": 3.0}}, "walls": {"min": 0, "max": 12.0}, "moves": 0, "seed": 0, "t0": 1, "cool": 1, "step": 1, "frozen": [], "events": [{"net": 0, "pins": ["A", "B"], "bbox": [1.0, 1.0, 8.0, 1.0], "hpwl": 7.0, "tiles": [[0, 0], [1, 0], [2, 0]], "share": 2.33333333333, "demandAfter": [[2.33333333333, 0.0], [2.33333333333, 0.0], [2.33333333333, 0.0], [0.0, 0.0]]}, {"net": 1, "pins": ["C", "D"], "bbox": [1.0, 5.0, 8.0, 5.0], "hpwl": 7.0, "tiles": [[0, 1], [1, 1], [2, 1]], "share": 2.33333333333, "demandAfter": [[2.33333333333, 2.33333333333], [2.33333333333, 2.33333333333], [2.33333333333, 2.33333333333], [0.0, 0.0]]}, {"net": 2, "pins": ["A", "C"], "bbox": [1.0, 1.0, 1.0, 5.0], "hpwl": 4.0, "tiles": [[0, 0], [0, 1]], "share": 2.0, "demandAfter": [[4.33333333333, 4.33333333333], [2.33333333333, 2.33333333333], [2.33333333333, 2.33333333333], [0.0, 0.0]]}, {"net": 3, "pins": ["B", "D"], "bbox": [8.0, 1.0, 8.0, 5.0], "hpwl": 4.0, "tiles": [[2, 0], [2, 1]], "share": 2.0, "demandAfter": [[4.33333333333, 4.33333333333], [2.33333333333, 2.33333333333], [4.33333333333, 4.33333333333], [0.0, 0.0]]}, {"net": 4, "pins": ["A", "B", "C", "D"], "bbox": [1.0, 1.0, 8.0, 5.0], "hpwl": 11.0, "tiles": [[0, 0], [0, 1], [1, 0], [1, 1], [2, 0], [2, 1]], "share": 1.83333333333, "demandAfter": [[6.16666666667, 6.16666666667], [4.16666666667, 4.16666666667], [6.16666666667, 6.16666666667], [0.0, 0.0]]}, {"net": 5, "pins": ["E", "F"], "bbox": [5.0, 3.0, 6.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0], [2, 0]], "share": 0.5, "demandAfter": [[6.16666666667, 6.16666666667], [4.66666666667, 4.16666666667], [6.66666666667, 6.16666666667], [0.0, 0.0]]}], "demand": [[6.16666666667, 6.16666666667], [4.66666666667, 4.16666666667], [6.66666666667, 6.16666666667], [0.0, 0.0]], "congestion": [[3.08333333333, 3.08333333333], [2.33333333333, 2.08333333333], [3.33333333333, 3.08333333333], [0.0, 0.0]], "overflow": {"perCell": [[4.16666666667, 4.16666666667], [2.66666666667, 2.16666666667], [4.66666666667, 4.16666666667], [0.0, 0.0]], "total": 22.0, "max": 4.66666666667, "count": 6}, "hottest": {"i": 2, "j": 0, "v": 3.33333333333}, "heat": {"mode": "relative-to-max", "maxC": 3.33333333333, "t": [[0.925, 0.925], [0.7, 0.625], [1.0, 0.925], [0.0, 0.0]]}, "capacity": 2.0}}, "heat": {"chip": {"W": 12, "H": 8}, "nx": 4, "ny": 2, "cellW": 3.0, "cellH": 4.0, "capacity": 2.0, "palette": [{"u": 0.0, "hex": "#ffffff", "rgb": [255, 255, 255]}, {"u": 0.333333333333, "hex": "#0f6b5c", "rgb": [15, 107, 92]}, {"u": 0.666666666667, "hex": "#b45309", "rgb": [180, 83, 9]}, {"u": 1.0, "hex": "#9f1239", "rgb": [159, 18, 57]}]}}, "claims": [{"run": "after", "start": 3.5, "demand": 3.5, "hottest": {"i": 2, "j": 0, "v": 1}, "ovtotal": 0, "ovmax": 0, "ovcount": 0}, {"run": "congested_seed", "start": 7, "demand": 7, "hottest": {"i": 1, "j": 0, "v": 3.5}, "ovtotal": 5, "ovmax": 5, "ovcount": 1}, {"run": "spread", "start": 34, "demand": 34, "hottest": {"i": 2, "j": 0, "v": 3.33333333333}, "ovtotal": 22, "ovmax": 4.66666666667, "ovcount": 6}, {"positions": {"A": {"x": 4.0, "y": 2.0}, "B": {"x": 5.0, "y": 2.0}, "C": {"x": 4.0, "y": 3.0}, "D": {"x": 5.0, "y": 3.0}, "E": {"x": 4.5, "y": 2.5}, "F": {"x": 5.5, "y": 2.5}}, "hpwl": 7}, {"positions": {"A": {"x": 1.0, "y": 1.0}, "B": {"x": 8.0, "y": 1.0}, "C": {"x": 1.0, "y": 5.0}, "D": {"x": 8.0, "y": 5.0}, "E": {"x": 5.0, "y": 3.0}, "F": {"x": 6.0, "y": 3.0}}, "hpwl": 34}, {"positions": {"A": {"x": 5.75, "y": 2.0}, "B": {"x": 6.25, "y": 2.0}, "C": {"x": 5.75, "y": 2.5}, "D": {"x": 6.25, "y": 2.5}, "E": {"x": 6.0, "y": 2.25}, "F": {"x": 6.5, "y": 2.25}}, "hpwl": 3.5, "demand": 3.5, "hottest": {"i": 2, "j": 0, "v": 1}, "ovtotal": 0, "ovmax": 0, "ovcount": 0}], "heat": {"chip": {"W": 12, "H": 8}, "nx": 4, "ny": 2, "cellW": 3.0, "cellH": 4.0, "capacity": 2.0, "palette": [{"u": 0.0, "hex": "#ffffff", "rgb": [255, 255, 255]}, {"u": 0.333333333333, "hex": "#0f6b5c", "rgb": [15, 107, 92]}, {"u": 0.666666666667, "hex": "#b45309", "rgb": [180, 83, 9]}, {"u": 1.0, "hex": "#9f1239", "rgb": [159, 18, 57]}]}, "sizes": {"A": [2, 1], "B": [2, 1], "C": [2, 1], "D": [2, 1], "E": [1, 1], "F": [1, 1]}}, "anchors": {"afterpass24": {"slide": 24, "en": "After", "fr": "Après"}, "hottest24": {"slide": 24, "en": "hottest", "fr": "chaude"}, "capacity24": {"slide": 24, "en": "capacity", "fr": "capacité"}, "cooled24": {"slide": 24, "en": "Cooled", "fr": "Refroidie"}, "congestion25": {"slide": 25, "en": "Congestion", "fr": "congestion"}, "oversubscribed25": {"slide": 25, "en": "oversubscribed", "fr": "sursaturée"}, "rudy25": {"slide": 25, "en": "RUDY", "fr": "RUDY"}, "argmax25": {"slide": 25, "en": "argmax", "fr": "argmax"}, "overflow25": {"slide": 25, "en": "Overflow", "fr": "débordement"}, "peak25": {"slide": 25, "en": "Peak", "fr": "pic"}, "browser26": {"slide": 26, "en": "browser", "fr": "navigateur"}, "lights26": {"slide": 26, "en": "lights", "fr": "allume"}, "drag26": {"slide": 26, "en": "Drag", "fr": "glisser"}, "runfeedback26": {"slide": 26, "en": "run feedback", "fr": "rétroaction"}, "divide27": {"slide": 27, "en": "Divide", "fr": "Divisez"}, "tiebreak27": {"slide": 27, "en": "tie-break", "fr": "départage"}, "goldseed27": {"slide": 27, "en": "Golden seed", "fr": "graine"}, "goldspread27": {"slide": 27, "en": "Golden spread", "fr": "dispersion"}, "guess28": {"slide": 28, "en": "guess", "fr": "devinez"}}, "pausing": {"between": 0.55, "scene": 0.9, "question": 1.3, "tail": 2.6}, "pauses": [{"after": "@cooled24", "sec": 1.2}], "initial": {"run": "after", "move": 0, "deposit": "all", "side": 0}, "timeline": [{"at": "slide:26", "run": "congested_seed"}, {"at": "slide:28:end+0.2", "dim": 0.12}], "show": [{"show": "heat", "from": "start", "to": "end"}, {"show": "nets", "from": "start", "to": "end"}, {"show": "netlabels", "from": "@browser26", "to": "end"}, {"show": "counter", "from": "@afterpass24", "to": "@hottest24", "metric": "ovcount"}, {"show": "counter", "from": "@hottest24", "to": "@capacity24", "metric": "ovtotal"}, {"show": "counter", "from": "@capacity24", "to": "@drag26", "metric": "hottestTile"}, {"show": "counter", "from": "@drag26", "to": "end", "metric": "hpwl", "label": {"en": "wirelength", "fr": "longueur de fil"}}, {"show": "highlight", "from": "@hottest24", "to": "slide:26", "ids": ["t2,0"]}, {"show": "highlight", "from": "slide:26", "to": "end", "ids": ["t1,0"]}], "overlays": [{"from": "start", "to": "slide:25", "x": 3, "y": 4, "type": "headline", "text": {"en": "**Cooled**, not cold", "fr": "**Refroidie**, pas froide"}, "sub": {"en": "{After the pass@afterpass24}: no tile is oversubscribed", "fr": "{Après la passe@afterpass24} : aucune tuile sursaturée"}}, {"from": "slide:24", "to": "slide:25", "x": 44, "y": 40, "type": "tags", "items": [{"text": {"en": "count ##0##, total overflow ##0##", "fr": "compte ##0##, débordement total ##0##"}, "at": "@afterpass24"}, {"text": {"en": "hottest: column two row zero, exactly ##1##", "fr": "plus chaude : colonne deux ligne zéro, exactement ##1##"}, "at": "@hottest24"}, {"text": {"en": "right at capacity, not below it", "fr": "exactement à la capacité, pas en dessous"}, "at": "@capacity24"}, {"text": {"en": "**cooled** is not **cold**", "fr": "**refroidie** n'est pas **froide**"}, "at": "@cooled24"}]}, {"from": "slide:25", "to": "slide:26", "x": 3, "y": 4, "type": "headline", "text": {"en": "**Remember**", "fr": "**Souvenez-vous**"}}, {"from": "slide:25", "to": "slide:26", "x": 44, "y": 40, "type": "vocab", "items": [{"k": {"en": "Congestion", "fr": "Congestion"}, "text": {"en": "demand over capacity, per tile", "fr": "demande sur capacité, par tuile"}, "at": "@congestion25"}, {"k": {"en": "Oversubscribed", "fr": "Sursaturée"}, "text": {"en": "congestion above one", "fr": "congestion au-dessus de un"}, "at": "@oversubscribed25"}, {"k": {"en": "RUDY", "fr": "RUDY"}, "text": {"en": "wire split evenly over touched tiles", "fr": "fil réparti également entre les tuiles"}, "at": "@rudy25"}, {"k": {"en": "Argmax", "fr": "Argmax"}, "text": {"en": "first max in scan order wins ties", "fr": "le premier max du balayage gagne"}, "at": "@argmax25"}, {"k": {"en": "Overflow", "fr": "Débordement"}, "text": {"en": "demand minus capacity, if > 0", "fr": "demande moins capacité, si > 0"}, "at": "@overflow25"}, {"k": {"en": "Peak vs total", "fr": "Pic contre total"}, "text": {"en": "move in opposite directions", "fr": "évoluent en sens inverse"}, "at": "@peak25"}]}, {"from": "slide:26", "to": "slide:27", "x": 3, "y": 4, "type": "headline", "text": {"en": "Your turn in the **browser**", "fr": "À vous dans le **navigateur**"}}, {"from": "slide:26", "to": "slide:27", "x": 44, "y": 40, "type": "tags", "items": [{"text": {"en": "seed lights one tile at ##3.5##", "fr": "la graine allume une tuile à ##3,5##"}, "at": "@lights26"}, {"text": {"en": "drag cell A across the boundary", "fr": "glissez la cellule A à travers la frontière"}, "at": "@drag26"}, {"text": {"en": "run feedback: total overflow falls to ##0##", "fr": "lancez la rétroaction : le débordement total tombe à ##0##"}, "at": "@runfeedback26"}]}, {"from": "slide:27", "to": "slide:28", "x": 3, "y": 4, "type": "headline", "text": {"en": "Your turn in **Python**", "fr": "À vous en **Python**"}}, {"from": "slide:27", "to": "slide:28", "x": 44, "y": 40, "type": "tags", "items": [{"text": {"en": "divide a demand matrix by capacity", "fr": "divisez une matrice de demande par la capacité"}, "at": "@divide27"}, {"text": {"en": "hottest with the written tie-break", "fr": "la plus chaude avec la règle de départage écrite"}, "at": "@tiebreak27"}, {"text": {"en": "golden seed: (1,0) at ##3.5##", "fr": "graine de référence : (1,0) à ##3,5##"}, "at": "@goldseed27"}, {"text": {"en": "golden spread: (2,0) at ##3.33##", "fr": "dispersion de référence : (2,0) à ##3,33##"}, "at": "@goldspread27"}]}, {"from": "slide:28", "to": "slide:28:end+0.2", "x": 3, "y": 4, "type": "headline", "text": {"en": "One **last** question", "fr": "Une **dernière** question"}, "sub": {"en": "{Pause and guess@guess28}: the peak fell — celebrate?", "fr": "{Faites une pause et devinez@guess28} : le pic a baissé — on célèbre ?"}}, {"from": "slide:28:end+0.3", "to": "end", "x": 50, "y": 44, "type": "question"}], "question": {"at": "slide:28:end+0.3", "text": {"en": "You spread the cells and the **peak** fell. Should the router celebrate?", "fr": "Vous avez dispersé les cellules et le **pic** a baissé. Le routeur devrait-il célébrer ?"}, "hint": {"en": "Check the total overflow too.", "fr": "Vérifiez d'abord le débordement total."}, "options": [{"label": {"en": "Yes, the peak fell", "fr": "Oui, le pic a baissé"}, "reply": {"en": "Only half the story: the total overflow rose from five to twenty-two, and six tiles are oversubscribed now.", "fr": "Seulement la moitié de l'histoire : le débordement total est monté de cinq à vingt-deux, et six tuiles sont sursaturées maintenant."}, "correct": false}, {"label": {"en": "No: the peak fell but the total rose", "fr": "Non : le pic a baissé mais le total a monté"}, "reply": {"en": "Right: peak three point five to three point three three, total five to twenty-two, count one to six. Celebrate only when both fall.", "fr": "Exact : pic de trois virgule cinq à trois virgule trois trois, total de cinq à vingt-deux, compte de un à six. On ne célèbre que quand les deux baissent."}, "correct": true}, {"label": {"en": "Yes, if the wires got shorter", "fr": "Oui, si les fils ont raccourci"}, "reply": {"en": "Spreading lengthened the wires: seven to thirty-four. The peak is not the whole story.", "fr": "Disperser a allongé les fils : de sept à trente-quatre. Le pic n'est pas toute l'histoire."}, "correct": false}]}, "chapters": [{"at": "start", "title": {"en": "Cooled, not cold", "fr": "Refroidie, pas froide"}}, {"at": "slide:25", "title": {"en": "Remember", "fr": "Souvenez-vous"}}, {"at": "slide:26", "title": {"en": "Your turn", "fr": "À vous"}}], "note": {"en": "Every number comes from the Lab 06 checker's --json (.cache/congestion-check.json, regenerated read-only from eda-learning-lab6-cg and byte-compared with the skill demo's copy); the engine recomputes every deposit event, and check_lesson.py --data compares every claim with the file at 12 significant digits.", "fr": "Chaque nombre vient du --json du vérificateur du Lab 06 (.cache/congestion-check.json, régénéré en lecture seule depuis eda-learning-lab6-cg et comparé octet par octet avec la copie de la démo de la compétence) ; le moteur recalcule chaque événement de dépôt, et check_lesson.py --data compare chaque affirmation au fichier avec 12 chiffres significatifs."}}, "timing": {"lang": "fr", "slides": [24, 28], "source": "edge-tts", "voice": "fr-FR-RemyMultilingualNeural", "rate": "-4%", "words": "exact", "duration": 110.914, "sentences": [{"slide": 24, "text": "Après la passe, aucune tuile n'est sursaturée : le compte est zéro.", "start": 0.104, "end": 4.076, "pause_after": 0.55, "words": [{"w": "Après", "t": 0.104}, {"w": "la", "t": 0.352}, {"w": "passe", "t": 0.469}, {"w": "aucune", "t": 1.328}, {"w": "tuile", "t": 1.589}, {"w": "n'est", "t": 1.862}, {"w": "sursaturée", "t": 1.966}, {"w": "le", "t": 3.138}, {"w": "compte", "t": 3.242}, {"w": "est", "t": 3.516}, {"w": "zéro", "t": 3.568}]}, {"slide": 24, "text": "La tuile la plus chaude est la colonne deux ligne zéro, à exactement un.", "start": 5.094, "end": 9.0, "pause_after": 0.55, "words": [{"w": "La", "t": 5.094}, {"w": "tuile", "t": 5.25}, {"w": "la", "t": 5.537}, {"w": "plus", "t": 5.641}, {"w": "chaude", "t": 5.797}, {"w": "est", "t": 6.227}, {"w": "la", "t": 6.266}, {"w": "colonne", "t": 6.37}, {"w": "deux", "t": 6.8}, {"w": "ligne", "t": 6.917}, {"w": "zéro", "t": 7.151}, {"w": "à", "t": 7.972}, {"w": "exactement", "t": 8.089}, {"w": "un", "t": 8.753}]}, {"slide": 24, "text": "Elle est exactement à la capacité, pas en dessous.", "start": 10.012, "end": 12.929, "pause_after": 0.55, "words": [{"w": "Elle", "t": 10.012}, {"w": "est", "t": 10.155}, {"w": "exactement", "t": 10.208}, {"w": "à", "t": 10.924}, {"w": "la", "t": 10.963}, {"w": "capacité", "t": 11.054}, {"w": "pas", "t": 12.161}, {"w": "en", "t": 12.278}, {"w": "dessous", "t": 12.408}]}, {"slide": 24, "text": "Refroidie n'est pas la même chose que froide.", "start": 13.946, "end": 16.173, "pause_after": 1.2, "words": [{"w": "Refroidie", "t": 13.946}, {"w": "n'est", "t": 14.597}, {"w": "pas", "t": 14.727}, {"w": "la", "t": 14.858}, {"w": "même", "t": 14.949}, {"w": "chose", "t": 15.131}, {"w": "que", "t": 15.444}, {"w": "froide", "t": 15.587}]}, {"slide": 25, "text": "La congestion est la demande divisée par la capacité, par tuile.", "start": 17.834, "end": 22.014, "pause_after": 0.55, "words": [{"w": "La", "t": 17.834}, {"w": "congestion", "t": 17.99}, {"w": "est", "t": 18.85}, {"w": "la", "t": 18.954}, {"w": "demande", "t": 19.058}, {"w": "divisée", "t": 19.475}, {"w": "par", "t": 19.944}, {"w": "la", "t": 20.087}, {"w": "capacité", "t": 20.165}, {"w": "par", "t": 21.259}, {"w": "tuile", "t": 21.428}]}, {"slide": 25, "text": "Au-dessus de un, une tuile est sursaturée.", "start": 23.027, "end": 25.709, "pause_after": 0.55, "words": [{"w": "Au-dessus", "t": 23.027}, {"w": "de", "t": 23.496}, {"w": "un", "t": 23.678}, {"w": "une", "t": 24.355}, {"w": "tuile", "t": 24.486}, {"w": "est", "t": 24.772}, {"w": "sursaturée", "t": 24.824}]}, {"slide": 25, "text": "RUDY répartit la longueur de fil de chaque réseau également sur les tuiles que sa boîte touche.", "start": 26.721, "end": 31.474, "pause_after": 0.55, "words": [{"w": "RUDY", "t": 26.721}, {"w": "répartit", "t": 27.125}, {"w": "la", "t": 27.568}, {"w": "longueur", "t": 27.672}, {"w": "de", "t": 28.01}, {"w": "fil", "t": 28.14}, {"w": "de", "t": 28.427}, {"w": "chaque", "t": 28.544}, {"w": "réseau", "t": 28.765}, {"w": "également", "t": 29.325}, {"w": "sur", "t": 29.82}, {"w": "les", "t": 29.989}, {"w": "tuiles", "t": 30.081}, {"w": "que", "t": 30.432}, {"w": "sa", "t": 30.562}, {"w": "boîte", "t": 30.693}, {"w": "touche", "t": 30.94}]}, {"slide": 25, "text": "La tuile la plus chaude est l'argmax, et le premier maximum dans l'ordre de balayage gagne les ex aequo.", "start": 32.492, "end": 38.13, "pause_after": 0.55, "words": [{"w": "La", "t": 32.492}, {"w": "tuile", "t": 32.635}, {"w": "la", "t": 32.909}, {"w": "plus", "t": 33.013}, {"w": "chaude", "t": 33.169}, {"w": "est", "t": 33.456}, {"w": "l'argmax", "t": 33.495}, {"w": "et", "t": 34.641}, {"w": "le", "t": 34.667}, {"w": "premier", "t": 34.758}, {"w": "maximum", "t": 35.044}, {"w": "dans", "t": 35.669}, {"w": "l'ordre", "t": 35.813}, {"w": "de", "t": 36.125}, {"w": "balayage", "t": 36.229}, {"w": "gagne", "t": 36.997}, {"w": "les", "t": 37.31}, {"w": "ex", "t": 37.414}, {"w": "aequo", "t": 37.674}]}, {"slide": 25, "text": "Le débordement est la demande moins la capacité, compté strictement au-dessus de zéro.", "start": 39.138, "end": 44.021, "pause_after": 0.55, "words": [{"w": "Le", "t": 39.138}, {"w": "débordement", "t": 39.307}, {"w": "est", "t": 40.115}, {"w": "la", "t": 40.206}, {"w": "demande", "t": 40.323}, {"w": "moins", "t": 40.714}, {"w": "la", "t": 40.935}, {"w": "capacité", "t": 41.026}, {"w": "compté", "t": 42.172}, {"w": "strictement", "t": 42.459}, {"w": "au-dessus", "t": 43.018}, {"w": "de", "t": 43.396}, {"w": "zéro", "t": 43.5}]}, {"slide": 25, "text": "Le pic et le total peuvent évoluer en sens inverse.", "start": 45.04, "end": 48.061, "pause_after": 1.4500000000000002, "words": [{"w": "Le", "t": 45.04}, {"w": "pic", "t": 45.236}, {"w": "et", "t": 45.522}, {"w": "le", "t": 45.561}, {"w": "total", "t": 45.678}, {"w": "peuvent", "t": 46.251}, {"w": "évoluer", "t": 46.486}, {"w": "en", "t": 46.98}, {"w": "sens", "t": 47.058}, {"w": "inverse", "t": 47.345}]}, {"slide": 26, "text": "Ouvrez le lab congestion-map dans votre navigateur.", "start": 49.917, "end": 53.081, "pause_after": 0.55, "words": [{"w": "Ouvrez", "t": 49.917}, {"w": "le", "t": 50.346}, {"w": "lab", "t": 50.463}, {"w": "congestion-map", "t": 50.724}, {"w": "dans", "t": 51.739}, {"w": "votre", "t": 51.87}, {"w": "navigateur", "t": 52.13}]}, {"slide": 26, "text": "La graine allume une tuile à congestion trois virgule cinq.", "start": 54.096, "end": 57.364, "pause_after": 0.55, "words": [{"w": "La", "t": 54.096}, {"w": "graine", "t": 54.265}, {"w": "allume", "t": 54.799}, {"w": "une", "t": 55.086}, {"w": "tuile", "t": 55.216}, {"w": "à", "t": 55.502}, {"w": "congestion", "t": 55.555}, {"w": "trois", "t": 56.245}, {"w": "virgule", "t": 56.453}, {"w": "cinq", "t": 56.792}]}, {"slide": 26, "text": "Faites glisser la cellule A à travers la frontière de tuile et regardez le compte monter.", "start": 58.377, "end": 62.765, "pause_after": 0.55, "words": [{"w": "Faites", "t": 58.377}, {"w": "glisser", "t": 58.716}, {"w": "la", "t": 59.08}, {"w": "cellule", "t": 59.184}, {"w": "A", "t": 59.562}, {"w": "à", "t": 59.836}, {"w": "travers", "t": 60.005}, {"w": "la", "t": 60.304}, {"w": "frontière", "t": 60.382}, {"w": "de", "t": 60.76}, {"w": "tuile", "t": 60.877}, {"w": "et", "t": 61.333}, {"w": "regardez", "t": 61.411}, {"w": "le", "t": 61.854}, {"w": "compte", "t": 61.958}, {"w": "monter", "t": 62.231}]}, {"slide": 26, "text": "Lancez la rétroaction et regardez le débordement total tomber à zéro.", "start": 63.788, "end": 67.89, "pause_after": 1.4500000000000002, "words": [{"w": "Lancez", "t": 63.788}, {"w": "la", "t": 64.192}, {"w": "rétroaction", "t": 64.283}, {"w": "et", "t": 65.233}, {"w": "regardez", "t": 65.364}, {"w": "le", "t": 65.819}, {"w": "débordement", "t": 65.937}, {"w": "total", "t": 66.483}, {"w": "tomber", "t": 66.965}, {"w": "à", "t": 67.304}, {"w": "zéro", "t": 67.369}]}, {"slide": 27, "text": "Sur le parcours Python, construisez la carte vous-même.", "start": 69.785, "end": 72.91, "pause_after": 0.55, "words": [{"w": "Sur", "t": 69.785}, {"w": "le", "t": 70.02}, {"w": "parcours", "t": 70.124}, {"w": "Python", "t": 70.514}, {"w": "construisez", "t": 71.361}, {"w": "la", "t": 71.882}, {"w": "carte", "t": 71.986}, {"w": "vous-même", "t": 72.285}]}, {"slide": 27, "text": "Divisez une matrice de demande par la capacité pour obtenir la congestion.", "start": 73.911, "end": 78.169, "pause_after": 0.55, "words": [{"w": "Divisez", "t": 73.911}, {"w": "une", "t": 74.51}, {"w": "matrice", "t": 74.627}, {"w": "de", "t": 75.057}, {"w": "demande", "t": 75.187}, {"w": "par", "t": 75.799}, {"w": "la", "t": 75.942}, {"w": "capacité", "t": 76.021}, {"w": "pour", "t": 76.724}, {"w": "obtenir", "t": 76.932}, {"w": "la", "t": 77.349}, {"w": "congestion", "t": 77.427}]}, {"slide": 27, "text": "Trouvez la tuile la plus chaude avec la règle de départage écrite.", "start": 79.165, "end": 82.629, "pause_after": 0.55, "words": [{"w": "Trouvez", "t": 79.165}, {"w": "la", "t": 79.465}, {"w": "tuile", "t": 79.595}, {"w": "la", "t": 79.894}, {"w": "plus", "t": 79.999}, {"w": "chaude", "t": 80.168}, {"w": "avec", "t": 80.689}, {"w": "la", "t": 80.897}, {"w": "règle", "t": 81.014}, {"w": "de", "t": 81.366}, {"w": "départage", "t": 81.47}, {"w": "écrite", "t": 81.978}]}, {"slide": 27, "text": "Référence pour la graine : tuile la plus chaude colonne un ligne zéro à trois virgule cinq.", "start": 83.627, "end": 88.51, "pause_after": 0.55, "words": [{"w": "Référence", "t": 83.627}, {"w": "pour", "t": 84.226}, {"w": "la", "t": 84.369}, {"w": "graine", "t": 84.474}, {"w": "tuile", "t": 85.346}, {"w": "la", "t": 85.593}, {"w": "plus", "t": 85.697}, {"w": "chaude", "t": 85.854}, {"w": "colonne", "t": 86.101}, {"w": "un", "t": 86.479}, {"w": "ligne", "t": 86.57}, {"w": "zéro", "t": 86.791}, {"w": "à", "t": 87.338}, {"w": "trois", "t": 87.442}, {"w": "virgule", "t": 87.638}, {"w": "cinq", "t": 87.963}]}, {"slide": 27, "text": "Référence pour la dispersion : colonne deux ligne zéro à trois virgule trois trois.", "start": 89.505, "end": 94.036, "pause_after": 1.4500000000000002, "words": [{"w": "Référence", "t": 89.505}, {"w": "pour", "t": 90.156}, {"w": "la", "t": 90.299}, {"w": "dispersion", "t": 90.378}, {"w": "colonne", "t": 91.484}, {"w": "deux", "t": 91.927}, {"w": "ligne", "t": 92.044}, {"w": "zéro", "t": 92.279}, {"w": "à", "t": 92.825}, {"w": "trois", "t": 92.943}, {"w": "virgule", "t": 93.151}, {"w": "trois", "t": 93.464}, {"w": "trois", "t": 93.646}]}, {"slide": 28, "text": "Faites une pause et devinez : vous avez dispersé les cellules et le pic de congestion a baissé.", "start": 95.934, "end": 100.817, "pause_after": 0.55, "words": [{"w": "Faites", "t": 95.934}, {"w": "une", "t": 96.208}, {"w": "pause", "t": 96.351}, {"w": "et", "t": 96.702}, {"w": "devinez", "t": 96.754}, {"w": "vous", "t": 97.77}, {"w": "avez", "t": 97.835}, {"w": "dispersé", "t": 98.07}, {"w": "les", "t": 98.564}, {"w": "cellules", "t": 98.669}, {"w": "et", "t": 99.202}, {"w": "le", "t": 99.254}, {"w": "pic", "t": 99.372}, {"w": "de", "t": 99.58}, {"w": "congestion", "t": 99.684}, {"w": "a", "t": 100.218}, {"w": "baissé", "t": 100.283}]}, {"slide": 28, "text": "Le routeur devrait-il célébrer ?", "start": 101.785, "end": 103.829, "pause_after": 1.3, "words": [{"w": "Le", "t": 101.785}, {"w": "routeur", "t": 102.045}, {"w": "devrait-il", "t": 102.618}, {"w": "célébrer", "t": 103.152}]}, {"slide": 28, "text": "Vérifiez d'abord le débordement total.", "start": 105.586, "end": 107.956, "pause_after": 2.6, "words": [{"w": "Vérifiez", "t": 105.586}, {"w": "d'abord", "t": 106.107}, {"w": "le", "t": 106.602}, {"w": "débordement", "t": 106.732}, {"w": "total", "t": 107.292}]}]}, "lang": "fr", "subs": {"en": ["After the pass, no tile is oversubscribed: the count is zero.", "The hottest tile is column two row zero, at exactly one.", "It sits right at capacity, not below it.", "Cooled is not the same as cold.", "Congestion is demand divided by capacity, per tile.", "Above one, a tile is oversubscribed.", "RUDY splits each net's wirelength evenly over the tiles its box touches.", "The hottest tile is the argmax, and the first maximum in scan order wins ties.", "Overflow is demand minus capacity, counted strictly above zero.", "Peak and total can move in opposite directions.", "Open the congestion-map lab in your browser.", "The seed lights one tile at congestion three point five.", "Drag cell A across the tile boundary and watch the count rise.", "Press run feedback and watch the total overflow fall to zero.", "On the Python track, build the map yourself.", "Divide a demand matrix by capacity for congestion.", "Find the hottest tile with the written tie-break.", "Golden seed hottest: column one row zero at three point five.", "Golden spread hottest: column two row zero at three point three three.", "Pause and guess: you spread the cells and the peak congestion fell.", "Should the router celebrate?", "Check the total overflow first."], "zh": ["通过之后，没有格子超载：计数为零。", "最热的格子是第 2 列第 0 行，恰好为一。", "它正好在容量上，而不是低于容量。", "凉了不等于冷了。", "拥塞度是每格的需求除以容量。", "大于一时，格子超载。", "RUDY 把每条线网的线长均匀分摊到其包围盒经过的格子上。", "最热的格子是 argmax，扫描顺序中的第一个最大值赢得平局。", "溢出等于需求减容量，只有严格大于零才计入。", "峰值和总量可能朝相反方向变化。", "在浏览器中打开 congestion-map 实验。", "种子让一个格子以拥塞度三点五亮起。", "把单元 A 拖过格子边界，看着计数上升。", "运行一次反馈，看着总溢出降到零。", "在 Python 路径上，自己构建这张地图。", "用需求矩阵除以容量得到拥塞度。", "按写下来的平局规则找到最热的格子。", "种子的标准答案：最热格子是第 1 列第 0 行，值为三点五。", "分散布局的标准答案：第 2 列第 0 行，值为三点三三。", "暂停并猜一猜：你分散了单元，拥塞峰值下降了。", "布线器应该庆祝吗？", "先检查总溢出。"]}, "storageKey": "lab6-lesson-speed"});
+</script>
+</body>
+</html>

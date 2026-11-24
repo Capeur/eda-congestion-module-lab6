@@ -814,3 +814,39 @@ $P $SK/scripts/check_lesson.py docs/lessons/part-N/index.html docs/fr/lessons/pa
 all equal to the checker; parts 4-5 also 200 seeds, 0 differ. `check_sentences.py` clean; `test_site.py` 161 checks
 0 failed; `test_lab_site.py` 206 ok 0 FAIL. Every number in a storyboard comes from the plan (which got it from the
 checker) or the checker's `--json`; the trace files were never edited or regenerated.
+
+## 20. Stage 5b Part 5 (Lab 06 site `eda-congestion-module-lab6`, branch `pending/part-5`) — done 2026-11-24
+
+Final part of the Lab 06 congestion lessons (slides 24–28, "Cooled, not cold"). Per-part detail, commands and
+verbatim gates: `lessons/part-5/README.md`. Storyboard `lessons/part-5/storyboard.json` (one file, EN + FR,
+scene `placement`, v5.1 heat grid): opens on the **feedback placement** (`run: "after"`, pinned in
+`placement.data.runs.after` from the checker's `--json` `feedback` block with the checker's own functions,
+asserted equal to `feedback.demandAfter` / `overflowAfter` / `hottestAfter`), switches to `congested_seed` at
+`slide:26`; no `deposit` keys, so `initial.deposit: "all"` stands and the map follows the run switch. 22
+sentences (per slide 4 6 4 5 3) in EN = FR = ZH; 19 anchors verified in both languages; 6 claims (run-level heat
+on `after` / `congested_seed` / `spread` + three raw placements), no event/per-net claims per the P2/P3 note.
+
+- Golden data: `.cache/congestion-check.json` regenerated read-only from `../eda-learning-lab6-cg`, `cmp`
+  byte-identical with `ai-workflow/skills/lesson-animator/examples/lab06-congestion-demo/data/congestion-check.json`;
+  checker 140 PASS, 0 FAIL, 0 SKIP.
+- Draft gate (`check_lesson.py --data` on both draft pages): **0 errors, 0 warnings**, claims 6/6, 18 deposit
+  events all equal, 20 claim values at 12 significant digits all equal (after moving the S24 tags and the S25
+  vocab to `y: 40` — the counter widget's box reaches ~33–37 % of the stage height on the right).
+- Voices (`LD_LIBRARY_PATH` unset): EN `en-US-AndrewMultilingualNeural` 22 sentences **108.3 s** (flaky
+  `NoAudioReceived` on sentences 9/13/18 across runs; reruns skip the cache, RC 0), FR
+  `fr-FR-RemyMultilingualNeural` 22 sentences **110.9 s** (RC 0 first run); ZH subtitles 22 sentences against the
+  EN timing.
+- Final `check_lesson.py --data` on `docs/lessons/part-5` + `docs/fr/lessons/part-5`: **0 errors, 0 warnings** both
+  languages; claims 6/6; 18 events all equal; 20 claim values at 12 digits all equal; question at 105.6 s (EN) /
+  108.3 s (FR). Both voiced contact sheets reviewed.
+- Players: `docs/lessons/index.html`, `docs/fr/lessons/index.html` — **5 part(s), 10.2 min in all** both languages.
+- Site gates (`build_site.py --repo ../eda-learning-lab6-cg`, `serve.py docs 8090`): sentence check clean
+  (28 slides; EN 122, FR 122, ZH 122); `tools/test_site.py` **168 checks, 0 failed** (en 78, fr 78, static 12 —
+  one earlier run had a single `net::ERR_ABORTED` FAIL from the test's own `goto`+`reload` race on the FR part-5
+  iframe; the rerun is clean); `tools/test_lab_site.py` **112 ok, 0 FAIL in all** (en 56, fr 56).
+- Click-through Part 5 EN+FR at 127.0.0.1:8090: subtitles over the voice (EN/FR/ZH via the menu), place kept
+  across the language switch (`#part-5&s=4` → FR page seeks to 17.84 s = sentence 4's FR start), Sounds button
+  toggles, `errors: []`, `dataDiffer` = 0, audio 200, no page errors.
+- Driver loop: all work committed and pushed on `pending/part-5` only; `main` never pushed (local `main` was
+  fast-forwarded to the promoted Part 4 commit `2c4f687` before branching; `origin/main` was still at the Part 3
+  commit `bd997d5`).

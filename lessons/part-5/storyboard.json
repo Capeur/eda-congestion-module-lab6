@@ -1,0 +1,1090 @@
+{
+ "scene": "placement",
+ "pageTitle": {
+  "en": "Lab 06 · Part 5 — Cooled, not cold",
+  "fr": "Lab 06 · Partie 5 — Refroidie, pas froide"
+ },
+ "eyebrow": {
+  "en": "Lab 06 · animated lesson 5 of 5",
+  "fr": "Lab 06 · leçon animée 5 sur 5"
+ },
+ "title": {
+  "en": "Cooled, not cold",
+  "fr": "Refroidie, pas froide"
+ },
+ "lede": {
+  "en": "One feedback pass cooled the seed: no tile is oversubscribed, the count is zero, and the hottest tile sits exactly at capacity — cooled, not cold. Remember the six words of the lab, then it is your turn: the browser lab for the heat map, Python for your own map, and one last question whose answer is peak against total. Drag a cell in the try-it panel and watch the wirelength and overflow readout; the player's next button then opens the browser lab and the quiz sits on the site page.",
+  "fr": "Une passe de rétroaction a refroidi la graine : aucune tuile n'est sursaturée, le compte est zéro, et la tuile la plus chaude est exactement à la capacité — refroidie, pas froide. Retenez les six mots du lab, puis à vous : le labo navigateur pour la carte de chaleur, Python pour votre propre carte, et une dernière question dont la réponse oppose le pic au total. Faites glisser une cellule dans le panneau d'essai et regardez la longueur de fil et le débordement ; le bouton suivant du lecteur ouvre le labo navigateur, et le quiz est sur la page du site."
+ },
+ "placement": {
+  "run": "after",
+  "floorBox": [
+   36,
+   168,
+   344,
+   229.3
+  ],
+  "data": {
+   "runs": {
+    "after": {
+     "cells": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F"
+     ],
+     "nets": [
+      [
+       "A",
+       "B"
+      ],
+      [
+       "C",
+       "D"
+      ],
+      [
+       "A",
+       "C"
+      ],
+      [
+       "B",
+       "D"
+      ],
+      [
+       "A",
+       "B",
+       "C",
+       "D"
+      ],
+      [
+       "E",
+       "F"
+      ]
+     ],
+     "start": {
+      "A": {
+       "x": 5.75,
+       "y": 2.0
+      },
+      "B": {
+       "x": 6.25,
+       "y": 2.0
+      },
+      "C": {
+       "x": 5.75,
+       "y": 2.5
+      },
+      "D": {
+       "x": 6.25,
+       "y": 2.5
+      },
+      "E": {
+       "x": 6.0,
+       "y": 2.25
+      },
+      "F": {
+       "x": 6.5,
+       "y": 2.25
+      }
+     },
+     "walls": {
+      "min": 0,
+      "max": 12.0
+     },
+     "moves": 0,
+     "seed": 0,
+     "t0": 1,
+     "cool": 1,
+     "step": 1,
+     "frozen": [],
+     "events": [
+      {
+       "net": 0,
+       "pins": [
+        "A",
+        "B"
+       ],
+       "bbox": [
+        5.75,
+        2.0,
+        6.25,
+        2.0
+       ],
+       "hpwl": 0.5,
+       "tiles": [
+        [
+         1,
+         0
+        ],
+        [
+         2,
+         0
+        ]
+       ],
+       "share": 0.25,
+       "demandAfter": [
+        [
+         0.0,
+         0.0
+        ],
+        [
+         0.25,
+         0.0
+        ],
+        [
+         0.25,
+         0.0
+        ],
+        [
+         0.0,
+         0.0
+        ]
+       ]
+      },
+      {
+       "net": 1,
+       "pins": [
+        "C",
+        "D"
+       ],
+       "bbox": [
+        5.75,
+        2.5,
+        6.25,
+        2.5
+       ],
+       "hpwl": 0.5,
+       "tiles": [
+        [
+         1,
+         0
+        ],
+        [
+         2,
+         0
+        ]
+       ],
+       "share": 0.25,
+       "demandAfter": [
+        [
+         0.0,
+         0.0
+        ],
+        [
+         0.5,
+         0.0
+        ],
+        [
+         0.5,
+         0.0
+        ],
+        [
+         0.0,
+         0.0
+        ]
+       ]
+      },
+      {
+       "net": 2,
+       "pins": [
+        "A",
+        "C"
+       ],
+       "bbox": [
+        5.75,
+        2.0,
+        5.75,
+        2.5
+       ],
+       "hpwl": 0.5,
+       "tiles": [
+        [
+         1,
+         0
+        ]
+       ],
+       "share": 0.5,
+       "demandAfter": [
+        [
+         0.0,
+         0.0
+        ],
+        [
+         1.0,
+         0.0
+        ],
+        [
+         0.5,
+         0.0
+        ],
+        [
+         0.0,
+         0.0
+        ]
+       ]
+      },
+      {
+       "net": 3,
+       "pins": [
+        "B",
+        "D"
+       ],
+       "bbox": [
+        6.25,
+        2.0,
+        6.25,
+        2.5
+       ],
+       "hpwl": 0.5,
+       "tiles": [
+        [
+         2,
+         0
+        ]
+       ],
+       "share": 0.5,
+       "demandAfter": [
+        [
+         0.0,
+         0.0
+        ],
+        [
+         1.0,
+         0.0
+        ],
+        [
+         1.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0
+        ]
+       ]
+      },
+      {
+       "net": 4,
+       "pins": [
+        "A",
+        "B",
+        "C",
+        "D"
+       ],
+       "bbox": [
+        5.75,
+        2.0,
+        6.25,
+        2.5
+       ],
+       "hpwl": 1.0,
+       "tiles": [
+        [
+         1,
+         0
+        ],
+        [
+         2,
+         0
+        ]
+       ],
+       "share": 0.5,
+       "demandAfter": [
+        [
+         0.0,
+         0.0
+        ],
+        [
+         1.5,
+         0.0
+        ],
+        [
+         1.5,
+         0.0
+        ],
+        [
+         0.0,
+         0.0
+        ]
+       ]
+      },
+      {
+       "net": 5,
+       "pins": [
+        "E",
+        "F"
+       ],
+       "bbox": [
+        6.0,
+        2.25,
+        6.5,
+        2.25
+       ],
+       "hpwl": 0.5,
+       "tiles": [
+        [
+         2,
+         0
+        ]
+       ],
+       "share": 0.5,
+       "demandAfter": [
+        [
+         0.0,
+         0.0
+        ],
+        [
+         1.5,
+         0.0
+        ],
+        [
+         2.0,
+         0.0
+        ],
+        [
+         0.0,
+         0.0
+        ]
+       ]
+      }
+     ],
+     "demand": [
+      [
+       0.0,
+       0.0
+      ],
+      [
+       1.5,
+       0.0
+      ],
+      [
+       2.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0
+      ]
+     ],
+     "congestion": [
+      [
+       0.0,
+       0.0
+      ],
+      [
+       0.75,
+       0.0
+      ],
+      [
+       1.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0
+      ]
+     ],
+     "overflow": {
+      "perCell": [
+       [
+        0.0,
+        0.0
+       ],
+       [
+        0.0,
+        0.0
+       ],
+       [
+        0.0,
+        0.0
+       ],
+       [
+        0.0,
+        0.0
+       ]
+      ],
+      "total": 0.0,
+      "max": 0.0,
+      "count": 0
+     },
+     "hottest": {
+      "i": 2,
+      "j": 0,
+      "v": 1.0
+     },
+     "heat": {
+      "mode": "relative-to-max",
+      "maxC": 1.0,
+      "t": [
+       [
+        0.0,
+        0.0
+       ],
+       [
+        0.75,
+        0.0
+       ],
+       [
+        1.0,
+        0.0
+       ],
+       [
+        0.0,
+        0.0
+       ]
+      ]
+     },
+     "capacity": 2.0
+    }
+   }
+  },
+  "claims": [
+   {
+    "run": "after",
+    "start": 3.5,
+    "demand": 3.5,
+    "hottest": {
+     "i": 2,
+     "j": 0,
+     "v": 1
+    },
+    "ovtotal": 0,
+    "ovmax": 0,
+    "ovcount": 0
+   },
+   {
+    "run": "congested_seed",
+    "start": 7,
+    "demand": 7,
+    "hottest": {
+     "i": 1,
+     "j": 0,
+     "v": 3.5
+    },
+    "ovtotal": 5,
+    "ovmax": 5,
+    "ovcount": 1
+   },
+   {
+    "run": "spread",
+    "start": 34,
+    "demand": 34,
+    "hottest": {
+     "i": 2,
+     "j": 0,
+     "v": 3.33333333333
+    },
+    "ovtotal": 22,
+    "ovmax": 4.66666666667,
+    "ovcount": 6
+   },
+   {
+    "positions": {
+     "A": {
+      "x": 4.0,
+      "y": 2.0
+     },
+     "B": {
+      "x": 5.0,
+      "y": 2.0
+     },
+     "C": {
+      "x": 4.0,
+      "y": 3.0
+     },
+     "D": {
+      "x": 5.0,
+      "y": 3.0
+     },
+     "E": {
+      "x": 4.5,
+      "y": 2.5
+     },
+     "F": {
+      "x": 5.5,
+      "y": 2.5
+     }
+    },
+    "hpwl": 7
+   },
+   {
+    "positions": {
+     "A": {
+      "x": 1.0,
+      "y": 1.0
+     },
+     "B": {
+      "x": 8.0,
+      "y": 1.0
+     },
+     "C": {
+      "x": 1.0,
+      "y": 5.0
+     },
+     "D": {
+      "x": 8.0,
+      "y": 5.0
+     },
+     "E": {
+      "x": 5.0,
+      "y": 3.0
+     },
+     "F": {
+      "x": 6.0,
+      "y": 3.0
+     }
+    },
+    "hpwl": 34
+   },
+   {
+    "positions": {
+     "A": {
+      "x": 5.75,
+      "y": 2.0
+     },
+     "B": {
+      "x": 6.25,
+      "y": 2.0
+     },
+     "C": {
+      "x": 5.75,
+      "y": 2.5
+     },
+     "D": {
+      "x": 6.25,
+      "y": 2.5
+     },
+     "E": {
+      "x": 6.0,
+      "y": 2.25
+     },
+     "F": {
+      "x": 6.5,
+      "y": 2.25
+     }
+    },
+    "hpwl": 3.5,
+    "demand": 3.5,
+    "hottest": {
+     "i": 2,
+     "j": 0,
+     "v": 1
+    },
+    "ovtotal": 0,
+    "ovmax": 0,
+    "ovcount": 0
+   }
+  ]
+ },
+ "anchors": {
+  "afterpass24": {
+   "slide": 24,
+   "en": "After",
+   "fr": "Après"
+  },
+  "hottest24": {
+   "slide": 24,
+   "en": "hottest",
+   "fr": "chaude"
+  },
+  "capacity24": {
+   "slide": 24,
+   "en": "capacity",
+   "fr": "capacité"
+  },
+  "cooled24": {
+   "slide": 24,
+   "en": "Cooled",
+   "fr": "Refroidie"
+  },
+  "congestion25": {
+   "slide": 25,
+   "en": "Congestion",
+   "fr": "congestion"
+  },
+  "oversubscribed25": {
+   "slide": 25,
+   "en": "oversubscribed",
+   "fr": "sursaturée"
+  },
+  "rudy25": {
+   "slide": 25,
+   "en": "RUDY",
+   "fr": "RUDY"
+  },
+  "argmax25": {
+   "slide": 25,
+   "en": "argmax",
+   "fr": "argmax"
+  },
+  "overflow25": {
+   "slide": 25,
+   "en": "Overflow",
+   "fr": "débordement"
+  },
+  "peak25": {
+   "slide": 25,
+   "en": "Peak",
+   "fr": "pic"
+  },
+  "browser26": {
+   "slide": 26,
+   "en": "browser",
+   "fr": "navigateur"
+  },
+  "lights26": {
+   "slide": 26,
+   "en": "lights",
+   "fr": "allume"
+  },
+  "drag26": {
+   "slide": 26,
+   "en": "Drag",
+   "fr": "glisser"
+  },
+  "runfeedback26": {
+   "slide": 26,
+   "en": "run feedback",
+   "fr": "rétroaction"
+  },
+  "divide27": {
+   "slide": 27,
+   "en": "Divide",
+   "fr": "Divisez"
+  },
+  "tiebreak27": {
+   "slide": 27,
+   "en": "tie-break",
+   "fr": "départage"
+  },
+  "goldseed27": {
+   "slide": 27,
+   "en": "Golden seed",
+   "fr": "graine"
+  },
+  "goldspread27": {
+   "slide": 27,
+   "en": "Golden spread",
+   "fr": "dispersion"
+  },
+  "guess28": {
+   "slide": 28,
+   "en": "guess",
+   "fr": "devinez"
+  }
+ },
+ "pausing": {
+  "between": 0.55,
+  "scene": 0.9,
+  "question": 1.3,
+  "tail": 2.6
+ },
+ "pauses": [
+  {
+   "after": "@cooled24",
+   "sec": 1.2
+  }
+ ],
+ "initial": {
+  "run": "after",
+  "move": 0,
+  "deposit": "all",
+  "side": 0
+ },
+ "timeline": [
+  {
+   "at": "slide:26",
+   "run": "congested_seed"
+  },
+  {
+   "at": "slide:28:end+0.2",
+   "dim": 0.12
+  }
+ ],
+ "show": [
+  {
+   "show": "heat",
+   "from": "start",
+   "to": "end"
+  },
+  {
+   "show": "nets",
+   "from": "start",
+   "to": "end"
+  },
+  {
+   "show": "netlabels",
+   "from": "@browser26",
+   "to": "end"
+  },
+  {
+   "show": "counter",
+   "from": "@afterpass24",
+   "to": "@hottest24",
+   "metric": "ovcount"
+  },
+  {
+   "show": "counter",
+   "from": "@hottest24",
+   "to": "@capacity24",
+   "metric": "ovtotal"
+  },
+  {
+   "show": "counter",
+   "from": "@capacity24",
+   "to": "@drag26",
+   "metric": "hottestTile"
+  },
+  {
+   "show": "counter",
+   "from": "@drag26",
+   "to": "end",
+   "metric": "hpwl",
+   "label": {
+    "en": "wirelength",
+    "fr": "longueur de fil"
+   }
+  },
+  {
+   "show": "highlight",
+   "from": "@hottest24",
+   "to": "slide:26",
+   "ids": [
+    "t2,0"
+   ]
+  },
+  {
+   "show": "highlight",
+   "from": "slide:26",
+   "to": "end",
+   "ids": [
+    "t1,0"
+   ]
+  }
+ ],
+ "overlays": [
+  {
+   "from": "start",
+   "to": "slide:25",
+   "x": 3,
+   "y": 4,
+   "type": "headline",
+   "text": {
+    "en": "**Cooled**, not cold",
+    "fr": "**Refroidie**, pas froide"
+   },
+   "sub": {
+    "en": "{After the pass@afterpass24}: no tile is oversubscribed",
+    "fr": "{Après la passe@afterpass24} : aucune tuile sursaturée"
+   }
+  },
+  {
+   "from": "slide:24",
+   "to": "slide:25",
+   "x": 44,
+   "y": 40,
+   "type": "tags",
+   "items": [
+    {
+     "text": {
+      "en": "count ##0##, total overflow ##0##",
+      "fr": "compte ##0##, débordement total ##0##"
+     },
+     "at": "@afterpass24"
+    },
+    {
+     "text": {
+      "en": "hottest: column two row zero, exactly ##1##",
+      "fr": "plus chaude : colonne deux ligne zéro, exactement ##1##"
+     },
+     "at": "@hottest24"
+    },
+    {
+     "text": {
+      "en": "right at capacity, not below it",
+      "fr": "exactement à la capacité, pas en dessous"
+     },
+     "at": "@capacity24"
+    },
+    {
+     "text": {
+      "en": "**cooled** is not **cold**",
+      "fr": "**refroidie** n'est pas **froide**"
+     },
+     "at": "@cooled24"
+    }
+   ]
+  },
+  {
+   "from": "slide:25",
+   "to": "slide:26",
+   "x": 3,
+   "y": 4,
+   "type": "headline",
+   "text": {
+    "en": "**Remember**",
+    "fr": "**Souvenez-vous**"
+   }
+  },
+  {
+   "from": "slide:25",
+   "to": "slide:26",
+   "x": 44,
+   "y": 40,
+   "type": "vocab",
+   "items": [
+    {
+     "k": {
+      "en": "Congestion",
+      "fr": "Congestion"
+     },
+     "text": {
+      "en": "demand over capacity, per tile",
+      "fr": "demande sur capacité, par tuile"
+     },
+     "at": "@congestion25"
+    },
+    {
+     "k": {
+      "en": "Oversubscribed",
+      "fr": "Sursaturée"
+     },
+     "text": {
+      "en": "congestion above one",
+      "fr": "congestion au-dessus de un"
+     },
+     "at": "@oversubscribed25"
+    },
+    {
+     "k": {
+      "en": "RUDY",
+      "fr": "RUDY"
+     },
+     "text": {
+      "en": "wire split evenly over touched tiles",
+      "fr": "fil réparti également entre les tuiles"
+     },
+     "at": "@rudy25"
+    },
+    {
+     "k": {
+      "en": "Argmax",
+      "fr": "Argmax"
+     },
+     "text": {
+      "en": "first max in scan order wins ties",
+      "fr": "le premier max du balayage gagne"
+     },
+     "at": "@argmax25"
+    },
+    {
+     "k": {
+      "en": "Overflow",
+      "fr": "Débordement"
+     },
+     "text": {
+      "en": "demand minus capacity, if > 0",
+      "fr": "demande moins capacité, si > 0"
+     },
+     "at": "@overflow25"
+    },
+    {
+     "k": {
+      "en": "Peak vs total",
+      "fr": "Pic contre total"
+     },
+     "text": {
+      "en": "move in opposite directions",
+      "fr": "évoluent en sens inverse"
+     },
+     "at": "@peak25"
+    }
+   ]
+  },
+  {
+   "from": "slide:26",
+   "to": "slide:27",
+   "x": 3,
+   "y": 4,
+   "type": "headline",
+   "text": {
+    "en": "Your turn in the **browser**",
+    "fr": "À vous dans le **navigateur**"
+   }
+  },
+  {
+   "from": "slide:26",
+   "to": "slide:27",
+   "x": 44,
+   "y": 40,
+   "type": "tags",
+   "items": [
+    {
+     "text": {
+      "en": "seed lights one tile at ##3.5##",
+      "fr": "la graine allume une tuile à ##3,5##"
+     },
+     "at": "@lights26"
+    },
+    {
+     "text": {
+      "en": "drag cell A across the boundary",
+      "fr": "glissez la cellule A à travers la frontière"
+     },
+     "at": "@drag26"
+    },
+    {
+     "text": {
+      "en": "run feedback: total overflow falls to ##0##",
+      "fr": "lancez la rétroaction : le débordement total tombe à ##0##"
+     },
+     "at": "@runfeedback26"
+    }
+   ]
+  },
+  {
+   "from": "slide:27",
+   "to": "slide:28",
+   "x": 3,
+   "y": 4,
+   "type": "headline",
+   "text": {
+    "en": "Your turn in **Python**",
+    "fr": "À vous en **Python**"
+   }
+  },
+  {
+   "from": "slide:27",
+   "to": "slide:28",
+   "x": 44,
+   "y": 40,
+   "type": "tags",
+   "items": [
+    {
+     "text": {
+      "en": "divide a demand matrix by capacity",
+      "fr": "divisez une matrice de demande par la capacité"
+     },
+     "at": "@divide27"
+    },
+    {
+     "text": {
+      "en": "hottest with the written tie-break",
+      "fr": "la plus chaude avec la règle de départage écrite"
+     },
+     "at": "@tiebreak27"
+    },
+    {
+     "text": {
+      "en": "golden seed: (1,0) at ##3.5##",
+      "fr": "graine de référence : (1,0) à ##3,5##"
+     },
+     "at": "@goldseed27"
+    },
+    {
+     "text": {
+      "en": "golden spread: (2,0) at ##3.33##",
+      "fr": "dispersion de référence : (2,0) à ##3,33##"
+     },
+     "at": "@goldspread27"
+    }
+   ]
+  },
+  {
+   "from": "slide:28",
+   "to": "slide:28:end+0.2",
+   "x": 3,
+   "y": 4,
+   "type": "headline",
+   "text": {
+    "en": "One **last** question",
+    "fr": "Une **dernière** question"
+   },
+   "sub": {
+    "en": "{Pause and guess@guess28}: the peak fell — celebrate?",
+    "fr": "{Faites une pause et devinez@guess28} : le pic a baissé — on célèbre ?"
+   }
+  },
+  {
+   "from": "slide:28:end+0.3",
+   "to": "end",
+   "x": 50,
+   "y": 44,
+   "type": "question"
+  }
+ ],
+ "question": {
+  "at": "slide:28:end+0.3",
+  "text": {
+   "en": "You spread the cells and the **peak** fell. Should the router celebrate?",
+   "fr": "Vous avez dispersé les cellules et le **pic** a baissé. Le routeur devrait-il célébrer ?"
+  },
+  "hint": {
+   "en": "Check the total overflow too.",
+   "fr": "Vérifiez d'abord le débordement total."
+  },
+  "options": [
+   {
+    "label": {
+     "en": "Yes, the peak fell",
+     "fr": "Oui, le pic a baissé"
+    },
+    "reply": {
+     "en": "Only half the story: the total overflow rose from five to twenty-two, and six tiles are oversubscribed now.",
+     "fr": "Seulement la moitié de l'histoire : le débordement total est monté de cinq à vingt-deux, et six tuiles sont sursaturées maintenant."
+    },
+    "correct": false
+   },
+   {
+    "label": {
+     "en": "No: the peak fell but the total rose",
+     "fr": "Non : le pic a baissé mais le total a monté"
+    },
+    "reply": {
+     "en": "Right: peak three point five to three point three three, total five to twenty-two, count one to six. Celebrate only when both fall.",
+     "fr": "Exact : pic de trois virgule cinq à trois virgule trois trois, total de cinq à vingt-deux, compte de un à six. On ne célèbre que quand les deux baissent."
+    },
+    "correct": true
+   },
+   {
+    "label": {
+     "en": "Yes, if the wires got shorter",
+     "fr": "Oui, si les fils ont raccourci"
+    },
+    "reply": {
+     "en": "Spreading lengthened the wires: seven to thirty-four. The peak is not the whole story.",
+     "fr": "Disperser a allongé les fils : de sept à trente-quatre. Le pic n'est pas toute l'histoire."
+    },
+    "correct": false
+   }
+  ]
+ },
+ "chapters": [
+  {
+   "at": "start",
+   "title": {
+    "en": "Cooled, not cold",
+    "fr": "Refroidie, pas froide"
+   }
+  },
+  {
+   "at": "slide:25",
+   "title": {
+    "en": "Remember",
+    "fr": "Souvenez-vous"
+   }
+  },
+  {
+   "at": "slide:26",
+   "title": {
+    "en": "Your turn",
+    "fr": "À vous"
+   }
+  }
+ ],
+ "note": {
+  "en": "Every number comes from the Lab 06 checker's --json (.cache/congestion-check.json, regenerated read-only from eda-learning-lab6-cg and byte-compared with the skill demo's copy); the engine recomputes every deposit event, and check_lesson.py --data compares every claim with the file at 12 significant digits.",
+  "fr": "Chaque nombre vient du --json du vérificateur du Lab 06 (.cache/congestion-check.json, régénéré en lecture seule depuis eda-learning-lab6-cg et comparé octet par octet avec la copie de la démo de la compétence) ; le moteur recalcule chaque événement de dépôt, et check_lesson.py --data compare chaque affirmation au fichier avec 12 chiffres significatifs."
+ }
+}
