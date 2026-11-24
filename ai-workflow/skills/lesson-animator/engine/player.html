@@ -67,7 +67,8 @@ h1 { font-family: var(--display); font-weight: 700; font-size: clamp(24px, 3.4vw
   auto.checked = get("-auto", "1") === "1";
   auto.addEventListener("change", () => { set("-auto", auto.checked ? "1" : "0"); if (!auto.checked) cancel(); });
   const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
-  let cur = -1, timer = 0, at = 0;
+  const DELAY = CFG.nextDelay != null ? CFG.nextDelay : 7;   // v5.2: next-part countdown in seconds (default 7, was 4 in 5.1)
+  let cur = -1, timer = 0, at = 0, armedBy = null;
   const btns = P.map((p, i) => {
     const li = document.createElement("li"), b = document.createElement("button");
     b.type = "button";
@@ -85,7 +86,7 @@ h1 { font-family: var(--display); font-weight: 700; font-size: clamp(24px, 3.4vw
     // the other languages open on the same part
     document.querySelectorAll(".pl-links a[data-lang]").forEach((a) => { a.href = a.dataset.base + "#part-" + P[cur].n + (at > 0 ? "&s=" + at : ""); });
   }
-  function cancel() { clearInterval(timer); timer = 0; nextBox.classList.remove("on"); }
+  function cancel() { clearInterval(timer); timer = 0; armedBy = null; nextBox.classList.remove("on"); }
   function load(i, play, s) {
     if (i < 0 || i >= P.length) return;
     cancel(); cur = i; at = s || 0;
@@ -93,27 +94,37 @@ h1 { font-family: var(--display); font-weight: 700; font-size: clamp(24px, 3.4vw
     try { history.replaceState(null, "", "#part-" + P[i].n); } catch (e) { /* file: pages */ }
     paint();
   }
-  function ended() {
-    done.add(P[cur].n); set("-done", [...done].join(",")); paint();
+  // v5.2: one routine arms the next box for "ended" and for "answered" (the question card of the part was
+  // answered while the lesson is frozen at the pause); if a countdown is already armed, it is ignored (no
+  // double countdown when "ended" then arrives for the same part)
+  function armNext(by) {
+    if (timer) return false;   // a countdown is already armed: no double countdown
+    armedBy = by;
     const nx = P[cur + 1];
     const msg = nextBox.querySelector(".grow"), now = nextBox.querySelector('[data-act="now"]'), stay = nextBox.querySelector('[data-act="stay"]');
     if (!nx) {
       msg.innerHTML = `<b></b>`; msg.firstChild.textContent = T.end;
       now.style.display = CFG.nextUrl ? "" : "none"; now.textContent = CFG.nextLabel || ""; now.onclick = () => { (window.top || window).location.href = CFG.nextUrl; };
-      stay.style.display = "none"; nextBox.classList.add("on"); return;
+      stay.style.display = "none"; nextBox.classList.add("on"); return true;
     }
     now.style.display = stay.style.display = ""; now.textContent = T.playNow; stay.textContent = T.stay;
     now.onclick = () => load(cur + 1, true); stay.onclick = cancel;
-    let left = auto.checked ? 4 : 0;
+    let left = auto.checked ? DELAY : 0;
     const say = () => { msg.innerHTML = "<b></b> <span></span>"; msg.firstChild.textContent = `${T.nextUp} ${T.part.replace("{n}", nx.n)}: ${nx.title}`; msg.lastChild.textContent = left > 0 ? T.inSec.replace("{s}", left) : ""; };
     say(); nextBox.classList.add("on");
     if (auto.checked) timer = setInterval(() => { left--; if (left <= 0) load(cur + 1, true); else say(); }, 1000);
+    return true;
+  }
+  function ended() {
+    done.add(P[cur].n); set("-done", [...done].join(",")); paint();
+    armNext("ended");   // v5.2: ignored when "answered" already armed the countdown for this part
   }
   window.addEventListener("message", (e) => {
     if (e.source !== frame.contentWindow || !e.data || !e.data.lesson) return;
     if (e.data.ev === "height") frame.style.height = Math.max(400, e.data.h + 8) + "px";
     else if (e.data.ev === "ended") ended();
-    else if (e.data.ev === "play") cancel();
+    else if (e.data.ev === "answered") armNext("answered");   // v5.2: the card was answered; same next-box countdown
+    else if (e.data.ev === "play") { if (armedBy !== "answered") cancel(); }   // v5.2: a resume after "answered" keeps the armed countdown
     else if (e.data.ev === "at") { at = e.data.s; paint(); }
   });
   $('[data-act="prev"]').addEventListener("click", () => load(cur - 1, true));

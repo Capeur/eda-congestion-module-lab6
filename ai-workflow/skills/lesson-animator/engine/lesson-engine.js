@@ -25,6 +25,16 @@
  * hottestTile follow the replay; "highlight" also accepts tile ids "t{i},{j}"; the try-it readout gains the overflow
  * (R7) beside the wirelength; cells may carry draw sizes. Performance: the built pages reference one shared, cached
  * lesson-engine.js instead of inlining the engine, and the audio preloads metadata only.
+ *
+ * v5.2 (2026-11-24), "pause and guess" finish-flow fix (Lab 06): while the stage holds the class "asking" (the
+ * auto-pause at question.at), the question card ignores the fade math and renders at opacity 1, transform none,
+ * above the scene dim — the fade computes exactly 0 at the pause (the card's window starts at QT), which used to
+ * leave the stage empty until playback resumed. Answering a card option still shows the reply in .qans and plays
+ * the win/miss sound, but now FREEZES: no resume, "asking" stays, and when the page is embedded in the all-parts
+ * player it posts { lesson: 1, ev: "answered", t } to the parent (the player arms its next-part countdown on it).
+ * A manual resume (the play button or Space) removes "asking" and plays the remaining tail; the card then follows
+ * its window as before and audio "ended" fires normally. The player shell's next-part countdown default goes 4 s →
+ * 7 s (build_player.py --next-delay).
  */
 (function () {
   "use strict";
@@ -367,6 +377,9 @@
       for (const o of OV) {
         const on = !F && ovStyle(o.d, t, o.a, o.b);
         if (F) { o.d.style.opacity = 0; }
+        // v5.2: while the auto-pause holds the stage ("asking"), the question card ignores the fade math and is
+        // pinned fully visible, above the scene dim (at the pause itself the fade computes exactly 0)
+        else if (o.type === "question" && stage.classList.contains("asking")) { o.d.style.opacity = 1; o.d.style.transform = "none"; }
         for (const p of o.parts) {
           const po = on && t >= p.t ? clamp((t - p.t) / (reduce ? 0.01 : 0.3)) : 0;
           p.e.style.opacity = po;
@@ -539,6 +552,7 @@
     function play() {
       if (cx.FREE) cx.leaveFree();
       if (au.ended || au.currentTime >= DUR - 0.05) { au.currentTime = 0; resetAsk(0); }
+      stage.classList.remove("asking");   // v5.2: a manual resume leaves the pinned card; it follows its window again
       const p = au.play(); if (p && p.catch) p.catch(() => {});
     }
     let pendT = null;
@@ -609,8 +623,9 @@
         const op = qa.options[+b.dataset.q];
         layer.querySelector(".qans").innerHTML = md(L(op.reply));
         if (op.correct === true) cx.sfx("win"); else if (op.correct === false) cx.sfx("miss");
-        stage.classList.remove("asking");
-        const p = au.play(); if (p && p.catch) p.catch(() => {});
+        // v5.2: answering FREEZES the scene at the pause — no resume, "asking" stays (play / Space resumes the
+        // tail); when embedded, tell the player, which arms its next-part countdown on "answered"
+        post("answered", { t: au.currentTime });
       }));
     }
 

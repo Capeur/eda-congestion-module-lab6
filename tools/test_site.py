@@ -17,7 +17,9 @@ there and the lab has no tests/ folder.
 The lesson player is shown on the page only when docs/[fr/]lessons/index.html exists, and the page says nothing
 about lessons otherwise: both directions are checked. Once the player exists (per language): it lists every built
 part with a title and a length; a landing-only visit downloads no part page; #part-N opens part N; `ended` from a part
-shows the countdown and then loads part N+1; the language link carries #part-N; and every built part page has the
+shows the countdown (7 s, v5.2 --next-delay) and then loads part N+1; v5.2: the question auto-pause pins the card
+fully visible without any resume, and answering an option freezes the scene and arms the same next-box countdown
+from 7 s; the language link carries #part-N; and every built part page has the
 subtitles menu with the other language and 中文, the "Sounds" button, window.__lesson.errors empty, audio that answers
 200, no console error, no request outside the site. Parts not built yet are skipped, and the output says how many of
 the five exist. The lab's own challenges are tested by tools/test_lab_site.py.
@@ -208,10 +210,53 @@ def check_lessons(b, lang: str, t: dict, docs_lang: Path) -> None:
         pg.wait_for_selector(".pl-next.on", timeout=3000)
         msg = pg.inner_text(".pl-next")
         check(lang, "after `ended` the countdown box names the next part", t_next_title(lang, parts, 1) in msg, msg.replace("\n", " | "))
+        m7 = re.search(r"(\d+) s\b", msg)
+        check(lang, "after `ended` the countdown starts from 7 s (v5.2, --next-delay)", m7 is not None and m7.group(1) == "7", msg.replace("\n", " | "))
         check(lang, "the finished part is marked done in the list", "✓" in btns.nth(0).inner_text())
-        wait_part(pg, parts[1], timeout=9000)
+        wait_part(pg, parts[1], timeout=16000)   # v5.2: 7 s countdown + load (was 9000 ms for the old 4 s)
         check(lang, f"the countdown ends and part {parts[1]} loads by itself", pg.evaluate("window.__player.current()") == 1
               and not pg.locator(".pl-next.on").count())
+
+    # v5.2 finish flow, on every built part: autoplay the part page, the question auto-pause pins the card fully
+    # visible WITHOUT any resume; answering an option freezes the scene (reply shown, still paused, still asking)
+    # and the shell arms the same next box counting down from 7 s
+    for k in parts:
+        pg.goto(f"{BASE}/{pre}lessons/index.html#part-{k}", wait_until="networkidle")
+        pg.reload(wait_until="networkidle")
+        f = wait_part(pg, k)
+        f.evaluate("const L = window.__lesson; L.play(); L.seek(L.question - 1.2);")   # autoplay, jump just before the card
+        f.wait_for_function("document.querySelector('.stage').classList.contains('asking')", timeout=10000)
+        pin = f.evaluate("""() => { const au = document.getElementById('lesson-audio'), q = document.querySelector('.ov-question');
+            return { paused: au.paused, t: au.currentTime, qt: window.__lesson.question, op: +q.style.opacity, tf: q.style.transform }; }""")
+        check(lang, f"part {k}: the auto-pause stops at QT ({pin['t']:.2f}s) with the card fully visible, no resume (opacity {pin['op']}, transform {pin['tf']!r})",
+              pin["paused"] and abs(pin["t"] - pin["qt"]) < 0.05 and pin["op"] >= 0.95 and pin["tf"] == "none", str(pin))
+        f.click(".qbtns button >> nth=0")
+        pg.wait_for_timeout(400)
+        frz = f.evaluate("""() => { const au = document.getElementById('lesson-audio');
+            return { paused: au.paused, asking: document.querySelector('.stage').classList.contains('asking'),
+                     ans: document.querySelector('.qans').textContent.trim() }; }""")
+        check(lang, f"part {k}: answering shows the reply and freezes the scene (still paused, still asking)",
+              frz["paused"] and frz["asking"] and bool(frz["ans"]), str(frz))
+        pg.wait_for_selector(".pl-next.on", timeout=3000)
+        msg = pg.inner_text(".pl-next")
+        m = re.search(r"(\d+) s\b", msg)
+        if k != parts[-1]:
+            check(lang, f"part {k}: answering arms the shell's next box counting down from 7 s",
+                  m is not None and m.group(1) == "7", msg.replace("\n", " | "))
+        else:
+            check(lang, f"part {k}: answering on the last part shows the player's end box", m is None, msg.replace("\n", " | "))
+        if k == parts[0]:
+            # manual resume still works; `ended` while the countdown is armed must be ignored (no double countdown)
+            f.evaluate("window.__lesson.play()")
+            pg.wait_for_timeout(300)
+            res = f.evaluate("() => ({ asking: document.querySelector('.stage').classList.contains('asking'), paused: document.getElementById('lesson-audio').paused })")
+            check(lang, f"part {k}: a manual resume after answering removes 'asking' and plays the tail",
+                  not res["asking"] and not res["paused"], str(res))
+            f.evaluate("document.getElementById('lesson-audio').dispatchEvent(new Event('ended'))")
+            pg.wait_for_timeout(400)
+            m2 = re.search(r"(\d+) s\b", pg.inner_text(".pl-next"))
+            check(lang, f"part {k}: `ended` while the countdown is armed is ignored (no double countdown: shows {m2 and m2.group(1)} s, not 7)",
+                  m2 is not None and m2.group(1) != "7", pg.inner_text(".pl-next").replace("\n", " | "))
     pg.evaluate("localStorage.clear()")
     check(lang, "the player: no console error, no failed request, 0 external requests", not problems, "; ".join(problems[:3]))
     pg.close()

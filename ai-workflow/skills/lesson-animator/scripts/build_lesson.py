@@ -23,7 +23,7 @@ import shutil
 import sys
 from pathlib import Path
 
-VERSION = "5.1"   # lesson-animator; stamped into the page as <meta name="lesson:engine"> (build_player.py checks it)
+VERSION = "5.2"   # lesson-animator; stamped into the page as <meta name="lesson:engine"> (build_player.py checks it)
 
 HERE = Path(__file__).resolve().parent
 ENGINE = HERE.parent / "engine"

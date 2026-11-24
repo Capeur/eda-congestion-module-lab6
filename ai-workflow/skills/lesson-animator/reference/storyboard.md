@@ -120,7 +120,11 @@ Inline markup inside any text:
 "pausing": { "between": 0.55, "scene": 0.9, "question": 1.3, "tail": 2.0 },
 "pauses": [ { "after": "@sixteen", "sec": 1.3 }, { "after": "slide:2:end", "sec": 1.5 } ]
 ```
-- The player **stops at `question.at`** and waits for an answer on the stage, then plays the rest.
+- The player **stops at `question.at`** and waits for an answer on the stage. v5.2 finish flow: at the pause the
+  card is pinned fully visible (opacity 1, above the scene dim — its fade would compute 0 exactly at the pause);
+  clicking an option shows its reply and plays the win/miss sound but **freezes** (no resume, the card stays);
+  pressing play (or Space) resumes and plays the rest, and the audio `ended` fires normally. Embedded in the
+  all-parts player, an answered card posts `answered` to the shell, which arms its next-part countdown.
 - `bench.deal` adds the "deal a random split with seed" box. It uses the course's mulberry32 dealer, only for
   two-group partition labs.
 - `claims` are checked against the rules. Put every number the narration or the texts say here.

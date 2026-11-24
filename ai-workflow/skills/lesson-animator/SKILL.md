@@ -3,10 +3,24 @@ name: lesson-animator
 description: Turn one part of an eda-learning lab's narration into an animated, interactive lesson page drawn live in the browser and synced to the voice (word-timed text, zooms, counters, auto-pause "pause and guess", click-to-try, EN and FR from one storyboard), with natural pauses and optional MP4 export. Three scenes - "graph" (partitioning/clustering labs - nodes, splits, cut), "floorplan" (floorplanning labs - a B*-tree next to a floor of blocks that drop onto the skyline, swap/turn/move, bounding box) and "placement" (placement labs - cells and net boxes on a chip floor, a simulated-annealing run replayed move by move with dice, thermometer, tally and chart). Use when asked for a dynamic or animated video/lesson for a lab, or to add one next to the site's video parts.
 ---
 
-# Lesson animator (version 5.1)
+# Lesson animator (version 5.2)
 
 ## What changed
 
+- **5.2 (2026-11-24), "pause and guess" finish-flow fix (Lab 06 only; the engine and player only — no scene, storyboard,
+  voice or timing change, so every built part page is rebuilt as-is with the new engine):**
+  - While the stage holds the class `asking` (the auto-pause at `question.at`), the question card ignores the fade
+    math and renders at **opacity 1, transform none**, above the scene dim. Before, the card's window starts at QT,
+    so the 0.35 s fade computed exactly 0 at the pause and the card only appeared once playback resumed.
+  - Answering a card option still shows the reply in `.qans` and plays the win/miss sound, but now **freezes**: it
+    does not resume and does not remove `asking`. When the page is embedded in the all-parts player it posts
+    `{ lesson: 1, ev: "answered", t }` to the parent. The below-the-card bench options keep their text feedback.
+  - A manual resume (play button or Space) removes `asking` and plays the remaining tail; the card then follows its
+    window as before and the audio `ended` event fires normally.
+  - The player shell's next-part countdown default goes **4 s → 7 s** (`build_player.py --next-delay`, default 7,
+    written into the shell config). On `answered` for the current part the shell arms the same next-box countdown it
+    shows on `ended`; if `ended` for the same part arrives while a countdown is already armed, it is ignored (no
+    double countdown). The countdown still stops when the user navigates parts.
 - **5.1 (2026-11-23), placement scene — heat-grid overlay + generic `--data` + performance** (one version bump, as
   spec'd after the Lab 06 Stage 3 review):
   - `placement.heat` (from `--data <congestion checker --json>`, or pinned by the storyboard): the GCell lattice
@@ -117,8 +131,9 @@ gives pixel-identical frames and the same check result as version 3.
 7b. **The player with all parts** (once every part of a language is built, and again after any rebuild):
    `python3 scripts/build_player.py --lessons docs/lessons --lang en --heading "<lab title>" --eyebrow "Lab NN · animated lessons" --other fr=../fr/lessons/index.html --back ../index.html --next-url ../tools/<tool>/index.html --next-label "Open the browser lab" --storage-key labNN-lessons`
    (and the same for `docs/fr/lessons` with `--other en=../../lessons/index.html`). It writes `docs/lessons/index.html`:
-   part list with lengths and ✓ for finished parts, previous / next, the next part starts by itself after a 4 s
-   countdown (can be switched off), a link per part (`index.html#part-3`), and the language link opens the same part.
+   part list with lengths and ✓ for finished parts, previous / next, the next part starts by itself after a 7 s
+   countdown (default; `--next-delay S`, can be switched off — also armed when the part's question card is
+   answered, and an `ended` while that countdown is armed is ignored), a link per part (`index.html#part-3`), and the language link opens the same part.
    Each part page still works alone. Since v5.1 the first part page is loaded lazily: a landing-only visit
    (no `#part-N`) downloads no part page. Parts built before v5.0 step 2 must be rebuilt first, and parts built
    before v5.1 too (they must reference the shared `lesson-engine.js`); the script says which.

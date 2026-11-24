@@ -2,7 +2,8 @@
 """One player page for all the parts of a lab's animated lessons.
 
 It lists the built lesson pages of one language (<lessons>/part-N/index.html, made by build_lesson.py), plays the one
-you pick in a frame, moves on to the next part when one ends (a short countdown, can be switched off), remembers the
+you pick in a frame, moves on to the next part when one ends or when its question card is answered (a countdown, can be
+switched off; --next-delay seconds, 7 by default — 4 before v5.2), remembers the
 finished parts, takes a link per part (index.html#part-3) and links to the same part in the other languages.
 
   python3 build_player.py --lessons docs/lessons --lang en --heading "Simulated annealing placement" \\
@@ -58,6 +59,8 @@ def main() -> int:
     ap.add_argument("--next-label")
     ap.add_argument("--titles", type=Path, help='JSON list of part titles for this language, to replace the lesson pages\' own titles')
     ap.add_argument("--storage-key", default="lessons", help="localStorage prefix (finished parts, auto-continue)")
+    ap.add_argument("--next-delay", type=int, default=7, metavar="S",
+                    help="seconds of the next-part countdown shown after a part ends or its question card is answered (default 7; 4 before v5.2)")
     a = ap.parse_args()
 
     t = T.get(a.lang, T["en"])
@@ -100,7 +103,8 @@ def main() -> int:
     fdir = dirs[0] / "fonts"
     faces = "".join(f"@font-face{{font-family:'{fam}';font-weight:{wt};font-style:normal;font-display:swap;src:url({dirs[0].name}/fonts/{fn}) format('woff2')}}"
                     for fam, wt, fn in FONTS if (fdir / fn).is_file())
-    cfg = {"parts": parts, "t": t, "key": a.storage_key, "nextUrl": a.next_url, "nextLabel": a.next_label}
+    cfg = {"parts": parts, "t": t, "key": a.storage_key, "nextUrl": a.next_url, "nextLabel": a.next_label,
+           "nextDelay": a.next_delay}   # v5.2: the next-part countdown in seconds (default 7)
     page = (ENGINE / "player.html").read_text(encoding="utf-8")
     for k, v in {"__LANG__": a.lang, "__TITLE__": html.escape(a.heading), "__FONTS__": faces, "__EYEBROW__": html.escape(a.eyebrow),
                  "__HEADING__": html.escape(a.heading), "__LINKS__": "".join(links), "__T_LINKS__": t["links"], "__T_PARTS__": t["parts"],
