@@ -1,0 +1,215 @@
+{
+ "scene": "placement",
+ "pageTitle": {
+  "en": "Lab 06 · Part 2 — RUDY's even split",
+  "fr": "Lab 06 · Partie 2 — Le partage égal de RUDY"
+ },
+ "eyebrow": {
+  "en": "Lab 06 · animated lesson 2 of 5",
+  "fr": "Lab 06 · leçon animée 2 sur 5"
+ },
+ "title": {
+  "en": "RUDY's even split",
+  "fr": "Le partage égal de RUDY"
+ },
+ "lede": {
+  "en": "How does one wire become demand on several tiles? Watch RUDY split each net's wirelength evenly over the GCells its box touches: the seed builds to a demand of seven in tile (1,0), the spread placement spreads wider. Drag cell A past the grid line x = 6 in the try-it panel and watch the overflow readout.",
+  "fr": "Comment un fil devient-il de la demande sur plusieurs tuiles ? Regardez RUDY répartir également la longueur de fil de chaque réseau sur les GCells touchées par sa boîte : la graine monte à une demande de sept dans la tuile (1,0), le placement dispersé s'étale plus largement. Faites glisser la cellule A au-delà de la ligne de grille x = 6 dans le panneau d'essai et regardez le débordement."
+ },
+ "placement": {
+  "run": "congested_seed",
+  "floorBox": [36, 168, 344, 229.3],
+  "claims": [
+   { "run": "congested_seed", "start": 7, "demand": 7 },
+   { "positions": "start", "hpwl": 7 },
+   { "positions": "start", "net": 0, "hpwl": 1 },
+   { "positions": "start", "net": 1, "hpwl": 1 },
+   { "positions": "start", "net": 2, "hpwl": 1 },
+   { "positions": "start", "net": 3, "hpwl": 1 },
+   { "positions": "start", "net": 4, "hpwl": 2 },
+   { "positions": "start", "net": 5, "hpwl": 1 },
+   { "run": "congested_seed", "event": 0, "net": 0, "pins": ["A", "B"], "bbox": [4, 2, 5, 2], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": { "1,0": 1 } },
+   { "run": "congested_seed", "event": 1, "net": 1, "pins": ["C", "D"], "bbox": [4, 3, 5, 3], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": { "1,0": 2 } },
+   { "run": "congested_seed", "event": 2, "net": 2, "pins": ["A", "C"], "bbox": [4, 2, 4, 3], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": { "1,0": 3 } },
+   { "run": "congested_seed", "event": 3, "net": 3, "pins": ["B", "D"], "bbox": [5, 2, 5, 3], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": { "1,0": 4 } },
+   { "run": "congested_seed", "event": 4, "net": 4, "pins": ["A", "B", "C", "D"], "bbox": [4, 2, 5, 3], "hpwl": 2, "share": 2, "tiles": [[1, 0]], "demandAfter": { "1,0": 6 } },
+   { "run": "congested_seed", "event": 5, "net": 5, "pins": ["E", "F"], "bbox": [4.5, 2.5, 5.5, 2.5], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": { "1,0": 7 } },
+   { "run": "spread", "start": 34, "demand": 34, "hottest": { "i": 2, "j": 0, "v": 3.33333333333 } },
+   { "positions": { "A": { "x": 1, "y": 1 }, "B": { "x": 8, "y": 1 }, "C": { "x": 1, "y": 5 }, "D": { "x": 8, "y": 5 }, "E": { "x": 5, "y": 3 }, "F": { "x": 6, "y": 3 } }, "hpwl": 34 },
+   { "positions": { "A": { "x": 6.5, "y": 2 }, "B": { "x": 5, "y": 2 }, "C": { "x": 4, "y": 3 }, "D": { "x": 5, "y": 3 }, "E": { "x": 4.5, "y": 2.5 }, "F": { "x": 5.5, "y": 2.5 } }, "hpwl": 11.5, "ovtotal": 7.5, "ovcount": 2, "hottest": { "i": 1, "j": 0, "v": 3.625 } }
+  ]
+ },
+ "anchors": {
+  "answer6": { "slide": 6, "en": "answer", "fr": "réponse" },
+  "rudy6": { "slide": 6, "en": "RUDY", "fr": "RUDY" },
+  "bounding6": { "slide": 6, "en": "bounding", "fr": "boîte" },
+  "wirelength6": { "slide": 6, "en": "wirelength", "fr": "longueur" },
+  "share7": { "slide": 7, "en": "share", "fr": "part" },
+  "third7": { "slide": 7, "en": "third", "fr": "tiers" },
+  "order7": { "slide": 7, "en": "order", "fr": "ordre" },
+  "build8": { "slide": 8, "en": "build", "fr": "construire" },
+  "ab8": { "slide": 8, "en": "A B", "fr": "A B" },
+  "each8": { "slide": 8, "en": "each", "fr": "chacun" },
+  "big8": { "slide": 8, "en": "big", "fr": "grand" },
+  "ef8": { "slide": 8, "en": "E F", "fr": "E F" },
+  "corners9": { "slide": 9, "en": "corners", "fr": "coins" },
+  "stretches9": { "slide": 9, "en": "stretches", "fr": "s'étend" },
+  "thirds9": { "slide": 9, "en": "thirds", "fr": "tiers" },
+  "eleven10": { "slide": 10, "en": "eleven", "fr": "onze" },
+  "sixths10": { "slide": 10, "en": "sixths", "fr": "sixièmes" },
+  "ef10": { "slide": 10, "en": "E F", "fr": "E F" },
+  "empty10": { "slide": 10, "en": "empty", "fr": "vide" },
+  "appears11": { "slide": 11, "en": "appears", "fr": "apparaît" },
+  "rowzero11": { "slide": 11, "en": "Row zero", "fr": "ligne zéro" },
+  "rowone11": { "slide": 11, "en": "Row one", "fr": "ligne un" }
+ },
+ "pausing": { "between": 0.55, "scene": 0.9, "question": 1.3, "tail": 2.6 },
+ "pauses": [
+  { "after": "@ef8", "sec": 1.2 }
+ ],
+ "initial": { "run": "congested_seed", "move": 0, "deposit": 0, "side": 0 },
+ "timeline": [
+  { "at": "@ab8", "deposit": 1 },
+  { "at": "@each8", "deposit": 4 },
+  { "at": "@big8", "deposit": 5 },
+  { "at": "@ef8", "deposit": "all" },
+  { "at": "@corners9", "run": "spread" },
+  { "at": "@stretches9", "deposit": 1 },
+  { "at": "@eleven10", "deposit": 5 },
+  { "at": "@appears11", "deposit": "all" },
+  { "at": "slide:11:end+0.2", "dim": 0.12 }
+ ],
+ "show": [
+  { "show": "heat", "from": "start", "to": "end" },
+  { "show": "netlabels", "from": "@wirelength6", "to": "end" },
+  { "show": "nets", "from": "@ab8", "to": "@each8", "ids": [0], "only": true },
+  { "show": "nets", "from": "@each8", "to": "@big8", "ids": [1, 2, 3], "only": true },
+  { "show": "nets", "from": "@big8", "to": "@ef8", "ids": [4], "only": true },
+  { "show": "nets", "from": "@ef8", "to": "slide:9", "ids": [5], "only": true },
+  { "show": "nets", "from": "@stretches9", "to": "@eleven10", "ids": [0], "only": true },
+  { "show": "nets", "from": "@eleven10", "to": "@ef10", "ids": [4], "only": true },
+  { "show": "nets", "from": "@ef10", "to": "slide:11", "ids": [5], "only": true },
+  { "show": "nets", "from": "@appears11", "to": "end" },
+  { "show": "counter", "from": "@build8", "to": "@ab8", "metric": "hpwl", "label": { "en": "wirelength", "fr": "longueur de fil" } },
+  { "show": "counter", "from": "@ab8", "to": "@corners9", "metric": "demand" },
+  { "show": "counter", "from": "@corners9", "to": "@stretches9", "metric": "hpwl", "label": { "en": "wirelength", "fr": "longueur de fil" } },
+  { "show": "counter", "from": "@stretches9", "to": "end", "metric": "demand" },
+  { "show": "highlight", "from": "@ab8", "to": "@corners9", "ids": ["t1,0"] }
+ ],
+ "overlays": [
+  {
+   "from": "start", "to": "slide:7", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "**RUDY**: split evenly", "fr": "**RUDY** : partage égal" },
+   "sub": { "en": "{The answer@answer6}: each net splits its wire evenly", "fr": "{La réponse@answer6} : chaque réseau partage son fil également" }
+  },
+  {
+   "from": "@rudy6", "to": "slide:7", "x": 56, "y": 8, "type": "term",
+   "text": { "en": "RUDY", "fr": "RUDY" },
+   "sub": { "en": "rectangular uniform density", "fr": "rectangular uniform density" }
+  },
+  {
+   "from": "@bounding6", "to": "slide:7", "x": 3, "y": 74, "type": "tags",
+   "items": [
+    { "text": { "en": "bounding box", "fr": "boîte englobante" }, "at": "@bounding6" },
+    { "text": { "en": "wirelength = width + height", "fr": "longueur de fil = largeur + hauteur" }, "at": "@wirelength6" }
+   ]
+  },
+  {
+   "from": "slide:7", "to": "slide:8", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "One **share** per tile", "fr": "Une **part** par tuile" }
+  },
+  {
+   "from": "@share7", "to": "slide:8", "x": 3, "y": 20, "type": "eq",
+   "text": { "en": "wirelength / tile count = {share@share7}", "fr": "longueur de fil / nombre de tuiles = {part@share7}" }
+  },
+  {
+   "from": "@third7", "to": "slide:8", "x": 3, "y": 74, "type": "tags",
+   "items": [
+    { "text": { "en": "one third for three tiles", "fr": "un tiers pour trois tuiles" }, "at": "@third7" },
+    { "text": { "en": "fixed order: nets in listed order, then column by column, row by row", "fr": "ordre fixe : réseaux dans l'ordre de liste, puis colonne par colonne, ligne par ligne" }, "at": "@order7" }
+   ]
+  },
+  {
+   "from": "slide:8", "to": "slide:9", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "The seed builds to **seven**", "fr": "La graine monte à **sept**" }
+  },
+  {
+   "from": "@ab8", "to": "slide:9", "x": 44, "y": 24, "type": "tags",
+   "items": [
+    { "text": { "en": "demand ##1##", "fr": "demande ##1##" }, "at": "@ab8" },
+    { "text": { "en": "demand ##4##", "fr": "demande ##4##" }, "at": "@each8" },
+    { "text": { "en": "demand ##6##", "fr": "demande ##6##" }, "at": "@big8" },
+    { "text": { "en": "demand ##7##", "fr": "demande ##7##" }, "at": "@ef8" }
+   ]
+  },
+  {
+   "from": "slide:9", "to": "slide:10", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "Wider **boxes**", "fr": "Des boîtes plus **larges**" }
+  },
+  {
+   "from": "@stretches9", "to": "slide:10", "x": 44, "y": 24, "type": "tags",
+   "items": [
+    { "text": { "en": "wirelength ##7## over ##3## tiles", "fr": "longueur de fil ##7## sur ##3## tuiles" }, "at": "@stretches9" },
+    { "text": { "en": "share = 7/3, about ##2.33##", "fr": "part = 7/3, environ ##2,33##" }, "at": "@thirds9" }
+   ]
+  },
+  {
+   "from": "slide:10", "to": "slide:11", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "The **big** net, the **small** net", "fr": "Le **grand** réseau, le **petit**" }
+  },
+  {
+   "from": "@sixths10", "to": "slide:11", "x": 44, "y": 24, "type": "tags",
+   "items": [
+    { "text": { "en": "##11## over ##6## tiles = 11/6, about ##1.83##", "fr": "##11## sur ##6## tuiles = 11/6, environ ##1,83##" }, "at": "@sixths10" },
+    { "text": { "en": "##1## over ##2## tiles = ##0.5## each", "fr": "##1## sur ##2## tuiles = ##0,5## chacune" }, "at": "@ef10" },
+    { "text": { "en": "the rightmost column stays empty", "fr": "la colonne la plus à droite reste vide" }, "at": "@empty10" }
+   ]
+  },
+  {
+   "from": "slide:11", "to": "end", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "The spread **demand**", "fr": "La **demande** dispersée" }
+  },
+  {
+   "from": "@rowzero11", "to": "slide:11:end+0.2", "x": 44, "y": 24, "type": "tags",
+   "items": [
+    { "text": { "en": "row zero: ##6.17##, ##4.67##, ##6.67##", "fr": "ligne zéro : ##6,17##, ##4,67##, ##6,67##" }, "at": "@rowzero11" },
+    { "text": { "en": "row one: ##6.17##, ##4.17##, ##6.17##", "fr": "ligne un : ##6,17##, ##4,17##, ##6,17##" }, "at": "@rowone11" }
+   ]
+  },
+  {
+   "from": "slide:11:end+0.3", "to": "end", "x": 50, "y": 44, "type": "question"
+  }
+ ],
+ "question": {
+  "at": "slide:11:end+0.3",
+  "text": { "en": "Which tile is **hottest** once we divide by two?", "fr": "Quelle tuile est la plus **chaude** une fois divisée par deux ?" },
+  "hint": { "en": "Divide each demand by capacity two.", "fr": "Divisez chaque demande par la capacité deux." },
+  "options": [
+   {
+    "label": { "en": "Column zero, row zero", "fr": "Colonne zéro, ligne zéro" },
+    "reply": { "en": "Not quite: that tile holds 6.17 of demand, but another holds 6.67. Part 3 finds it.", "fr": "Pas tout à fait : cette tuile contient 6,17 de demande, mais une autre en contient 6,67. La partie 3 la trouve." },
+    "correct": false
+   },
+   {
+    "label": { "en": "Column two, row zero", "fr": "Colonne deux, ligne zéro" },
+    "reply": { "en": "Right: 6.67 of demand, congestion three point three three. Part 3 shows the scan.", "fr": "Exact : 6,67 de demande, congestion trois virgule trois trois. La partie 3 montre le balayage." },
+    "correct": true
+   },
+   {
+    "label": { "en": "The rightmost column", "fr": "La colonne la plus à droite" },
+    "reply": { "en": "No: no box touches it, its demand is zero.", "fr": "Non : aucune boîte ne la touche, sa demande est nulle." },
+    "correct": false
+   }
+  ]
+ },
+ "chapters": [
+  { "at": "start", "title": { "en": "RUDY", "fr": "RUDY" } },
+  { "at": "slide:8", "title": { "en": "The seed builds", "fr": "La graine se construit" } },
+  { "at": "slide:9", "title": { "en": "The spread", "fr": "La dispersion" } },
+  { "at": "slide:11", "title": { "en": "The demand", "fr": "La demande" } }
+ ],
+ "note": {
+  "en": "Every number comes from the Lab 06 checker's --json (.cache/congestion-check.json, regenerated read-only from eda-learning-lab6-cg and byte-compared with the skill demo's copy); the engine recomputes every deposit event, and check_lesson.py --data compares every claim with the file at 12 significant digits.",
+  "fr": "Chaque nombre vient du --json du vérificateur du Lab 06 (.cache/congestion-check.json, régénéré en lecture seule depuis eda-learning-lab6-cg et comparé octet par octet avec la copie de la démo de la compétence) ; le moteur recalcule chaque événement de dépôt, et check_lesson.py --data compare chaque affirmation au fichier avec 12 chiffres significatifs."
+ }
+}

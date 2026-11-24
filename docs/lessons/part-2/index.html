@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lab 06 · Part 2 — RUDY's even split</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>@font-face{font-family:'Fraunces';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/fraunces-latin-700-normal.woff2) format('woff2')}@font-face{font-family:'IBM Plex Mono';font-weight:400;font-style:normal;font-display:swap;src:url(fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2')}@font-face{font-family:'IBM Plex Mono';font-weight:500;font-style:normal;font-display:swap;src:url(fonts/ibm-plex-mono-latin-500-normal.woff2) format('woff2')}@font-face{font-family:'Source Sans 3';font-weight:400;font-style:normal;font-display:swap;src:url(fonts/source-sans-3-latin-400-normal.woff2) format('woff2')}@font-face{font-family:'Source Sans 3';font-weight:600;font-style:normal;font-display:swap;src:url(fonts/source-sans-3-latin-600-normal.woff2) format('woff2')}@font-face{font-family:'Source Sans 3';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/source-sans-3-latin-700-normal.woff2) format('woff2')}</style>
+<meta name="lesson:title" content="RUDY's even split">
+<meta name="lesson:duration" content="133.3">
+<meta name="lesson:engine" content="5.1">
+<style>
+/* lesson.css — styles for the animated lesson player (lesson-engine.js).
+   Layout: one reading column. A 16:9 stage carries the lesson; captions and transport sit under it,
+   then chapters and the "your turn" bench. Group colours follow the course labs: the group holding
+   the first node name is blue, the next green, then amber and rose; cut edges are red. */
+:root {
+  --bg: #f3f5f2;
+  --surface: #ffffff;
+  --ink: #17201c;
+  --muted: #56625c;
+  --line: #d6ddd8;
+  --stage: #fbfcfa;
+  --edge: #7a8780;
+  --g0: #1d4ed8;
+  --g1: #0f6b5c;
+  --g2: #b45309;
+  --g3: #9f1239;
+  --cut: #dc2626;
+  --heavy: #b45309;
+  --copper: #a8662a;
+  --unplaced: #94a3b8;
+  --tint0: rgba(29, 78, 216, 0.07);
+  --tint1: rgba(15, 107, 92, 0.08);
+  --said: #17201c;
+  --unsaid: #9aa49f;
+  --mark: #fde68a;
+  --display: "Fraunces", Georgia, "Times New Roman", serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1412; --surface: #151d1a; --ink: #e6ece9; --muted: #9ba7a1; --line: #2a3531;
+    --stage: #111916; --edge: #85938c; --g0: #6f8fff; --g1: #36b39b; --g2: #f59e0b; --g3: #fb7185;
+    --cut: #f87171; --heavy: #f59e0b; --copper: #d39a5c; --unplaced: #66758a;
+    --tint0: rgba(111, 143, 255, 0.10); --tint1: rgba(54, 179, 155, 0.10);
+    --said: #e6ece9; --unsaid: #5f6b66; --mark: #78350f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1412; --surface: #151d1a; --ink: #e6ece9; --muted: #9ba7a1; --line: #2a3531;
+  --stage: #111916; --edge: #85938c; --g0: #6f8fff; --g1: #36b39b; --g2: #f59e0b; --g3: #fb7185;
+  --cut: #f87171; --heavy: #f59e0b; --copper: #d39a5c; --unplaced: #66758a;
+  --tint0: rgba(111, 143, 255, 0.10); --tint1: rgba(54, 179, 155, 0.10);
+  --said: #e6ece9; --unsaid: #5f6b66; --mark: #78350f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 48px; margin: 0;
+}
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 22px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 46px); line-height: 1.05; margin: 0; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 62ch; }
+.lede a, .note a { color: inherit; }
+
+/* ---------- player ---------- */
+.player { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.stage { position: relative; aspect-ratio: 16 / 9; max-width: 100%; background: var(--stage); container-type: inline-size; overflow: hidden; }
+.stage svg.scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.layer { position: absolute; inset: 0; pointer-events: none; }
+.ov { position: absolute; opacity: 0; will-change: opacity, transform; }
+.ov [data-a] { display: inline-block; opacity: 0; }
+
+.hl { font-family: var(--display); font-weight: 700; font-size: 4.3cqw; line-height: 1.08; letter-spacing: -0.01em; max-width: 60cqw; }
+.hl b, .tag b, .sub b, .qcard b { color: var(--g0); font-weight: 700; }
+.red { color: var(--cut); }
+.sub { font-family: var(--body); font-size: 2.1cqw; color: var(--muted); font-weight: 600; margin-top: .6cqw; }
+.term { display: grid; gap: .4cqw; background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 1.4cqw 1.8cqw; box-shadow: 0 .6cqw 2cqw rgba(0,0,0,.06); }
+.term .t { font-family: var(--display); font-size: 3.4cqw; font-weight: 700; }
+.term .d { font-size: 1.9cqw; color: var(--muted); }
+.chip { display: inline-block; font-family: var(--mono); font-size: 2.2cqw; font-weight: 500; padding: .5cqw 1.3cqw; border-radius: 99px; border: 2px solid var(--ink); background: var(--surface); }
+.tag { font-family: var(--body); font-weight: 700; font-size: 2.2cqw; background: var(--surface); border: 1px solid var(--line); border-radius: .9cqw; padding: .6cqw 1.2cqw; }
+.tags { display: grid; gap: 1cqw; justify-items: start; }
+.tag .n, .num { font-family: var(--mono); color: var(--heavy); }
+.label { font-family: var(--display); font-weight: 700; font-size: 2.8cqw; }
+.label.c0 { color: var(--g0); } .label.c1 { color: var(--g1); } .label.c2 { color: var(--g2); } .label.c3 { color: var(--g3); }
+.vocab { display: grid; gap: .8cqw; font-size: 2cqw; }
+.vocab div { background: var(--surface); border: 1px solid var(--line); border-radius: .8cqw; padding: .5cqw 1.1cqw; }
+.vocab b { font-family: var(--display); font-size: 2.3cqw; margin-right: .6cqw; }
+.eq { font-family: var(--mono); font-size: 3.4cqw; font-weight: 500; background: var(--surface); border: 1px solid var(--line); border-radius: 1cqw; padding: 1cqw 1.6cqw; white-space: nowrap; }
+.eq .red { font-weight: 700; }
+.stamp { font-family: var(--display); font-weight: 700; font-size: 6cqw; color: var(--cut); border: .45cqw solid var(--cut); border-radius: 1cqw; padding: .2cqw 1.6cqw; rotate: -9deg; letter-spacing: .06em; text-transform: uppercase; background: color-mix(in srgb, var(--stage) 80%, transparent); }
+.bigq { width: 100cqw; }
+.bigq .q { font-family: var(--display); font-size: 16cqw; font-weight: 700; line-height: 1; color: var(--muted); text-align: center; }
+.bigq .hl { max-width: none; text-align: center; font-size: 3.6cqw; }
+.cmp { display: grid; gap: 1cqw; background: var(--surface); border: 1px solid var(--line); border-radius: 1.4cqw; padding: 2cqw 2.4cqw; width: 62cqw; box-shadow: 0 .8cqw 3cqw rgba(0,0,0,.08); }
+.cmp .row { display: grid; grid-template-columns: 1.4fr .7fr 1.3fr; align-items: baseline; gap: 1.4cqw; font-size: 2.3cqw; }
+.cmp .row .k { font-family: var(--mono); font-size: 3cqw; font-weight: 500; }
+.cmp .bad .k { color: var(--cut); }
+.cmp .good .k { color: var(--g1); }
+.qcard { background: var(--surface); border: 2px solid var(--ink); border-radius: 1.4cqw; padding: 1.6cqw 2.2cqw; width: 44cqw; display: grid; gap: .6cqw; }
+.qcard .e { font-family: var(--mono); font-size: 1.7cqw; letter-spacing: .1em; text-transform: uppercase; color: var(--heavy); }
+.qcard .q { font-family: var(--display); font-size: 3.1cqw; font-weight: 700; line-height: 1.15; }
+.qcard .h { font-size: 1.8cqw; color: var(--muted); }
+.qbtns { display: none; gap: 1cqw; pointer-events: auto; flex-wrap: wrap; }
+.stage.asking .qbtns { display: flex; }
+.qbtns .btn { font-size: 1.8cqw; padding: .6cqw 1.3cqw; }
+.qans { color: var(--ink); font-size: 1.9cqw; }
+.qans:empty { display: none; }
+.thumbs { display: flex; gap: 2cqw; }
+.thumb { background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 1cqw; display: grid; gap: .4cqw; justify-items: center; width: 22cqw; position: relative; }
+.thumb svg { width: 100%; height: auto; display: block; }
+.thumb .c { font-family: var(--mono); font-size: 1.75cqw; font-weight: 500; white-space: nowrap; }
+.thumb.best { border: 2px solid var(--g1); }
+.thumb .ok { position: absolute; top: -1.6cqw; right: -1.2cqw; background: var(--g1); color: #fff; font-weight: 700; font-size: 1.7cqw; border-radius: 99px; padding: .3cqw 1cqw; }
+
+.counter { display: grid; justify-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: .9cqw 1.6cqw; min-width: 15cqw; }
+.counter .l, .balance .l { font-family: var(--mono); font-size: 1.6cqw; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.counter .v { font-family: var(--mono); font-size: 6.2cqw; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
+.counter.bad .v { color: var(--cut); }
+.counter.good .v { color: var(--g1); }
+.balance { display: grid; gap: .8cqw; background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 1.2cqw 1.6cqw; width: 19cqw; }
+.bars { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 1.6cqw; height: 15cqw; align-items: end; }
+.bar { background: var(--g0); border-radius: .5cqw .5cqw 0 0; height: 0; display: flex; justify-content: center; align-items: flex-start; color: #fff; font-family: var(--mono); font-size: 2cqw; padding-top: .3cqw; }
+.bar.c1 { background: var(--g1); } .bar.c2 { background: var(--g2); } .bar.c3 { background: var(--g3); }
+.cap { position: absolute; left: -.6cqw; right: -.6cqw; height: 0; border-top: .3cqw dashed var(--cut); opacity: 0; }
+.cap span { position: absolute; right: 0; top: -2.6cqw; font-family: var(--mono); font-size: 1.5cqw; color: var(--cut); }
+.verdict { font-weight: 700; font-size: 1.9cqw; min-height: 1.2em; }
+.verdict.no { color: var(--cut); }
+.verdict.yes { color: var(--g1); }
+.banner { position: absolute; left: 2cqw; top: 2cqw; display: none; gap: 1cqw; align-items: center; pointer-events: auto; font-size: 1.9cqw; }
+.stage.free .banner { display: flex; }
+.banner b { font-family: var(--display); font-size: 2.6cqw; }
+
+/* svg pieces */
+.node rect { transition: fill .45s, stroke .45s; }
+.g0 rect { fill: var(--g0); stroke: var(--g0); }
+.g1 rect { fill: var(--g1); stroke: var(--g1); }
+.g2 rect { fill: var(--g2); stroke: var(--g2); }
+.g3 rect { fill: var(--g3); stroke: var(--g3); }
+.nu rect { fill: var(--unplaced); stroke: var(--unplaced); }
+.ncell rect { fill: var(--surface); stroke: var(--copper); stroke-width: 3; }
+.node text { fill: #fff; font-family: var(--body); font-weight: 700; font-size: 21px; text-anchor: middle; dominant-baseline: central; }
+.ncell text { fill: var(--ink); }
+.node { cursor: pointer; }
+.node:focus-visible rect { stroke: var(--ink); stroke-width: 4; }
+.main { stroke: var(--edge); stroke-linecap: round; transition: stroke .35s; }
+.wire { stroke: var(--copper); stroke-width: 2.2; stroke-linecap: round; }
+.edge.cut .main { stroke: var(--cut); stroke-dasharray: 10 7; }
+.edge.heavy .main { stroke: var(--heavy); }
+.edge.pulse .main { animation: lesson-pulse 1s ease-in-out 2; }
+@keyframes lesson-pulse { 50% { stroke-width: 12; } }
+.wl rect { fill: var(--stage); stroke: var(--line); transition: fill .3s, stroke .3s; }
+.wl text { fill: var(--ink); font-family: var(--mono); font-size: 16px; font-weight: 500; text-anchor: middle; dominant-baseline: central; }
+.edge.cut .wl rect { stroke: var(--cut); }
+.edge.flash .wl rect { fill: var(--mark); stroke: var(--heavy); }
+.chipbody { fill: none; stroke: var(--copper); stroke-width: 3; }
+.pin { fill: var(--copper); }
+.divider { stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 8 8; }
+.tint0 { fill: var(--tint0); }
+.tint1 { fill: var(--tint1); }
+
+/* captions */
+.captions { padding: 14px 18px; border-top: 1px solid var(--line); min-height: 3.6em; font-size: 19px; line-height: 1.45; }
+.captions span { color: var(--unsaid); transition: color .15s; }
+.captions span.said { color: var(--said); }
+.player.nocc .captions { display: none; }
+
+/* transport */
+.transport { display: grid; grid-template-columns: auto 1fr auto; gap: 10px 14px; align-items: center; padding: 12px 16px 14px; border-top: 1px solid var(--line); }
+.play { width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--ink); color: var(--bg); font-size: 18px; cursor: pointer; display: grid; place-items: center; }
+.scrub { display: grid; gap: 4px; min-width: 0; }
+.scrub input { width: 100%; accent-color: var(--g0); }
+.time { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.opts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button, .tbtn { font-family: var(--mono); font-size: 13px; padding: 6px 9px; border: 0; background: var(--surface); color: var(--ink); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.tbtn { border: 1px solid var(--line); border-radius: 8px; }
+.tbtn[aria-pressed="false"] { color: var(--muted); text-decoration: line-through; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--g0); outline-offset: 2px; }
+@media (max-width: 620px) {
+  .transport { grid-template-columns: auto 1fr; }
+  .opts { grid-column: 1 / -1; justify-content: flex-start; }
+  .captions { font-size: 16px; }
+}
+
+/* chapters + bench */
+.chapters { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.chapters button { width: 100%; display: grid; grid-template-columns: 4.5em 1fr; gap: 10px; text-align: left; background: none; border: 0; border-left: 3px solid var(--line); padding: 6px 12px; font: inherit; color: var(--muted); cursor: pointer; }
+.chapters button .ts { font-family: var(--mono); font-size: 14px; font-variant-numeric: tabular-nums; }
+.chapters button[aria-current="true"] { border-left-color: var(--g0); color: var(--ink); font-weight: 600; }
+.cols { display: grid; grid-template-columns: 1fr 1.25fr; gap: 22px; align-items: start; }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+h2 { font-family: var(--display); font-size: 24px; margin: 0 0 8px; }
+.bench { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; gap: 14px; min-width: 0; }
+.bench.pulse { animation: lesson-benchin 1.2s ease 2; }
+@keyframes lesson-benchin { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--g0) 35%, transparent); } }
+.bench p { margin: 0; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn { font: 600 15px var(--body); padding: 8px 14px; border-radius: 9px; border: 1px solid var(--ink); background: var(--surface); color: var(--ink); cursor: pointer; }
+.btn.primary { background: var(--ink); color: var(--bg); }
+.seedbox { width: 5.5em; font: 500 15px var(--mono); padding: 7px 9px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.feedback { border-left: 3px solid var(--g1); padding: 4px 0 4px 12px; }
+.feedback:empty { display: none; }
+.readout { font-family: var(--mono); font-size: 14.5px; background: var(--bg); border-radius: 8px; padding: 10px 12px; font-variant-numeric: tabular-nums; }
+.note { font-size: 14px; color: var(--muted); max-width: 70ch; }
+.ok { color: var(--g1); font-weight: 700; } .no { color: var(--cut); font-weight: 700; }
+.norec .node rect, .norec .main, .norec .wl rect { transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .node rect, .main, .wl rect, .captions span { transition: none !important; }
+  .edge.pulse .main, .bench.pulse { animation: none; }
+}
+
+/* ---------- floorplan scene (B*-tree + floor of blocks) ----------
+   Block colours come from the lab (one fixed colour per block id, the course's paper palette) and are set inline.
+   Tree links: left child = solid ("next door"), right child = dashed ("upstairs"). The skyline is amber. */
+:root { --sky: #d97706; --waste: rgba(220, 38, 38, 0.10); --over: rgba(220, 38, 38, 0.13); --gridline: #e3e8e4; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --sky: #fbbf24; --waste: rgba(248, 113, 113, 0.14); --over: rgba(248, 113, 113, 0.16); --gridline: #1f2a26; } }
+:root[data-theme="dark"] { --sky: #fbbf24; --waste: rgba(248, 113, 113, 0.14); --over: rgba(248, 113, 113, 0.16); --gridline: #1f2a26; }
+.fp-gridlines line { stroke: var(--gridline); stroke-width: 1; }
+.fp-outline { fill: none; stroke: var(--ink); stroke-width: 2; stroke-dasharray: 9 6; opacity: .55; }
+.fp-outline-lab { font-family: var(--mono); font-size: 14px; fill: var(--muted); text-anchor: end; }
+.fp-floorline { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+.fp-axis text { font-family: var(--mono); font-size: 12.5px; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+.fp-axis .fp-axis-y { text-anchor: end; }
+.fp-overzone { fill: url(#fp-over); stroke: none; transition: opacity .3s; }
+.fp-over-line { stroke: var(--cut); stroke-width: 2.4; opacity: .55; }
+.fp-hatch-bg { fill: var(--waste); }
+.fp-hatch-line { stroke: var(--cut); stroke-width: 2; opacity: .35; }
+.fp-waste { fill: url(#fp-hatch); }
+.fpb rect { stroke-width: 2; fill-opacity: .92; }
+.fpb .fp-bid { fill: #fff; font-family: var(--body); font-weight: 700; font-size: 21px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.fpb .fp-dim { fill: #fff; font-family: var(--mono); font-size: 12.5px; text-anchor: middle; dominant-baseline: central; opacity: .9; pointer-events: none; }
+.fpb.out rect { stroke: var(--cut); stroke-width: 4; stroke-dasharray: 7 4; }
+.fpb.hl rect, .fpn.hl circle:not(.fp-ring) { stroke: var(--ink); stroke-width: 4; }
+.fp-sky { fill: none; stroke: var(--sky); stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
+.fp-bbox { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 10 6; }
+.fp-bboxlab rect { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+.fp-bboxlab text { font-family: var(--mono); font-size: 15px; font-weight: 500; fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
+.fp-coords circle { fill: var(--ink); }
+.fp-coords text { font-family: var(--mono); font-size: 13px; font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--stage); stroke-width: 4px; }
+.fp-edge { stroke: var(--edge); stroke-width: 3; stroke-linecap: round; }
+.fp-edge.right { stroke-dasharray: 8 6; }
+.fpn circle { stroke-width: 3; }
+.fpn .fp-ring { fill: none; stroke: var(--ink); stroke-width: 3; opacity: 0; }
+.fpn.hl .fp-ring { opacity: 1; }
+.fpn text { font-family: var(--body); font-weight: 700; font-size: 20px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.fpk { cursor: pointer; }
+.fpk:focus-visible { outline: none; }
+.fpk:focus-visible rect, .fpk:focus-visible circle:not(.fp-ring) { stroke: var(--ink); stroke-width: 4; }
+.fp-badges circle { fill: var(--ink); }
+.fp-badges text { fill: var(--bg); font-family: var(--mono); font-size: 12.5px; font-weight: 500; text-anchor: middle; dominant-baseline: central; }
+.fp-link rect { fill: var(--surface); stroke: var(--line); }
+.fp-link text { font-family: var(--body); font-size: 13px; font-weight: 600; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+.fp-legal { font-family: var(--body); font-weight: 700; font-size: 1.9cqw; background: var(--surface); border: 2px solid var(--line); border-radius: .9cqw; padding: .4cqw 1.1cqw; white-space: nowrap; }
+.fp-legal.yes { color: var(--g1); border-color: var(--g1); }
+.fp-legal.no { color: var(--cut); border-color: var(--cut); }
+.fp-counter { min-width: 17cqw; }
+.fp-thumb svg { max-height: 16cqw; }
+.fp-ops .btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.norec .fp-overzone { transition: none !important; }
+
+/* ---------- placement scene (v5) ---------- */
+.pl-chip { fill: var(--tint0); stroke: none; }
+.pl-gridlines line { stroke: var(--line); stroke-width: 1; opacity: .55; }
+/* v5.1 heat grid: the GCell lattice and one tile per GCell, painted from the deposit replay */
+.pl-glines line { stroke: var(--heavy); stroke-width: 1.4; stroke-dasharray: 6 4; opacity: .6; }
+.pl-tile { stroke: none; }
+.pl-tilering { fill: none; stroke: var(--ink); stroke-width: 3; opacity: 0; }
+.pl-tilering.hl { opacity: 1; }
+.pl-wall { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 10 6; opacity: .5; transition: stroke .15s, opacity .15s; }
+.pl-wall.hit { stroke: var(--cut); opacity: 1; }
+.pl-axis text { font-family: var(--mono); font-size: 12px; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+.pl-axis .pl-axis-y { text-anchor: end; }
+.pl-net rect { fill: var(--edge); fill-opacity: .05; stroke: var(--edge); stroke-width: 1.6; }
+.pl-net line { stroke: var(--copper); stroke-width: 2.4; stroke-linecap: round; opacity: .8; }
+.pl-net text { font-family: var(--mono); font-size: 13px; font-weight: 500; fill: var(--ink); text-anchor: middle; dominant-baseline: central; paint-order: stroke; stroke: var(--stage); stroke-width: 4px; }
+.pl-net.hot rect { stroke: var(--heavy); stroke-width: 2.6; fill: var(--heavy); fill-opacity: .08; }
+.pl-trial { fill: none; stroke: var(--heavy); stroke-width: 2; stroke-dasharray: 6 5; }
+.plk { cursor: grab; outline: none; touch-action: none; }
+.plk rect { stroke: var(--surface); stroke-width: 1.5; }
+.plk text, .pl-ghost text { fill: #fff; font-family: var(--body); font-weight: 700; font-size: 16px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.plk .pl-ring { fill: none; stroke: var(--ink); stroke-width: 2.5; opacity: 0; }
+.plk.hl .pl-ring, .plk:focus-visible .pl-ring { opacity: 1; }
+.plk.pad rect:not(.pl-ring) { stroke: var(--ink); stroke-width: 2.5; }
+.pl-ghost rect { fill: var(--heavy); fill-opacity: .35; stroke: var(--heavy); stroke-width: 2; stroke-dasharray: 5 4; }
+.pl-ghost.bad rect { fill: var(--cut); stroke: var(--cut); }
+.pl-ghost text { fill: var(--ink); }
+.pl-bestpos rect { fill: none; stroke-width: 2.2; stroke-dasharray: 4 4; }
+.pl-thermo .tube { fill: var(--surface); stroke: var(--line); stroke-width: 2; }
+.pl-thermo text { font-family: var(--mono); font-size: 13px; fill: var(--muted); text-anchor: middle; }
+.pl-thermo text.v { font-size: 14px; font-weight: 500; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.pl-card text { font-family: var(--body); font-size: 18px; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.pl-card .delta { font-family: var(--mono); font-size: 21px; font-weight: 500; }
+.pl-card .delta.worse, .pl-card .verdict.no { fill: var(--cut); }
+.pl-card .delta.better, .pl-card .verdict.yes { fill: var(--g1); }
+.pl-card .delta.free, .pl-card .verdict.free { fill: var(--muted); }
+.pl-card .verdict { font-weight: 700; font-size: 22px; text-anchor: end; }
+.pl-dice .track { fill: var(--line); fill-opacity: .55; stroke: var(--edge); stroke-width: 1.2; }
+.pl-dice .pfill { fill: var(--g1); opacity: .75; }
+.pl-dice .pfill.sure { opacity: .3; }
+.pl-dice text { font-family: var(--body); font-size: 15.5px; fill: var(--muted); }
+.pl-dice text.u { font-family: var(--mono); font-size: 13.5px; text-anchor: middle; fill: var(--ink); }
+.pl-dice .marker line { stroke: var(--ink); stroke-width: 2.5; }
+.pl-dice .marker circle { fill: var(--ink); stroke: var(--surface); stroke-width: 2; }
+.pl-dice .marker.yes circle { fill: var(--g1); } .pl-dice .marker.no circle { fill: var(--cut); }
+.pl-tally text { font-family: var(--body); font-size: 17px; font-weight: 600; fill: var(--ink); font-variant-numeric: tabular-nums; white-space: pre; }
+.pl-tally text.kinds { font-size: 15px; font-weight: 400; fill: var(--muted); }
+.pl-chart .axis, .pl-spread .axis { stroke: var(--edge); stroke-width: 1.5; }
+.pl-chart .cur { fill: none; stroke: var(--g0); stroke-width: 2.4; stroke-linejoin: round; }
+.pl-chart .best { fill: none; stroke: var(--g1); stroke-width: 2; stroke-dasharray: 5 4; }
+.pl-chart .dot { fill: var(--g0); stroke: var(--surface); stroke-width: 2; }
+.pl-chart .startline { stroke: var(--edge); stroke-width: 1; stroke-dasharray: 3 5; }
+.pl-chart text, .pl-spread text { font-family: var(--mono); font-size: 12.5px; fill: var(--muted); }
+.pl-chart .tick { text-anchor: end; dominant-baseline: central; }
+.pl-chart .tick.x, .pl-spread .tick.x { text-anchor: start; dominant-baseline: auto; }
+.pl-chart .tick.x.end { text-anchor: end; } .pl-spread .tick.x.mid { text-anchor: middle; }
+.pl-chart .lab.start { text-anchor: end; }
+.pl-chart .lab.bestl { fill: var(--g1); font-weight: 500; }
+.pl-spread .d { fill: var(--edge); }
+.pl-spread .d.hot { fill: var(--heavy); stroke: var(--surface); stroke-width: 1.5; }
+.pl-spread .median { stroke: var(--g0); stroke-width: 2; stroke-dasharray: 5 4; }
+.pl-spread .lab.med { fill: var(--g0); }
+.pl-spread .lab.hot { fill: var(--heavy); font-weight: 500; font-size: 13.5px; paint-order: stroke; stroke: var(--stage); stroke-width: 4px; }
+.pl-spread .lab.endl { text-anchor: end; }
+.pl-spread .lead { stroke: var(--heavy); stroke-width: 1.2; }
+.pl-spread .scap { font-family: var(--body); font-size: 15px; fill: var(--ink); }
+.pl-counter { min-width: 17cqw; }
+.pl-ops label { display: inline-flex; gap: 6px; align-items: center; font-size: 14.5px; }
+.pl-seed { width: 5.5em; font: inherit; padding: 5px 7px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.pl-thumb svg { width: 11cqw; }
+.pl-piles rect { fill: none; stroke: var(--cut); stroke-width: 3; }
+.pl-piles circle { fill: var(--cut); stroke: var(--surface); stroke-width: 2; }
+.pl-piles text { fill: #fff; font-family: var(--mono); font-weight: 500; font-size: 13px; text-anchor: middle; dominant-baseline: central; }
+.pl-land .ground { fill: var(--tint1); stroke: none; }
+.pl-land .line { fill: none; stroke: var(--g1); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.pl-land .ball { fill: var(--heavy); stroke: var(--surface); stroke-width: 2.5; }
+.pl-land .lab { font-family: var(--body); font-size: 15.5px; font-weight: 600; fill: var(--ink); text-anchor: middle; }
+
+/* ---------- inside the all-parts player ---------- */
+html.embedded body { background: transparent; padding: 0 2px 6px; margin: 0; }
+html.embedded .wrap > header .eyebrow { display: none; }
+html.embedded .wrap > header h1 { font-size: clamp(20px, 2.6vw, 28px); margin-top: 0; }
+
+/* ---------- subtitles menu ---------- */
+.subsel { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.subsel select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 5px 6px; }
+.captions:lang(zh) { font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif; letter-spacing: .02em; }
+
+/* ---------- sounds button ---------- */
+.sbtn { font-family: var(--mono); font-size: 13px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.sbtn[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.sbtn[aria-pressed="false"] { color: var(--muted); }
+.opts { flex-wrap: wrap; }
+
+</style>
+</head>
+<body>
+<div id="lesson-root"></div>
+<audio id="lesson-audio" preload="metadata" src="lesson-en.m4a"></audio>
+<script src="../lesson-engine.js"></script>
+<script>
+LessonEngine.mount({"sb": {"scene": "placement", "pageTitle": {"en": "Lab 06 · Part 2 — RUDY's even split", "fr": "Lab 06 · Partie 2 — Le partage égal de RUDY"}, "eyebrow": {"en": "Lab 06 · animated lesson 2 of 5", "fr": "Lab 06 · leçon animée 2 sur 5"}, "title": {"en": "RUDY's even split", "fr": "Le partage égal de RUDY"}, "lede": {"en": "How does one wire become demand on several tiles? Watch RUDY split each net's wirelength evenly over the GCells its box touches: the seed builds to a demand of seven in tile (1,0), the spread placement spreads wider. Drag cell A past the grid line x = 6 in the try-it panel and watch the overflow readout.", "fr": "Comment un fil devient-il de la demande sur plusieurs tuiles ? Regardez RUDY répartir également la longueur de fil de chaque réseau sur les GCells touchées par sa boîte : la graine monte à une demande de sept dans la tuile (1,0), le placement dispersé s'étale plus largement. Faites glisser la cellule A au-delà de la ligne de grille x = 6 dans le panneau d'essai et regardez le débordement."}, "placement": {"run": "congested_seed", "floorBox": [36, 168, 344, 229.3], "claims": [{"run": "congested_seed", "start": 7, "demand": 7}, {"positions": "start", "hpwl": 7}, {"positions": "start", "net": 0, "hpwl": 1}, {"positions": "start", "net": 1, "hpwl": 1}, {"positions": "start", "net": 2, "hpwl": 1}, {"positions": "start", "net": 3, "hpwl": 1}, {"positions": "start", "net": 4, "hpwl": 2}, {"positions": "start", "net": 5, "hpwl": 1}, {"run": "congested_seed", "event": 0, "net": 0, "pins": ["A", "B"], "bbox": [4, 2, 5, 2], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": {"1,0": 1}}, {"run": "congested_seed", "event": 1, "net": 1, "pins": ["C", "D"], "bbox": [4, 3, 5, 3], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": {"1,0": 2}}, {"run": "congested_seed", "event": 2, "net": 2, "pins": ["A", "C"], "bbox": [4, 2, 4, 3], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": {"1,0": 3}}, {"run": "congested_seed", "event": 3, "net": 3, "pins": ["B", "D"], "bbox": [5, 2, 5, 3], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": {"1,0": 4}}, {"run": "congested_seed", "event": 4, "net": 4, "pins": ["A", "B", "C", "D"], "bbox": [4, 2, 5, 3], "hpwl": 2, "share": 2, "tiles": [[1, 0]], "demandAfter": {"1,0": 6}}, {"run": "congested_seed", "event": 5, "net": 5, "pins": ["E", "F"], "bbox": [4.5, 2.5, 5.5, 2.5], "hpwl": 1, "share": 1, "tiles": [[1, 0]], "demandAfter": {"1,0": 7}}, {"run": "spread", "start": 34, "demand": 34, "hottest": {"i": 2, "j": 0, "v": 3.33333333333}}, {"positions": {"A": {"x": 1, "y": 1}, "B": {"x": 8, "y": 1}, "C": {"x": 1, "y": 5}, "D": {"x": 8, "y": 5}, "E": {"x": 5, "y": 3}, "F": {"x": 6, "y": 3}}, "hpwl": 34}, {"positions": {"A": {"x": 6.5, "y": 2}, "B": {"x": 5, "y": 2}, "C": {"x": 4, "y": 3}, "D": {"x": 5, "y": 3}, "E": {"x": 4.5, "y": 2.5}, "F": {"x": 5.5, "y": 2.5}}, "hpwl": 11.5, "ovtotal": 7.5, "ovcount": 2, "hottest": {"i": 1, "j": 0, "v": 3.625}}], "data": {"runs": {"congested_seed": {"cells": ["A", "B", "C", "D", "E", "F"], "nets": [["A", "B"], ["C", "D"], ["A", "C"], ["B", "D"], ["A", "B", "C", "D"], ["E", "F"]], "start": {"A": {"x": 4.0, "y": 2.0}, "B": {"x": 5.0, "y": 2.0}, "C": {"x": 4.0, "y": 3.0}, "D": {"x": 5.0, "y": 3.0}, "E": {"x": 4.5, "y": 2.5}, "F": {"x": 5.5, "y": 2.5}}, "walls": {"min": 0, "max": 12.0}, "moves": 0, "seed": 0, "t0": 1, "cool": 1, "step": 1, "frozen": [], "events": [{"net": 0, "pins": ["A", "B"], "bbox": [4.0, 2.0, 5.0, 2.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [1.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 1, "pins": ["C", "D"], "bbox": [4.0, 3.0, 5.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [2.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 2, "pins": ["A", "C"], "bbox": [4.0, 2.0, 4.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [3.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 3, "pins": ["B", "D"], "bbox": [5.0, 2.0, 5.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [4.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 4, "pins": ["A", "B", "C", "D"], "bbox": [4.0, 2.0, 5.0, 3.0], "hpwl": 2.0, "tiles": [[1, 0]], "share": 2.0, "demandAfter": [[0.0, 0.0], [6.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 5, "pins": ["E", "F"], "bbox": [4.5, 2.5, 5.5, 2.5], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [7.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}], "demand": [[0.0, 0.0], [7.0, 0.0], [0.0, 0.0], [0.0, 0.0]], "congestion": [[0.0, 0.0], [3.5, 0.0], [0.0, 0.0], [0.0, 0.0]], "overflow": {"perCell": [[0.0, 0.0], [5.0, 0.0], [0.0, 0.0], [0.0, 0.0]], "total": 5.0, "max": 5.0, "count": 1}, "hottest": {"i": 1, "j": 0, "v": 3.5}, "heat": {"mode": "relative-to-max", "maxC": 3.5, "t": [[0.0, 0.0], [1.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, "capacity": 2.0}, "spread": {"cells": ["A", "B", "C", "D", "E", "F"], "nets": [["A", "B"], ["C", "D"], ["A", "C"], ["B", "D"], ["A", "B", "C", "D"], ["E", "F"]], "start": {"A": {"x": 1.0, "y": 1.0}, "B": {"x": 8.0, "y": 1.0}, "C": {"x": 1.0, "y": 5.0}, "D": {"x": 8.0, "y": 5.0}, "E": {"x": 5.0, "y": 3.0}, "F": {"x": 6.0, "y": 3.0}}, "walls": {"min": 0, "max": 12.0}, "moves": 0, "seed": 0, "t0": 1, "cool": 1, "step": 1, "frozen": [], "events": [{"net": 0, "pins": ["A", "B"], "bbox": [1.0, 1.0, 8.0, 1.0], "hpwl": 7.0, "tiles": [[0, 0], [1, 0], [2, 0]], "share": 2.33333333333, "demandAfter": [[2.33333333333, 0.0], [2.33333333333, 0.0], [2.33333333333, 0.0], [0.0, 0.0]]}, {"net": 1, "pins": ["C", "D"], "bbox": [1.0, 5.0, 8.0, 5.0], "hpwl": 7.0, "tiles": [[0, 1], [1, 1], [2, 1]], "share": 2.33333333333, "demandAfter": [[2.33333333333, 2.33333333333], [2.33333333333, 2.33333333333], [2.33333333333, 2.33333333333], [0.0, 0.0]]}, {"net": 2, "pins": ["A", "C"], "bbox": [1.0, 1.0, 1.0, 5.0], "hpwl": 4.0, "tiles": [[0, 0], [0, 1]], "share": 2.0, "demandAfter": [[4.33333333333, 4.33333333333], [2.33333333333, 2.33333333333], [2.33333333333, 2.33333333333], [0.0, 0.0]]}, {"net": 3, "pins": ["B", "D"], "bbox": [8.0, 1.0, 8.0, 5.0], "hpwl": 4.0, "tiles": [[2, 0], [2, 1]], "share": 2.0, "demandAfter": [[4.33333333333, 4.33333333333], [2.33333333333, 2.33333333333], [4.33333333333, 4.33333333333], [0.0, 0.0]]}, {"net": 4, "pins": ["A", "B", "C", "D"], "bbox": [1.0, 1.0, 8.0, 5.0], "hpwl": 11.0, "tiles": [[0, 0], [0, 1], [1, 0], [1, 1], [2, 0], [2, 1]], "share": 1.83333333333, "demandAfter": [[6.16666666667, 6.16666666667], [4.16666666667, 4.16666666667], [6.16666666667, 6.16666666667], [0.0, 0.0]]}, {"net": 5, "pins": ["E", "F"], "bbox": [5.0, 3.0, 6.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0], [2, 0]], "share": 0.5, "demandAfter": [[6.16666666667, 6.16666666667], [4.66666666667, 4.16666666667], [6.66666666667, 6.16666666667], [0.0, 0.0]]}], "demand": [[6.16666666667, 6.16666666667], [4.66666666667, 4.16666666667], [6.66666666667, 6.16666666667], [0.0, 0.0]], "congestion": [[3.08333333333, 3.08333333333], [2.33333333333, 2.08333333333], [3.33333333333, 3.08333333333], [0.0, 0.0]], "overflow": {"perCell": [[4.16666666667, 4.16666666667], [2.66666666667, 2.16666666667], [4.66666666667, 4.16666666667], [0.0, 0.0]], "total": 22.0, "max": 4.66666666667, "count": 6}, "hottest": {"i": 2, "j": 0, "v": 3.33333333333}, "heat": {"mode": "relative-to-max", "maxC": 3.33333333333, "t": [[0.925, 0.925], [0.7, 0.625], [1.0, 0.925], [0.0, 0.0]]}, "capacity": 2.0}}, "seeds": null, "heat": {"chip": {"W": 12, "H": 8}, "nx": 4, "ny": 2, "cellW": 3.0, "cellH": 4.0, "capacity": 2.0, "palette": [{"u": 0.0, "hex": "#ffffff", "rgb": [255, 255, 255]}, {"u": 0.333333333333, "hex": "#0f6b5c", "rgb": [15, 107, 92]}, {"u": 0.666666666667, "hex": "#b45309", "rgb": [180, 83, 9]}, {"u": 1.0, "hex": "#9f1239", "rgb": [159, 18, 57]}]}}, "heat": {"chip": {"W": 12, "H": 8}, "nx": 4, "ny": 2, "cellW": 3.0, "cellH": 4.0, "capacity": 2.0, "palette": [{"u": 0.0, "hex": "#ffffff", "rgb": [255, 255, 255]}, {"u": 0.333333333333, "hex": "#0f6b5c", "rgb": [15, 107, 92]}, {"u": 0.666666666667, "hex": "#b45309", "rgb": [180, 83, 9]}, {"u": 1.0, "hex": "#9f1239", "rgb": [159, 18, 57]}]}, "sizes": {"A": [2, 1], "B": [2, 1], "C": [2, 1], "D": [2, 1], "E": [1, 1], "F": [1, 1]}}, "anchors": {"answer6": {"slide": 6, "en": "answer", "fr": "réponse"}, "rudy6": {"slide": 6, "en": "RUDY", "fr": "RUDY"}, "bounding6": {"slide": 6, "en": "bounding", "fr": "boîte"}, "wirelength6": {"slide": 6, "en": "wirelength", "fr": "longueur"}, "share7": {"slide": 7, "en": "share", "fr": "part"}, "third7": {"slide": 7, "en": "third", "fr": "tiers"}, "order7": {"slide": 7, "en": "order", "fr": "ordre"}, "build8": {"slide": 8, "en": "build", "fr": "construire"}, "ab8": {"slide": 8, "en": "A B", "fr": "A B"}, "each8": {"slide": 8, "en": "each", "fr": "chacun"}, "big8": {"slide": 8, "en": "big", "fr": "grand"}, "ef8": {"slide": 8, "en": "E F", "fr": "E F"}, "corners9": {"slide": 9, "en": "corners", "fr": "coins"}, "stretches9": {"slide": 9, "en": "stretches", "fr": "s'étend"}, "thirds9": {"slide": 9, "en": "thirds", "fr": "tiers"}, "eleven10": {"slide": 10, "en": "eleven", "fr": "onze"}, "sixths10": {"slide": 10, "en": "sixths", "fr": "sixièmes"}, "ef10": {"slide": 10, "en": "E F", "fr": "E F"}, "empty10": {"slide": 10, "en": "empty", "fr": "vide"}, "appears11": {"slide": 11, "en": "appears", "fr": "apparaît"}, "rowzero11": {"slide": 11, "en": "Row zero", "fr": "ligne zéro"}, "rowone11": {"slide": 11, "en": "Row one", "fr": "ligne un"}}, "pausing": {"between": 0.55, "scene": 0.9, "question": 1.3, "tail": 2.6}, "pauses": [{"after": "@ef8", "sec": 1.2}], "initial": {"run": "congested_seed", "move": 0, "deposit": 0, "side": 0}, "timeline": [{"at": "@ab8", "deposit": 1}, {"at": "@each8", "deposit": 4}, {"at": "@big8", "deposit": 5}, {"at": "@ef8", "deposit": "all"}, {"at": "@corners9", "run": "spread"}, {"at": "@stretches9", "deposit": 1}, {"at": "@eleven10", "deposit": 5}, {"at": "@appears11", "deposit": "all"}, {"at": "slide:11:end+0.2", "dim": 0.12}], "show": [{"show": "heat", "from": "start", "to": "end"}, {"show": "netlabels", "from": "@wirelength6", "to": "end"}, {"show": "nets", "from": "@ab8", "to": "@each8", "ids": [0], "only": true}, {"show": "nets", "from": "@each8", "to": "@big8", "ids": [1, 2, 3], "only": true}, {"show": "nets", "from": "@big8", "to": "@ef8", "ids": [4], "only": true}, {"show": "nets", "from": "@ef8", "to": "slide:9", "ids": [5], "only": true}, {"show": "nets", "from": "@stretches9", "to": "@eleven10", "ids": [0], "only": true}, {"show": "nets", "from": "@eleven10", "to": "@ef10", "ids": [4], "only": true}, {"show": "nets", "from": "@ef10", "to": "slide:11", "ids": [5], "only": true}, {"show": "nets", "from": "@appears11", "to": "end"}, {"show": "counter", "from": "@build8", "to": "@ab8", "metric": "hpwl", "label": {"en": "wirelength", "fr": "longueur de fil"}}, {"show": "counter", "from": "@ab8", "to": "@corners9", "metric": "demand"}, {"show": "counter", "from": "@corners9", "to": "@stretches9", "metric": "hpwl", "label": {"en": "wirelength", "fr": "longueur de fil"}}, {"show": "counter", "from": "@stretches9", "to": "end", "metric": "demand"}, {"show": "highlight", "from": "@ab8", "to": "@corners9", "ids": ["t1,0"]}], "overlays": [{"from": "start", "to": "slide:7", "x": 3, "y": 4, "type": "headline", "text": {"en": "**RUDY**: split evenly", "fr": "**RUDY** : partage égal"}, "sub": {"en": "{The answer@answer6}: each net splits its wire evenly", "fr": "{La réponse@answer6} : chaque réseau partage son fil également"}}, {"from": "@rudy6", "to": "slide:7", "x": 56, "y": 8, "type": "term", "text": {"en": "RUDY", "fr": "RUDY"}, "sub": {"en": "rectangular uniform density", "fr": "rectangular uniform density"}}, {"from": "@bounding6", "to": "slide:7", "x": 3, "y": 74, "type": "tags", "items": [{"text": {"en": "bounding box", "fr": "boîte englobante"}, "at": "@bounding6"}, {"text": {"en": "wirelength = width + height", "fr": "longueur de fil = largeur + hauteur"}, "at": "@wirelength6"}]}, {"from": "slide:7", "to": "slide:8", "x": 3, "y": 4, "type": "headline", "text": {"en": "One **share** per tile", "fr": "Une **part** par tuile"}}, {"from": "@share7", "to": "slide:8", "x": 3, "y": 20, "type": "eq", "text": {"en": "wirelength / tile count = {share@share7}", "fr": "longueur de fil / nombre de tuiles = {part@share7}"}}, {"from": "@third7", "to": "slide:8", "x": 3, "y": 74, "type": "tags", "items": [{"text": {"en": "one third for three tiles", "fr": "un tiers pour trois tuiles"}, "at": "@third7"}, {"text": {"en": "fixed order: nets in listed order, then column by column, row by row", "fr": "ordre fixe : réseaux dans l'ordre de liste, puis colonne par colonne, ligne par ligne"}, "at": "@order7"}]}, {"from": "slide:8", "to": "slide:9", "x": 3, "y": 4, "type": "headline", "text": {"en": "The seed builds to **seven**", "fr": "La graine monte à **sept**"}}, {"from": "@ab8", "to": "slide:9", "x": 44, "y": 24, "type": "tags", "items": [{"text": {"en": "demand ##1##", "fr": "demande ##1##"}, "at": "@ab8"}, {"text": {"en": "demand ##4##", "fr": "demande ##4##"}, "at": "@each8"}, {"text": {"en": "demand ##6##", "fr": "demande ##6##"}, "at": "@big8"}, {"text": {"en": "demand ##7##", "fr": "demande ##7##"}, "at": "@ef8"}]}, {"from": "slide:9", "to": "slide:10", "x": 3, "y": 4, "type": "headline", "text": {"en": "Wider **boxes**", "fr": "Des boîtes plus **larges**"}}, {"from": "@stretches9", "to": "slide:10", "x": 44, "y": 24, "type": "tags", "items": [{"text": {"en": "wirelength ##7## over ##3## tiles", "fr": "longueur de fil ##7## sur ##3## tuiles"}, "at": "@stretches9"}, {"text": {"en": "share = 7/3, about ##2.33##", "fr": "part = 7/3, environ ##2,33##"}, "at": "@thirds9"}]}, {"from": "slide:10", "to": "slide:11", "x": 3, "y": 4, "type": "headline", "text": {"en": "The **big** net, the **small** net", "fr": "Le **grand** réseau, le **petit**"}}, {"from": "@sixths10", "to": "slide:11", "x": 44, "y": 24, "type": "tags", "items": [{"text": {"en": "##11## over ##6## tiles = 11/6, about ##1.83##", "fr": "##11## sur ##6## tuiles = 11/6, environ ##1,83##"}, "at": "@sixths10"}, {"text": {"en": "##1## over ##2## tiles = ##0.5## each", "fr": "##1## sur ##2## tuiles = ##0,5## chacune"}, "at": "@ef10"}, {"text": {"en": "the rightmost column stays empty", "fr": "la colonne la plus à droite reste vide"}, "at": "@empty10"}]}, {"from": "slide:11", "to": "end", "x": 3, "y": 4, "type": "headline", "text": {"en": "The spread **demand**", "fr": "La **demande** dispersée"}}, {"from": "@rowzero11", "to": "slide:11:end+0.2", "x": 44, "y": 24, "type": "tags", "items": [{"text": {"en": "row zero: ##6.17##, ##4.67##, ##6.67##", "fr": "ligne zéro : ##6,17##, ##4,67##, ##6,67##"}, "at": "@rowzero11"}, {"text": {"en": "row one: ##6.17##, ##4.17##, ##6.17##", "fr": "ligne un : ##6,17##, ##4,17##, ##6,17##"}, "at": "@rowone11"}]}, {"from": "slide:11:end+0.3", "to": "end", "x": 50, "y": 44, "type": "question"}], "question": {"at": "slide:11:end+0.3", "text": {"en": "Which tile is **hottest** once we divide by two?", "fr": "Quelle tuile est la plus **chaude** une fois divisée par deux ?"}, "hint": {"en": "Divide each demand by capacity two.", "fr": "Divisez chaque demande par la capacité deux."}, "options": [{"label": {"en": "Column zero, row zero", "fr": "Colonne zéro, ligne zéro"}, "reply": {"en": "Not quite: that tile holds 6.17 of demand, but another holds 6.67. Part 3 finds it.", "fr": "Pas tout à fait : cette tuile contient 6,17 de demande, mais une autre en contient 6,67. La partie 3 la trouve."}, "correct": false}, {"label": {"en": "Column two, row zero", "fr": "Colonne deux, ligne zéro"}, "reply": {"en": "Right: 6.67 of demand, congestion three point three three. Part 3 shows the scan.", "fr": "Exact : 6,67 de demande, congestion trois virgule trois trois. La partie 3 montre le balayage."}, "correct": true}, {"label": {"en": "The rightmost column", "fr": "La colonne la plus à droite"}, "reply": {"en": "No: no box touches it, its demand is zero.", "fr": "Non : aucune boîte ne la touche, sa demande est nulle."}, "correct": false}]}, "chapters": [{"at": "start", "title": {"en": "RUDY", "fr": "RUDY"}}, {"at": "slide:8", "title": {"en": "The seed builds", "fr": "La graine se construit"}}, {"at": "slide:9", "title": {"en": "The spread", "fr": "La dispersion"}}, {"at": "slide:11", "title": {"en": "The demand", "fr": "La demande"}}], "note": {"en": "Every number comes from the Lab 06 checker's --json (.cache/congestion-check.json, regenerated read-only from eda-learning-lab6-cg and byte-compared with the skill demo's copy); the engine recomputes every deposit event, and check_lesson.py --data compares every claim with the file at 12 significant digits.", "fr": "Chaque nombre vient du --json du vérificateur du Lab 06 (.cache/congestion-check.json, régénéré en lecture seule depuis eda-learning-lab6-cg et comparé octet par octet avec la copie de la démo de la compétence) ; le moteur recalcule chaque événement de dépôt, et check_lesson.py --data compare chaque affirmation au fichier avec 12 chiffres significatifs."}}, "timing": {"lang": "en", "slides": [6, 11], "source": "edge-tts", "voice": "en-US-AndrewMultilingualNeural", "rate": "-4%", "words": "exact", "duration": 133.308, "sentences": [{"slide": 6, "text": "The answer: each net splits its wire evenly over its tiles.", "start": 0.104, "end": 4.323, "pause_after": 0.55, "words": [{"w": "The", "t": 0.104}, {"w": "answer", "t": 0.221}, {"w": "each", "t": 1.224}, {"w": "net", "t": 1.406}, {"w": "splits", "t": 1.628}, {"w": "its", "t": 2.201}, {"w": "wire", "t": 2.344}, {"w": "evenly", "t": 2.969}, {"w": "over", "t": 3.372}, {"w": "its", "t": 3.568}, {"w": "tiles", "t": 3.672}]}, {"slide": 6, "text": "Each net draws the smallest box around its cells, its bounding box.", "start": 5.345, "end": 9.915, "pause_after": 0.55, "words": [{"w": "Each", "t": 5.345}, {"w": "net", "t": 5.566}, {"w": "draws", "t": 5.84}, {"w": "the", "t": 6.27}, {"w": "smallest", "t": 6.361}, {"w": "box", "t": 6.999}, {"w": "around", "t": 7.389}, {"w": "its", "t": 7.741}, {"w": "cells", "t": 7.845}, {"w": "its", "t": 8.705}, {"w": "bounding", "t": 8.822}, {"w": "box", "t": 9.264}]}, {"slide": 6, "text": "The net's wirelength is the box width plus its height.", "start": 10.948, "end": 13.813, "pause_after": 0.55, "words": [{"w": "The", "t": 10.948}, {"w": "net's", "t": 11.0}, {"w": "wirelength", "t": 11.196}, {"w": "is", "t": 11.977}, {"w": "the", "t": 12.107}, {"w": "box", "t": 12.185}, {"w": "width", "t": 12.615}, {"w": "plus", "t": 12.849}, {"w": "its", "t": 13.24}, {"w": "height", "t": 13.357}]}, {"slide": 6, "text": "The rule that splits it evenly is RUDY, for rectangular uniform density.", "start": 14.858, "end": 19.806, "pause_after": 1.4500000000000002, "words": [{"w": "The", "t": 14.858}, {"w": "rule", "t": 14.975}, {"w": "that", "t": 15.249}, {"w": "splits", "t": 15.379}, {"w": "it", "t": 15.874}, {"w": "evenly", "t": 16.199}, {"w": "is", "t": 16.72}, {"w": "RUDY", "t": 16.955}, {"w": "for", "t": 17.944}, {"w": "rectangular", "t": 18.087}, {"w": "uniform", "t": 18.764}, {"w": "density", "t": 19.233}]}, {"slide": 7, "text": "A tile's share is the wirelength divided by its tile count.", "start": 21.743, "end": 25.298, "pause_after": 0.55, "words": [{"w": "A", "t": 21.743}, {"w": "tile's", "t": 21.795}, {"w": "share", "t": 22.212}, {"w": "is", "t": 22.811}, {"w": "the", "t": 22.902}, {"w": "wirelength", "t": 23.019}, {"w": "divided", "t": 23.84}, {"w": "by", "t": 24.373}, {"w": "its", "t": 24.53}, {"w": "tile", "t": 24.634}, {"w": "count", "t": 24.92}]}, {"slide": 7, "text": "A box over three tiles gives each tile one third.", "start": 26.312, "end": 29.528, "pause_after": 0.55, "words": [{"w": "A", "t": 26.312}, {"w": "box", "t": 26.364}, {"w": "over", "t": 26.664}, {"w": "three", "t": 26.859}, {"w": "tiles", "t": 27.25}, {"w": "gives", "t": 27.757}, {"w": "each", "t": 28.252}, {"w": "tile", "t": 28.435}, {"w": "one", "t": 28.838}, {"w": "third", "t": 29.099}]}, {"slide": 7, "text": "Deposits happen in a fixed order: nets in their listed order.", "start": 30.56, "end": 34.31, "pause_after": 0.55, "words": [{"w": "Deposits", "t": 30.56}, {"w": "happen", "t": 31.094}, {"w": "in", "t": 31.485}, {"w": "a", "t": 31.576}, {"w": "fixed", "t": 31.628}, {"w": "order", "t": 32.149}, {"w": "nets", "t": 33.021}, {"w": "in", "t": 33.347}, {"w": "their", "t": 33.425}, {"w": "listed", "t": 33.542}, {"w": "order", "t": 33.894}]}, {"slide": 7, "text": "Inside one net, tiles fill column by column, then row by row.", "start": 35.334, "end": 39.527, "pause_after": 1.4500000000000002, "words": [{"w": "Inside", "t": 35.334}, {"w": "one", "t": 35.842}, {"w": "net", "t": 36.141}, {"w": "tiles", "t": 36.701}, {"w": "fill", "t": 37.04}, {"w": "column", "t": 37.261}, {"w": "by", "t": 37.613}, {"w": "column", "t": 37.795}, {"w": "then", "t": 38.55}, {"w": "row", "t": 38.759}, {"w": "by", "t": 38.941}, {"w": "row", "t": 39.123}]}, {"slide": 8, "text": "Now watch the seed map build, net by net.", "start": 41.464, "end": 44.042, "pause_after": 0.55, "words": [{"w": "Now", "t": 41.464}, {"w": "watch", "t": 41.673}, {"w": "the", "t": 41.959}, {"w": "seed", "t": 42.063}, {"w": "map", "t": 42.389}, {"w": "build", "t": 42.662}, {"w": "net", "t": 43.287}, {"w": "by", "t": 43.482}, {"w": "net", "t": 43.613}]}, {"slide": 8, "text": "Net A B has wirelength one and touches only tile one zero, so it drops one.", "start": 45.062, "end": 50.27, "pause_after": 0.55, "words": [{"w": "Net", "t": 45.062}, {"w": "A", "t": 45.336}, {"w": "B", "t": 45.401}, {"w": "has", "t": 45.57}, {"w": "wirelength", "t": 45.726}, {"w": "one", "t": 46.416}, {"w": "and", "t": 47.041}, {"w": "touches", "t": 47.198}, {"w": "only", "t": 47.614}, {"w": "tile", "t": 47.862}, {"w": "one", "t": 48.213}, {"w": "zero", "t": 48.422}, {"w": "so", "t": 49.307}, {"w": "it", "t": 49.476}, {"w": "drops", "t": 49.541}, {"w": "one", "t": 49.932}]}, {"slide": 8, "text": "Nets C D, A C and B D drop one each, bringing demand to four.", "start": 51.3, "end": 56.613, "pause_after": 0.55, "words": [{"w": "Nets", "t": 51.3}, {"w": "C", "t": 51.482}, {"w": "D", "t": 51.665}, {"w": "A", "t": 52.602}, {"w": "C", "t": 52.706}, {"w": "and", "t": 53.201}, {"w": "B", "t": 53.384}, {"w": "D", "t": 53.592}, {"w": "drop", "t": 53.839}, {"w": "one", "t": 54.269}, {"w": "each", "t": 54.673}, {"w": "bringing", "t": 55.376}, {"w": "demand", "t": 55.675}, {"w": "to", "t": 56.066}, {"w": "four", "t": 56.131}]}, {"slide": 8, "text": "The big net A B C D has wirelength two, making demand six.", "start": 57.658, "end": 62.71, "pause_after": 0.55, "words": [{"w": "The", "t": 57.658}, {"w": "big", "t": 57.762}, {"w": "net", "t": 57.958}, {"w": "A", "t": 58.348}, {"w": "B", "t": 58.452}, {"w": "C", "t": 58.648}, {"w": "D", "t": 58.908}, {"w": "has", "t": 59.403}, {"w": "wirelength", "t": 59.676}, {"w": "two", "t": 60.484}, {"w": "making", "t": 61.408}, {"w": "demand", "t": 61.708}, {"w": "six", "t": 62.111}]}, {"slide": 8, "text": "Net E F drops its one, and the demand ends at seven.", "start": 63.739, "end": 67.828, "pause_after": 1.2, "words": [{"w": "Net", "t": 63.739}, {"w": "E", "t": 64.078}, {"w": "F", "t": 64.338}, {"w": "drops", "t": 64.69}, {"w": "its", "t": 65.119}, {"w": "one", "t": 65.237}, {"w": "and", "t": 66.226}, {"w": "the", "t": 66.278}, {"w": "demand", "t": 66.356}, {"w": "ends", "t": 67.138}, {"w": "at", "t": 67.307}, {"w": "seven", "t": 67.385}]}, {"slide": 9, "text": "In the second placement, called spread, the cells sit near the chip's corners.", "start": 69.499, "end": 73.718, "pause_after": 0.55, "words": [{"w": "In", "t": 69.499}, {"w": "the", "t": 69.564}, {"w": "second", "t": 69.642}, {"w": "placement", "t": 70.02}, {"w": "called", "t": 70.515}, {"w": "spread", "t": 70.801}, {"w": "the", "t": 71.674}, {"w": "cells", "t": 71.778}, {"w": "sit", "t": 72.155}, {"w": "near", "t": 72.533}, {"w": "the", "t": 72.702}, {"w": "chip's", "t": 72.78}, {"w": "corners", "t": 73.08}]}, {"slide": 9, "text": "Net A B stretches across the chip with wirelength seven over three tiles in row zero.", "start": 74.753, "end": 80.847, "pause_after": 0.55, "words": [{"w": "Net", "t": 74.753}, {"w": "A", "t": 75.248}, {"w": "B", "t": 75.326}, {"w": "stretches", "t": 75.482}, {"w": "across", "t": 76.016}, {"w": "the", "t": 76.459}, {"w": "chip", "t": 76.537}, {"w": "with", "t": 76.98}, {"w": "wirelength", "t": 77.149}, {"w": "seven", "t": 77.852}, {"w": "over", "t": 78.542}, {"w": "three", "t": 78.79}, {"w": "tiles", "t": 79.219}, {"w": "in", "t": 79.909}, {"w": "row", "t": 80.066}, {"w": "zero", "t": 80.287}]}, {"slide": 9, "text": "Each gets seven thirds, about two point three three.", "start": 81.879, "end": 85.173, "pause_after": 1.4500000000000002, "words": [{"w": "Each", "t": 81.879}, {"w": "gets", "t": 82.048}, {"w": "seven", "t": 82.231}, {"w": "thirds", "t": 82.634}, {"w": "about", "t": 83.507}, {"w": "two", "t": 83.78}, {"w": "point", "t": 84.028}, {"w": "three", "t": 84.327}, {"w": "three", "t": 84.653}]}, {"slide": 10, "text": "The big net A B C D has wirelength eleven over six tiles.", "start": 87.11, "end": 91.707, "pause_after": 0.55, "words": [{"w": "The", "t": 87.11}, {"w": "big", "t": 87.214}, {"w": "net", "t": 87.41}, {"w": "A", "t": 87.826}, {"w": "B", "t": 87.944}, {"w": "C", "t": 88.165}, {"w": "D", "t": 88.451}, {"w": "has", "t": 88.985}, {"w": "wirelength", "t": 89.194}, {"w": "eleven", "t": 89.988}, {"w": "over", "t": 90.574}, {"w": "six", "t": 90.782}, {"w": "tiles", "t": 91.095}]}, {"slide": 10, "text": "Each tile gets eleven sixths, about one point eight three.", "start": 92.748, "end": 96.329, "pause_after": 0.55, "words": [{"w": "Each", "t": 92.748}, {"w": "tile", "t": 92.904}, {"w": "gets", "t": 93.204}, {"w": "eleven", "t": 93.373}, {"w": "sixths", "t": 93.751}, {"w": "about", "t": 94.727}, {"w": "one", "t": 95.092}, {"w": "point", "t": 95.391}, {"w": "eight", "t": 95.652}, {"w": "three", "t": 95.847}]}, {"slide": 10, "text": "Net E F has wirelength one over two tiles, so zero point five each.", "start": 97.341, "end": 102.667, "pause_after": 0.55, "words": [{"w": "Net", "t": 97.341}, {"w": "E", "t": 97.563}, {"w": "F", "t": 97.693}, {"w": "has", "t": 98.031}, {"w": "wirelength", "t": 98.227}, {"w": "one", "t": 98.982}, {"w": "over", "t": 99.581}, {"w": "two", "t": 99.789}, {"w": "tiles", "t": 100.076}, {"w": "so", "t": 100.961}, {"w": "zero", "t": 101.169}, {"w": "point", "t": 101.56}, {"w": "five", "t": 101.872}, {"w": "each", "t": 102.25}]}, {"slide": 10, "text": "No box touches the rightmost column, so it stays empty.", "start": 103.675, "end": 107.334, "pause_after": 1.4500000000000002, "words": [{"w": "No", "t": 103.675}, {"w": "box", "t": 103.87}, {"w": "touches", "t": 104.326}, {"w": "the", "t": 104.73}, {"w": "rightmost", "t": 104.808}, {"w": "column", "t": 105.459}, {"w": "so", "t": 106.227}, {"w": "it", "t": 106.397}, {"w": "stays", "t": 106.475}, {"w": "empty", "t": 106.917}]}, {"slide": 11, "text": "Add the six deposits and the spread demand appears.", "start": 109.24, "end": 112.834, "pause_after": 0.55, "words": [{"w": "Add", "t": 109.24}, {"w": "the", "t": 109.396}, {"w": "six", "t": 109.462}, {"w": "deposits", "t": 109.735}, {"w": "and", "t": 110.685}, {"w": "the", "t": 110.79}, {"w": "spread", "t": 110.868}, {"w": "demand", "t": 111.766}, {"w": "appears", "t": 112.17}]}, {"slide": 11, "text": "Row zero reads six point one seven, four point six seven, six point six seven.", "start": 113.872, "end": 119.445, "pause_after": 0.55, "words": [{"w": "Row", "t": 113.872}, {"w": "zero", "t": 114.107}, {"w": "reads", "t": 114.523}, {"w": "six", "t": 115.109}, {"w": "point", "t": 115.357}, {"w": "one", "t": 115.656}, {"w": "seven", "t": 115.956}, {"w": "four", "t": 116.815}, {"w": "point", "t": 116.971}, {"w": "six", "t": 117.271}, {"w": "seven", "t": 117.531}, {"w": "six", "t": 118.247}, {"w": "point", "t": 118.508}, {"w": "six", "t": 118.807}, {"w": "seven", "t": 119.081}]}, {"slide": 11, "text": "Row one reads six point one seven, four point one seven, six point one seven.", "start": 120.481, "end": 125.703, "pause_after": 0.55, "words": [{"w": "Row", "t": 120.481}, {"w": "one", "t": 120.742}, {"w": "reads", "t": 120.976}, {"w": "six", "t": 121.262}, {"w": "point", "t": 121.549}, {"w": "one", "t": 121.874}, {"w": "seven", "t": 122.161}, {"w": "four", "t": 123.02}, {"w": "point", "t": 123.15}, {"w": "one", "t": 123.437}, {"w": "seven", "t": 123.684}, {"w": "six", "t": 124.505}, {"w": "point", "t": 124.739}, {"w": "one", "t": 125.065}, {"w": "seven", "t": 125.273}]}, {"slide": 11, "text": "Pause and guess: which tile is hottest once we divide by two?", "start": 126.745, "end": 130.326, "pause_after": 2.6, "words": [{"w": "Pause", "t": 126.745}, {"w": "and", "t": 127.006}, {"w": "guess", "t": 127.084}, {"w": "which", "t": 128.034}, {"w": "tile", "t": 128.23}, {"w": "is", "t": 128.503}, {"w": "hottest", "t": 128.581}, {"w": "once", "t": 129.076}, {"w": "we", "t": 129.284}, {"w": "divide", "t": 129.388}, {"w": "by", "t": 129.727}, {"w": "two", "t": 129.87}]}]}, "lang": "en", "subs": {"fr": ["La réponse : chaque réseau partage son fil également entre ses tuiles.", "Chaque réseau dessine la plus petite boîte autour de ses cellules, sa boîte englobante.", "La longueur de fil du réseau est la largeur de la boîte plus sa hauteur.", "La règle qui partage également est RUDY, pour rectangular uniform density.", "La part d'une tuile est la longueur de fil divisée par son nombre de tuiles.", "Une boîte sur trois tuiles donne à chaque tuile un tiers.", "Les dépôts se font dans un ordre fixe : les réseaux dans leur ordre de liste.", "Dans un réseau, les tuiles se remplissent colonne par colonne, puis ligne par ligne.", "Regardez maintenant la carte de la graine se construire, réseau par réseau.", "Le réseau A B a une longueur de fil de un et ne touche que la tuile un zéro, donc il dépose un.", "Les réseaux C D, A C et B D déposent un chacun, portant la demande à quatre.", "Le grand réseau A B C D a une longueur de fil de deux, portant la demande à six.", "Le réseau E F dépose son un, et la demande finit à sept.", "Dans le second placement, appelé dispersé, les cellules sont près des coins de la puce.", "Le réseau A B s'étend sur toute la puce avec une longueur de fil de sept sur trois tuiles de la ligne zéro.", "Chacune reçoit sept tiers, environ deux virgule trois trois.", "Le grand réseau A B C D a une longueur de fil de onze sur six tuiles.", "Chaque tuile reçoit onze sixièmes, environ un virgule huit trois.", "Le réseau E F a une longueur de fil de un sur deux tuiles, donc zéro virgule cinq chacune.", "Aucune boîte ne touche la colonne la plus à droite, donc elle reste vide.", "Ajoutez les six dépôts et la demande dispersée apparaît.", "La ligne zéro vaut six virgule un sept, quatre virgule six sept, six virgule six sept.", "La ligne un vaut six virgule un sept, quatre virgule un sept, six virgule un sept.", "Faites une pause et devinez : quelle tuile est la plus chaude une fois divisé par deux ?"], "zh": ["答案：每个线网把它的导线均匀分摊到所经过的格子上。", "每个线网围绕其单元画出最小的包围盒。", "线网的线长等于盒的宽度加高度。", "这种均匀分摊的规则叫 RUDY，即矩形均匀密度。", "格子的份额是线长除以它经过的格子数。", "一个跨三个格子的盒给每个格子三分之一。", "沉积按固定顺序进行：线网按列表顺序。", "在一个线网内部，格子先按列填充，再按行填充。", "现在看种子地图一个线网一个线网地构建起来。", "线网 A B 的线长为一，只经过格子 (1,0)，所以它落下一。", "线网 C D、A C 和 B D 各落下一，需求达到四。", "大线网 A B C D 的线长为二，使需求达到六。", "线网 E F 落下它的一，需求最终到七。", "在第二个布局中，也就是分散布局，单元位于芯片角落附近。", "线网 A B 横跨芯片，线长七分摊在第 0 行的三个格子上。", "每个格子得到七分之三，约二点三三。", "大线网 A B C D 的线长为十一，分摊在六个格子上。", "每个格子得到十一分之六，约一点八三。", "线网 E F 的线长为一，分摊在两个格子上，所以每个得零点五。", "没有盒碰到最右边的列，所以它保持为空。", "把六次沉积加起来，分散布局的需求就出现了。", "第 0 行是六点一七、四点六七、六点六七。", "第 1 行是六点一七、四点一七、六点一七。", "暂停并猜一猜：除以二之后，哪个格子最热？"]}, "storageKey": "lab6-lesson-speed"});
+</script>
+</body>
+</html>
