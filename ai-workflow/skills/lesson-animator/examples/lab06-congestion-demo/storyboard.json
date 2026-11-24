@@ -1,0 +1,153 @@
+{
+ "scene": "placement",
+ "pageTitle": { "en": "Congestion heat map demo lesson" },
+ "eyebrow": { "en": "Lab 06 · engine demo (heat grid, v5.1)" },
+ "title": { "en": "Watch the demand build" },
+ "lede": { "en": "Demo of the placement scene's heat-grid overlay (v5.1): the six deposit events of the congestion checker's seed run paint the GCell grid tile by tile, with the demand counter, and the hottest tile is ringed at the end. Drag a cell in the try-it panel to see the overflow readout." },
+ "placement": {
+  "run": "congested_seed",
+  "floorBox": [36, 168, 344, 229.33],
+  "claims": [
+   {
+    "run": "congested_seed",
+    "start": 7,
+    "demand": 7,
+    "hottest": { "i": 1, "j": 0, "v": 3.5 },
+    "ovtotal": 5,
+    "ovmax": 5,
+    "ovcount": 1
+   },
+   {
+    "run": "congested_seed",
+    "event": 0,
+    "net": 0,
+    "pins": ["A", "B"],
+    "bbox": [4, 2, 5, 2],
+    "hpwl": 1,
+    "share": 1,
+    "tiles": [[1, 0]],
+    "demandAfter": { "1,0": 1 }
+   },
+   {
+    "run": "congested_seed",
+    "event": 1,
+    "net": 1,
+    "pins": ["C", "D"],
+    "bbox": [4, 3, 5, 3],
+    "hpwl": 1,
+    "share": 1,
+    "tiles": [[1, 0]],
+    "demandAfter": { "1,0": 2 }
+   },
+   {
+    "run": "congested_seed",
+    "event": 2,
+    "net": 2,
+    "pins": ["A", "C"],
+    "bbox": [4, 2, 4, 3],
+    "hpwl": 1,
+    "share": 1,
+    "tiles": [[1, 0]],
+    "demandAfter": { "1,0": 3 }
+   },
+   {
+    "run": "congested_seed",
+    "event": 3,
+    "net": 3,
+    "pins": ["B", "D"],
+    "bbox": [5, 2, 5, 3],
+    "hpwl": 1,
+    "share": 1,
+    "tiles": [[1, 0]],
+    "demandAfter": { "1,0": 4 }
+   },
+   {
+    "run": "congested_seed",
+    "event": 4,
+    "net": 4,
+    "pins": ["A", "B", "C", "D"],
+    "bbox": [4, 2, 5, 3],
+    "hpwl": 2,
+    "share": 2,
+    "tiles": [[1, 0]],
+    "demandAfter": { "1,0": 6 }
+   },
+   {
+    "run": "congested_seed",
+    "event": 5,
+    "net": 5,
+    "pins": ["E", "F"],
+    "bbox": [4.5, 2.5, 5.5, 2.5],
+    "hpwl": 1,
+    "share": 1,
+    "tiles": [[1, 0]],
+    "demandAfter": { "1,0": 7 }
+   },
+   {
+    "positions": {
+     "A": { "x": 6.5, "y": 2 },
+     "B": { "x": 5, "y": 2 },
+     "C": { "x": 4, "y": 3 },
+     "D": { "x": 5, "y": 3 },
+     "E": { "x": 4.5, "y": 2.5 },
+     "F": { "x": 5.5, "y": 2.5 }
+    },
+    "hpwl": 11.5,
+    "ovtotal": 7.5,
+    "ovcount": 2,
+    "hottest": { "i": 1, "j": 0, "v": 3.625 }
+   }
+  ]
+ },
+ "anchors": {
+  "grid": { "slide": 1, "en": "grid" },
+  "deposits": { "slide": 1, "en": "deposits" },
+  "netAB": { "slide": 1, "en": "net a b adds" },
+  "netCD": { "slide": 1, "en": "net c d adds" },
+  "netAC": { "slide": 1, "en": "net a c adds" },
+  "netBD": { "slide": 1, "en": "net b d adds" },
+  "netABCD": { "slide": 1, "en": "net a b c d adds" },
+  "netEF": { "slide": 1, "en": "net e f adds" },
+  "hottest": { "slide": 1, "en": "hottest" },
+  "drag": { "slide": 1, "en": "drag" }
+ },
+ "pausing": { "between": 0.55, "scene": 0.9, "question": 1.3, "tail": 2.0 },
+ "initial": { "run": "congested_seed", "move": 0, "deposit": 0, "side": 0 },
+ "timeline": [
+  { "at": "@netAB", "deposit": 1 },
+  { "at": "@netCD", "deposit": 2 },
+  { "at": "@netAC", "deposit": 3 },
+  { "at": "@netBD", "deposit": 4 },
+  { "at": "@netABCD", "deposit": 5 },
+  { "at": "@netEF", "deposit": 6 }
+ ],
+ "show": [
+  { "show": "heat", "from": "@grid", "to": "end" },
+  { "show": "nets", "from": "@deposits", "to": "end" },
+  { "show": "counter", "from": "@netAB", "to": "@hottest", "metric": "demand" },
+  { "show": "counter", "from": "@hottest", "to": "end", "metric": "hottestTile" },
+  { "show": "highlight", "from": "@hottest", "to": "end", "ids": ["t1,0"] }
+ ],
+ "overlays": [
+  {
+   "from": "start",
+   "to": "@deposits",
+   "x": 3,
+   "y": 4,
+   "type": "headline",
+   "text": { "en": "The demand builds **tile by tile**" }
+  },
+  {
+   "from": "@hottest",
+   "to": "end",
+   "x": 3,
+   "y": 4,
+   "type": "headline",
+   "text": { "en": "Hottest tile **(1,0) = 3.5**, overflow ##5##" }
+  }
+ ],
+ "chapters": [
+  { "at": "start", "title": { "en": "The demand builds" } }
+ ],
+ "note": { "en": "Every number comes from the Lab 06 checker's --json (data/congestion-check.json, generated read-only from eda-learning-lab6-cg); the engine recomputes every deposit event and check_lesson.py --data compares every claim with the file at 12 significant digits." }
+}

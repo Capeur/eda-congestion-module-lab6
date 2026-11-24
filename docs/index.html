@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 06 — Congestion heat map · Congestion for EDA</title>
+  <meta name="description" content="Lab 06 of the Congestion for EDA course: a demand-over-capacity heat map on a tiny GCell grid, told in five short animated lessons, with an interactive browser lab, a Python checker and a quiz.">
+  <link rel="alternate" hreflang="fr" href="fr/index.html">
+  <link rel="preload" href="fonts/source-sans-3-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="page.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <span class="crumb">Congestion for EDA · <strong>Lab 06</strong></span>
+      <nav class="toc" aria-label="On this page">
+        
+        <a href="#lab">Interactive lab</a>
+        <a href="#implement">Implement</a>
+        <a href="#quiz">Quiz</a>
+        <a href="#transcript">Transcript</a>
+        <a class="lang-switch" href="fr/index.html" hreflang="fr" lang="fr" title="Lire cette page en français">Français</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="hero">
+      <p class="eyebrow">Lab 06 · GCell congestion</p>
+      <h1>Congestion heat map</h1>
+      <p class="lead">Six cells sit on a small chip cut into eight tiles. Each net spreads its wire over the tiles its box touches, each tile holds a demand over a capacity, and the hottest tile lights up. This lab tells that story in five short lessons, then lets you drag cells, read the overflow metrics and cool the map yourself.</p>
+    </div>
+
+    
+
+    <section id="lab">
+      <h2>Interactive lab</h2>
+      <div class="card lab-grid">
+        
+        <div>
+          <p>Open it and play with it, right in the browser:</p>
+          <ul>
+            <li>Watch the seed light one tile at congestion 3.5: all six nets deposit their wire there.</li>
+<li>Drag cell A across the tile boundary x = 6 and watch the oversubscribed count rise from one to two.</li>
+<li>Read the metrics panel: hottest tile, overflow total / max / count, HPWL — the exact numbers, not the colours.</li>
+<li>Press Run feedback once and watch the seed&#x27;s total overflow fall to zero, with the hottest tile at exactly 1.0.</li>
+          </ul>
+          <p>Nine challenges, from Intro to Challenge, check what you built and typed, not the button you pressed. Nothing passes on page load, from the seed alone, from the reveal, or from one Run feedback click alone — and editing after a method button cancels that method's credit.</p>
+          <div class="btns"><a class="btn primary" href="tools/congestion-map/index.html">Open the lab</a></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="implement">
+      <h2>Implement (Track A)</h2>
+      <p>Write the nine functions of the heat map yourself — <code>rudy_demand</code>, <code>congestion_map</code>, <code>overflow_metrics</code>, <code>hottest</code> and the rest — from the written rules, and check them against the goldens. The commands below run inside the <a href="https://github.com/yongfu-li/eda-learning">course repository</a>, from <code>courses/learn_congestion/module02-05-congestion-map/</code>.</p>
+      <div class="files">
+        <a href="examples/tiny_cong.json" download><code>tiny_cong.json</code><small>The instance: 12×8 chip, 4×2 GCell grid, capacity 2, cells A–F, six nets, both placements</small></a>
+<a href="examples/congestion_map_check.py" download><code>congestion_map_check.py</code><small>Golden self-check; --impl checks your code, --vs-node compares with JavaScript, --json is the lesson replay file</small></a>
+<a href="examples/cong_node.mjs" download><code>cong_node.mjs</code><small>The same numeric core in JavaScript (used by --vs-node)</small></a>
+<a href="examples/cap_one.json" download><code>cap_one.json</code><small>Capacity 2→1: no tile flips, the ratios double</small></a>
+<a href="examples/boundary_move.json" download><code>boundary_move.json</code><small>One cell across a GCell boundary: overflow count 1→2</small></a>
+<a href="examples/cap_below_one.json" download><code>cap_below_one.json</code><small>Capacity below 1: count 0→2</small></a>
+<a href="CHECKLIST.md" download><code>CHECKLIST.md</code><small>The learner checklist (both tracks)</small></a>
+<a href="README.md" download><code>README.md</code><small>The module README</small></a>
+      </div>
+      <div class="card md">
+        <h1>Examples — Congestion heat map</h1>
+<p>Track A (implement). The instance is <code>examples/tiny_cong.json</code> (chip 12×8, GCells 4×2 of 3×4, capacity 2, cells A–F,
+nets A–B, C–D, A–C, B–D, A–B–C–D, E–F). The answer key is <code>examples/congestion_map_check.py</code>; every number below was
+printed by that checker (<code>python3 examples/congestion_map_check.py --show</code>, <code>--json</code>). Run it from this module
+folder; it needs only the Python standard library (<code>--vs-node</code> also needs <code>node</code>). The module is <strong>fully
+deterministic</strong> — positions come from the instance file, nothing draws a random number — so there is no PRNG anywhere
+and Python and JavaScript agree bit-for-bit per cell (<code>--vs-node</code>).</p>
+<h2>Goal</h2>
+<p>Build a <strong>congestion heat map</strong>: per GCell, <code>congestion = demand / capacity</code>, plus the overflow metrics
+(<code>max(0, demand − capacity)</code> per tile, and total / max / count over the grid). Values above 1 are oversubscribed.
+The map lets you point at the hottest tile without reading floats; the metrics give the exact, regressable numbers.</p>
+<h2>Definitions</h2>
+<ul>
+<li><strong>GCell grid</strong>: <code>nx × ny</code> tiles of <code>cellW × cellH</code> over the chip. Here 4×2 of 3×4 over 12×8. <code>cellGcell(x, y)</code> =
+  <code>clamp(floor(x/3), 0, 3)</code>, <code>clamp(floor(y/4), 0, 1)</code> — out-of-chip coordinates clamp into the edge tile (R6):
+  (12, 8) → (3, 1), (−1, −1) → (0, 0).</li>
+<li><strong>Net bbox / HPWL</strong>: bbox of its pins' positions; HPWL = (max x − min x) + (max y − min y).</li>
+<li><strong>RUDY demand</strong> (R3, the fill order): nets in file order; a net deposits <code>share = HPWL / max(1, #tiles)</code> into every
+  GCell its bbox touches, tiles filled <strong>i-outer / j-inner</strong>; demand accumulates in that order (float order matters
+  in the last ulp).</li>
+<li><strong>Congestion</strong> = demand / capacity. <strong>Overflow</strong> (R7) = <code>max(0, demand − capacity)</code> per tile; <code>count</code> = number of
+  tiles with overflow <strong>strictly &gt; 0</strong>; <code>total</code> summed in scan order; <code>max</code> init 0.</li>
+<li><strong>Hottest</strong> (R2) = argmax of congestion, scan i outer / j inner, strict <code>&gt;</code>: the <strong>first</strong> maximum in row-major
+  order wins; all-zeros → (0, 0, 0). Probe: <code>[[1,2],[0,0],[0,0],[2,0]]</code> → (0, 1).</li>
+<li><strong>Heat colour</strong> (R5): <code>t = clamp(cong / maxC, 0, 1)</code> with <code>maxC</code> = the current map's max congestion — <strong>relative to
+  the current max, not to the capacity</strong>; oversubscribed (&gt; 1) is not a colour boundary. Paper palette stops at
+  u = 0, 1/3, 2/3, 1 → <code>#ffffff, #0f6b5c, #b45309, #9f1239</code>, alpha 0.15 + 0.7u.</li>
+<li><strong>Rounding</strong> (R1): checks compare raw floats with tol 1e-9; display 2 decimals round-half-even; <code>--json</code> rounds to
+  12 significant digits. JS <code>total += v</code> and Python <code>sum()</code> can differ in the last ulp, so the checker accumulates
+  <code>total</code> with an explicit loop (that is why the raw spread total is 22.000000000000004 in JS).</li>
+</ul>
+<h2>The two in-chip clamp rules (kept as written, not unified)</h2>
+<ul>
+<li><strong>Drag clamp</strong> (moving cells in the browser lab): x ∈ [0, 11.5], y ∈ [0, 7.5] — the hard-coded literals in
+  <code>platform/assets/interactive-congestion-lab.js</code> <code>moveSelectedTo</code> (CHIP − 0.5). Probe: (20, −3) → (11.5, 0).</li>
+<li><strong>Feedback clamp</strong> (<code>placementFeedbackLite</code>): x ∈ [0, chip−1] = [0, 11], y ∈ [0, chip−1] = [0, 7]. Probes: with
+  F at (15, 2.5) the feedback moves it to (11, 4.25); with F at (4.5, 20) to (6, 7).</li>
+</ul>
+<p>They are different rules (11.5/7.5 vs 11/7); the checker tests both as-is.</p>
+<h2>API (what <code>--impl</code> looks for)</h2>
+<p><code>positions</code> is <code>{cell: {"x": .., "y": ..}}</code>, <code>data</code> is the instance dict loaded from an <code>examples/*.json</code> file.
+Same signatures as <code>common/solvers.py</code>, so you can compare your file with the course's. Functions you have not
+written yet are reported as SKIP; never change the positions, nets or data you are given.</p>
+<pre><code class="language-python">def cell_gcell(x, y, nx, ny, cell_w, cell_h)   -&gt; (i, j)
+def net_bbox(net, positions)                   -&gt; (x0, y0, x1, y1)
+def hpwl(net, positions)                       -&gt; float
+def deposit_events(positions, data)            -&gt; [{net, pins, bbox, hpwl, tiles, share}, ...]  # fill order
+def rudy_demand(positions, data)               -&gt; demand[i][j]
+def congestion_map(demand, capacity)           -&gt; cong[i][j]
+def overflow_metrics(demand, capacity)         -&gt; {&quot;perCell&quot;, &quot;total&quot;, &quot;max&quot;, &quot;count&quot;}
+def hottest(cong)                              -&gt; (i, j, v)
+def placement_feedback_lite(positions, data)   -&gt; new positions
+</code></pre>
+<h2>Pseudocode</h2>
+<pre><code class="language-text">INPUT: positions, instance (chip, gcell grid, capacity, nets)
+for each net, in nets order:                      # R3
+  bbox  = min/max of its pins' positions
+  wl    = (max x - min x) + (max y - min y)       # HPWL
+  tiles = GCells of the bbox corners, clamped, filled i-outer / j-inner
+  share = wl / max(1, #tiles)
+  for each tile (i, j) in that order: demand[i][j] += share
+cong[i][j]     = demand[i][j] / capacity
+overflow[i][j] = max(0, demand[i][j] - capacity)  # R7; count = #tiles with &gt; 0 (strict)
+hottest        = argmax cong, scan i outer / j inner, strict &gt;  # R2: first max in row-major order
+heat t[i][j]   = clamp(cong[i][j] / maxC, 0, 1)    # R5: relative to current max, not to capacity
+OUTPUT: demand, congestion, overflow (perCell/total/max/count), hottest, heat t
+</code></pre>
+<h2>Golden 1 — the congested seed (capacity 2)</h2>
+<p>All six cells sit in GCell (1,0); every net deposits there (R3 fill order):</p>
+<table>
+<thead>
+<tr>
+<th>net</th>
+<th>pins</th>
+<th>bbox</th>
+<th>HPWL</th>
+<th>tiles</th>
+<th>share</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>A, B</td>
+<td>[4, 2, 5, 2]</td>
+<td>1</td>
+<td>(1,0)</td>
+<td>1</td>
+</tr>
+<tr>
+<td>1</td>
+<td>C, D</td>
+<td>[4, 3, 5, 3]</td>
+<td>1</td>
+<td>(1,0)</td>
+<td>1</td>
+</tr>
+<tr>
+<td>2</td>
+<td>A, C</td>
+<td>[4, 2, 4, 3]</td>
+<td>1</td>
+<td>(1,0)</td>
+<td>1</td>
+</tr>
+<tr>
+<td>3</td>
+<td>B, D</td>
+<td>[5, 2, 5, 3]</td>
+<td>1</td>
+<td>(1,0)</td>
+<td>1</td>
+</tr>
+<tr>
+<td>4</td>
+<td>A, B, C, D</td>
+<td>[4, 2, 5, 3]</td>
+<td>2</td>
+<td>(1,0)</td>
+<td>2</td>
+</tr>
+<tr>
+<td>5</td>
+<td>E, F</td>
+<td>[4.5, 2.5, 5.5, 2.5]</td>
+<td>1</td>
+<td>(1,0)</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>quantity</th>
+<th>value</th>
+<th>why it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>demand</td>
+<td>(1,0) = <strong>7</strong>, all other tiles 0</td>
+<td>1+1+1+1+2+1</td>
+</tr>
+<tr>
+<td>congestion</td>
+<td>(1,0) = <strong>3.50</strong></td>
+<td>7 / 2</td>
+</tr>
+<tr>
+<td>overflow</td>
+<td>perCell (1,0) = <strong>5</strong>; total <strong>5</strong>, max <strong>5</strong>, count <strong>1</strong></td>
+<td>max(0, 7−2); strict &gt; 0 count</td>
+</tr>
+<tr>
+<td>hottest (R2)</td>
+<td><strong>(1,0) @ 3.50</strong></td>
+<td>the center lights up first</td>
+</tr>
+<tr>
+<td>HPWL</td>
+<td>per-net [1, 1, 1, 1, 2, 1], total <strong>7</strong></td>
+<td>compact placement, short wires</td>
+</tr>
+<tr>
+<td>heat t (R5)</td>
+<td>(1,0) = 1.00, rest 0</td>
+<td>maxC = 3.5</td>
+</tr>
+</tbody>
+</table>
+<h2>Golden 2 — the spread placement (capacity 2)</h2>
+<table>
+<thead>
+<tr>
+<th>net</th>
+<th>pins</th>
+<th>bbox</th>
+<th>HPWL</th>
+<th>tiles (fill order)</th>
+<th>share</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>A, B</td>
+<td>[1, 1, 8, 1]</td>
+<td>7</td>
+<td>(0,0), (1,0), (2,0)</td>
+<td>7/3 = 2.3333</td>
+</tr>
+<tr>
+<td>1</td>
+<td>C, D</td>
+<td>[1, 5, 8, 5]</td>
+<td>7</td>
+<td>(0,1), (1,1), (2,1)</td>
+<td>2.3333</td>
+</tr>
+<tr>
+<td>2</td>
+<td>A, C</td>
+<td>[1, 1, 1, 5]</td>
+<td>4</td>
+<td>(0,0), (0,1)</td>
+<td>2</td>
+</tr>
+<tr>
+<td>3</td>
+<td>B, D</td>
+<td>[8, 1, 8, 5]</td>
+<td>4</td>
+<td>(2,0), (2,1)</td>
+<td>2</td>
+</tr>
+<tr>
+<td>4</td>
+<td>A, B, C, D</td>
+<td>[1, 1, 8, 5]</td>
+<td>11</td>
+<td>(0,0), (0,1), (1,0), (1,1), (2,0), (2,1)</td>
+<td>11/6 = 1.8333</td>
+</tr>
+<tr>
+<td>5</td>
+<td>E, F</td>
+<td>[5, 3, 6, 3]</td>
+<td>1</td>
+<td>(1,0), (2,0)</td>
+<td>0.5</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>quantity</th>
+<th>value</th>
+<th>why it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>demand</td>
+<td>6.17 6.17 | 4.67 4.17 | 6.67 6.17 | 0 0 (columns i = 0..3)</td>
+<td>RUDY spread over bbox tiles</td>
+</tr>
+<tr>
+<td>congestion</td>
+<td>3.08 3.08 | 2.33 2.08 | 3.33 3.08 | 0 0</td>
+<td>demand / 2</td>
+</tr>
+<tr>
+<td>overflow</td>
+<td>total <strong>22</strong>, max <strong>4.67</strong>, count <strong>6</strong></td>
+<td>raw JS total 22.000000000000004 (R1)</td>
+</tr>
+<tr>
+<td>hottest (R2)</td>
+<td><strong>(2,0) @ 3.33</strong></td>
+<td>first max in row-major order</td>
+</tr>
+<tr>
+<td>HPWL</td>
+<td>per-net [7, 7, 4, 4, 11, 1], total <strong>34</strong></td>
+<td>long wires</td>
+</tr>
+<tr>
+<td>heat t (R5)</td>
+<td>0.93 0.93 | 0.70 0.62 | 1.00 0.93 | 0 0</td>
+<td>maxC = 3.33</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Peak vs total</strong>: spreading lowers the peak congestion (3.50 → 3.33) but raises total overflow (5 → 22) and the
+oversubscribed count (1 → 6). Read both numbers, not just the hottest tile.</p>
+<h2>Golden 3 — capacity sweep (both placements, RUDY)</h2>
+<table>
+<thead>
+<tr>
+<th>capacity</th>
+<th>spread total / max / count</th>
+<th>seed total / max / count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>28.00 / 5.67 / <strong>6</strong></td>
+<td>6 / 6 / <strong>1</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td>22.00 / 4.67 / 6</td>
+<td>5 / 5 / 1</td>
+</tr>
+<tr>
+<td>3</td>
+<td>16.00 / 3.67 / 6</td>
+<td>4 / 4 / 1</td>
+</tr>
+<tr>
+<td>4</td>
+<td>10.00 / 2.67 / 6</td>
+<td>3 / 3 / 1</td>
+</tr>
+<tr>
+<td>5</td>
+<td>5.17 / 1.67 / <strong>4</strong></td>
+<td>2 / 2 / 1</td>
+</tr>
+<tr>
+<td>8</td>
+<td>0 / 0 / <strong>0</strong></td>
+<td>0 / 0 / <strong>0</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Two verified answers that used to be asked vaguely:</p>
+<ul>
+<li><strong>Capacity 2 → 1: no tile flips oversubscribed.</strong> Every tile above capacity 2 is still above 1, the zero tiles
+  stay zero: count stays 6 on spread and 1 on seed; the ratios just double (spread hottest 3.33 → 6.67).
+  See <code>examples/cap_one.json</code> (same instance at capacity 1, sweep [2, 1, 5, 8]).</li>
+<li><strong>Capacity 2 → 5 on spread is the visible flip: count 6 → 4.</strong> Tiles (1,0) (demand 4.67) and (1,1) (demand 4.17)
+  are above 2 but not above 5, so they drop out; total 22 → 5.17.</li>
+</ul>
+<h2>Golden 4 — one feedback pass on the seed (R4 + feedback clamp)</h2>
+<p>Neighbours are tried (+1,0), (−1,0), (0,+1), (0,−1), strict <code>&lt;</code>; the cell moves to the midpoint toward the chosen
+tile centre, clamped to [0, 11]×[0, 7] (the feedback clamp, not the drag clamp).</p>
+<table>
+<thead>
+<tr>
+<th>quantity</th>
+<th>before</th>
+<th>after</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>positions</td>
+<td>A(4,2) B(5,2) C(4,3) D(5,3) E(4.5,2.5) F(5.5,2.5)</td>
+<td>A(5.75,2) B(6.25,2) C(5.75,2.5) D(6.25,2.5) E(6,2.25) F(6.5,2.25)</td>
+</tr>
+<tr>
+<td>demand</td>
+<td>(1,0) = 7</td>
+<td>(1,0) = 1.5, (2,0) = 2.0</td>
+</tr>
+<tr>
+<td>overflow total / max / count</td>
+<td>5 / 5 / 1</td>
+<td><strong>0 / 0 / 0</strong></td>
+</tr>
+<tr>
+<td>hottest</td>
+<td>(1,0) @ 3.5</td>
+<td>(2,0) @ <strong>exactly 1.0</strong></td>
+</tr>
+</tbody>
+</table>
+<h2>Three small instances that each flip one result</h2>
+<table>
+<thead>
+<tr>
+<th>file</th>
+<th>what changes</th>
+<th>the flip (all from the checker)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>examples/cap_one.json</code></td>
+<td>tiny instance at <strong>capacity 1</strong> (the 2→1 case)</td>
+<td>no tile flips; ratios double; count unchanged (6 spread / 1 seed). Sweep [2, 1, 5, 8]</td>
+</tr>
+<tr>
+<td><code>examples/boundary_move.json</code></td>
+<td>seed cell <strong>A moved (4,2) → (6.5,2)</strong>, across the GCell boundary x = 6</td>
+<td>nets touching A now deposit into two tiles: overflow count <strong>1 → 2</strong>, total 5 → 7.5, HPWL 7 → 11.5, hottest (1,0) @ 3.625</td>
+</tr>
+<tr>
+<td><code>examples/cap_below_one.json</code></td>
+<td>2×1 grid, <strong>capacity 0.4</strong> (below 1)</td>
+<td>net A–B spans the boundary x = 3: share 0.5 per tile; at capacity 1 count 0, at 0.5 overflow exactly 0 (strict &gt; 0, R7), at 0.4 count <strong>0 → 2</strong> (congestion 1.25)</td>
+</tr>
+</tbody>
+</table>
+<p>Run any of them with <code>python3 examples/congestion_map_check.py --instance examples/boundary_move.json --show</code>.</p>
+<h2>Probes (rules pinned by the checker)</h2>
+<ul>
+<li>R2 tie: <code>hottest([[1,2],[0,0],[0,0],[2,0]])</code> = <strong>(0,1)</strong> — first max in row-major order, not the last; all-zeros → (0,0,0).</li>
+<li>R6 clamp: <code>cellGcell(12, 8)</code> = (3,1), <code>cellGcell(-1, -1)</code> = (0,0).</li>
+<li>Drag clamp: (20, −3) → <strong>(11.5, 0)</strong>, (11.7, 7.6) → (11.5, 7.5).</li>
+<li>Feedback clamp: F (15, 2.5) → <strong>(11, 4.25)</strong>; F (4.5, 20) → (6, 7).</li>
+<li>Reversed input: nets reversed on spread give the same tiles per net, demand within 1e-9 (last-ulp differences
+  allowed, R1), same count 6 and hottest (2,0); the positions dict in reverse key order gives identical feedback.</li>
+</ul>
+<h2>Try these</h2>
+<pre><code class="language-bash">python3 examples/congestion_map_check.py                     # all PASS (every examples/*.json)
+python3 examples/congestion_map_check.py --show              # the rules and every table above
+python3 examples/congestion_map_check.py --instance examples/cap_one.json --show
+python3 examples/congestion_map_check.py --impl my_cong.py   # YOUR functions (SKIP for missing ones)
+python3 examples/congestion_map_check.py --impl examples/wrong/tie_last_wins.py   # FAILs on purpose (R2 tie-break)
+python3 examples/congestion_map_check.py --vs-node           # JS and Python agree bit-for-bit per cell
+python3 examples/congestion_map_check.py --json &gt; lesson.json  # the replay file for the animated lessons
+</code></pre>
+<p><code>examples/wrong/tie_last_wins.py</code> is a faithful-looking port that breaks one written rule (<code>&gt;=</code> instead of <code>&gt;</code> in
+<code>hottest</code>): it must FAIL on the tie probe with <code>got [3, 0, 2.0]</code>.</p>
+<h2>Starter prompts (ask why)</h2>
+<ol>
+<li>Load <code>placement</code> and <code>congested_seed</code> from <code>examples/tiny_cong.json</code>; print the 4×2 demand and congestion
+   matrices with two decimals. Which tile is hottest on each, and why (R2)?</li>
+<li>Run the checker's deposit events for the spread placement. Why does net A–B (HPWL 7) give 2.3333 to each of
+   (0,0), (1,0), (2,0) instead of all 7 to one tile?</li>
+<li>Compare spread vs seed on <strong>both</strong> peak and total overflow. Why does spreading lower the peak (3.50 → 3.33) but
+   raise the total (5 → 22)?</li>
+<li>Change capacity from 2.0 to 1.0 (see <code>examples/cap_one.json</code>): which GCells flip oversubscribed? Now check the
+   verified answer: <strong>none</strong> — the count stays 6 on spread and 1 on seed, only the ratios double. Then raise the
+   capacity to 5 on the spread placement: the count drops 6 → 4 because tiles (1,0) and (1,1) fall back under the
+   capacity. Why does 2→1 flip nothing while 2→5 flips two tiles?</li>
+<li>Move one cell across a GCell boundary (<code>examples/boundary_move.json</code>: A from (4,2) to (6.5,2)). Which nets'
+   tile lists change, and why does the overflow count flip 1 → 2?</li>
+<li>Run one feedback pass on the seed. Why does the total overflow reach exactly 0, and why is the new hottest
+   (2,0) at congestion exactly 1.0 still painted with the top colour (R5)?</li>
+<li>Write one sentence: why does a congestion map belong <strong>before</strong> detailed global routing?</li>
+</ol>
+<h2>Expected artifacts</h2>
+<ul>
+<li>A file with the nine API functions and a clean <code>--impl</code> run (no FAIL)</li>
+<li>The demand / congestion / overflow / hottest tables for both placements of <code>examples/tiny_cong.json</code></li>
+<li>One sentence each for prompts 3, 4, 5 and 7</li>
+</ul>
+      </div>
+    </section>
+
+    <section id="quiz">
+      <h2>Quiz</h2>
+      <p>8 quick questions on this lab. Pick an answer for each, then check.</p>
+      <div class="card quiz" id="quiz-root"
+           data-check="Check my answers" data-reset="Reset" data-pass="passed"
+           data-fail="try again" data-true="True" data-false="False"></div>
+      <script type="application/json" id="quiz-data">{"id": "module02-05-congestion-map", "title": "Congestion heat map check", "passing_score": 0.75, "items": [{"id": "q1", "type": "multiple_choice", "prompt": "On the congested seed (capacity 2), the congestion of GCell (1,0) is…", "choices": ["3.50", "7.00", "5.00", "1.75"], "answer": 0, "explain": "All six nets deposit into tile (1,0): HPWL 1 + 1 + 1 + 1 + 2 + 1 = demand 7. Congestion = demand / capacity = 7 / 2 = 3.5. (5.00 is the overflow max(0, 7 − 2), 7.00 is the raw demand.)"}, {"id": "q2", "type": "multiple_choice", "prompt": "On the spread placement with capacity 2, the TOTAL RUDY overflow (sum of max(0, demand − 2) over all 8 GCells) is…", "choices": ["22", "5", "6", "34"], "answer": 0, "explain": "Per-tile overflows 4.1667 + 4.1667 + 2.6667 + 2.1667 + 4.6667 + 4.1667 = 22 (the raw float is 22.000000000000004; goldens compare with tol 1e-9 and --json rounds to 12 significant digits, rule R1). 5 is the seed's total, 6 is the count of oversubscribed tiles, 34 is the spread HPWL."}, {"id": "q3", "type": "multiple_choice", "prompt": "On the spread placement, the hottest GCell (argmax of the congestion matrix) is…", "choices": ["(2,0) with congestion 3.33", "(0,0) with congestion 3.08", "(1,0) with congestion 2.33", "a tie between (0,0) and (2,0), broken by chance"], "answer": 0, "explain": "The scan is i outer, j inner, strict > (rule R2): the FIRST maximum in row-major order wins, so ties are deterministic — (2,0) at 6.6667/2 = 3.3333 beats (0,0) at 3.0833 here, and a tie would go to the earlier tile, e.g. [[1,2],[0,0],[0,0],[2,0]] -> (0,1)."}, {"id": "q4", "type": "true_false", "prompt": "Lowering the capacity from 2 to 1 on the spread placement flips at least one GCell from not-oversubscribed to oversubscribed.", "answer": false, "explain": "No tile flips: every tile that was oversubscribed at capacity 2 (demand above 2) is still above 1 at capacity 1, and the two zero tiles stay at 0. The oversubscribed count stays 6 on spread and 1 on the seed; only the ratios double (3.33 -> 6.67 on the spread hottest tile). Verified with the checker's capacity sweep on examples/cap_one.json."}, {"id": "q5", "type": "multiple_choice", "prompt": "Raising the capacity from 2 to 5 on the spread placement, the oversubscribed count goes…", "choices": ["6 -> 6 (nothing changes)", "6 -> 4: tiles (1,0) and (1,1) drop out", "6 -> 0", "4 -> 6"], "answer": 1, "explain": "Tiles (1,0) and (1,1) have demand 4.6667 and 4.1667, which is above 2 but not above 5, so their overflow becomes 0: count 6 -> 4, total 22 -> 5.1667. This is the visible-flip case (checker sweep at capacity 5 on tiny_cong)."}, {"id": "q6", "type": "multiple_choice", "prompt": "The overflow of the seed's GCell (1,0) (demand 7, capacity 2) is…", "choices": ["5", "7", "3.5", "0"], "answer": 0, "explain": "Overflow per GCell = max(0, demand − capacity) = max(0, 7 − 2) = 5 (rule R7). The count of oversubscribed tiles uses a strict > 0, so a tile at exactly capacity (overflow 0) does not count."}, {"id": "q7", "type": "true_false", "prompt": "A GCell's heat colour tells you whether it is oversubscribed (congestion above 1).", "answer": false, "explain": "The colour encodes t = clamp(congestion / maxC, 0, 1), relative to the CURRENT map maximum, not to the capacity (rule R5): oversubscribed is not a colour boundary. On the cooled map after one feedback pass (max congestion exactly 1.0 at (2,0)), that tile still paints the full crimson stop of the paper palette (u = 0, 1/3, 2/3, 1 -> #ffffff, #0f6b5c, #b45309, #9f1239). The metrics, not the colours, carry the exact numbers."}, {"id": "q8", "type": "multiple_choice", "prompt": "After one placement-feedback pass on the congested seed (capacity 2), the total overflow is…", "choices": ["5 (unchanged)", "2", "0", "1"], "answer": 2, "explain": "Each cell in the overflowing tile (1,0) moves halfway toward a quieter neighbour (rule R4: neighbours tried (+1,0), (−1,0), (0,+1), (0,−1), first strictly smaller wins). The demand splits into (1,0) = 1.5 and (2,0) = 2.0, both at or below capacity 2, so overflow total 5 -> 0, max 0, count 0; the hottest tile becomes (2,0) at exactly 1.0."}]}</script>
+    </section>
+
+    <section id="transcript">
+      <details class="card transcript">
+        <summary>Full narration transcript</summary>
+        <h3>A crowded chip lights up</h3><p>Why does a chip need a heat map? Picture six blocks of logic crowded into one small square of the chip. Real wires cannot all fit through that square. A heat map of wire crowding paints that square red, so you see the jam before routing. We call that map the congestion map.</p>
+<h3>The chip and its cells</h3><p>Our chip is a rectangle twelve units wide and eight units tall. It holds six cells, named A to F. A cell is a block of logic that needs its own spot. The cells are joined in six groups called nets. A net is a set of cells that one wire must connect. A placement says where every cell sits.</p>
+<h3>Cutting the chip into tiles</h3><p>Before routing, we cut the chip into big squares called GCells. GCell stands for global cell, a coarse tile of the map. Our grid has four columns and two rows, so eight tiles. Each tile is three units wide and four units tall. We name a tile by its column and its row, counting from zero.</p>
+<h3>Demand, capacity, and the ratio</h3><p>Each tile has a capacity, the wire allowed to cross it. Our tiles allow two. The demand of a tile is the wire that wants to cross it. Congestion is demand divided by capacity. Above one, a tile is oversubscribed: more wire than room.</p>
+<h3>The crowded seed map</h3><p>In our first placement, called the seed, all six cells sit in one tile. That tile is column one, row zero, near the chip&#x27;s middle. All six nets drop their wire there, so its demand is seven. Seven divided by two gives congestion three point five. Its overflow, demand minus capacity, is five. Pause and guess: where does a demand of seven come from?</p>
+<h3>RUDY&#x27;s even split</h3><p>The answer: each net splits its wire evenly over its tiles. Each net draws the smallest box around its cells, its bounding box. The net&#x27;s wirelength is the box width plus its height. The rule that splits it evenly is RUDY, for rectangular uniform density.</p>
+<h3>One share per tile</h3><p>A tile&#x27;s share is the wirelength divided by its tile count. A box over three tiles gives each tile one third. Deposits happen in a fixed order: nets in their listed order. Inside one net, tiles fill column by column, then row by row.</p>
+<h3>The seed builds to seven</h3><p>Now watch the seed map build, net by net. Net A B has wirelength one and touches only tile one zero, so it drops one. Nets C D, A C and B D drop one each, bringing demand to four. The big net A B C D has wirelength two, making demand six. Net E F drops its one, and the demand ends at seven.</p>
+<h3>Wider boxes in the spread</h3><p>In the second placement, called spread, the cells sit near the chip&#x27;s corners. Net A B stretches across the chip with wirelength seven over three tiles in row zero. Each gets seven thirds, about two point three three.</p>
+<h3>The big net, the small net</h3><p>The big net A B C D has wirelength eleven over six tiles. Each tile gets eleven sixths, about one point eight three. Net E F has wirelength one over two tiles, so zero point five each. No box touches the rightmost column, so it stays empty.</p>
+<h3>The spread demand</h3><p>Add the six deposits and the spread demand appears. Row zero reads six point one seven, four point six seven, six point six seven. Row one reads six point one seven, four point one seven, six point one seven. Pause and guess: which tile is hottest once we divide by two?</p>
+<h3>The hottest tile</h3><p>The hottest tile is column two, row zero, at three point three three. To find it, we scan every tile and keep the largest value. That winner is the argmax, the tile of the maximum.</p>
+<h3>A tie must be written down</h3><p>Two tiles can tie for the maximum. If code picks either one, two correct programs can disagree. So the tie-break is written down. We scan column by column, then row by row. A tile wins only if strictly greater than the best so far. The first maximum in that order wins.</p>
+<h3>A tie example</h3><p>Here is a tie. Column zero holds one and two. Columns one and two hold zeros. Column three holds two and zero. Two tiles tie at two: column zero row one, and column three row zero. The scan reaches column zero first, so that tile wins.</p>
+<h3>The seed&#x27;s hottest tile</h3><p>On the seed map, only tile one zero is nonzero. Its value is three point five. One nonzero tile cannot tie. The argmax of the seed is column one, row zero, at three point five.</p>
+<h3>Why the rule is on paper</h3><p>The checker&#x27;s goldens need the tie-break, so all correct programs agree. Pause and guess: spreading lowered the peak. Did the total overflow fall too?</p>
+<h3>No, the total went up</h3><p>No: the total overflow went up, not down. The peak fell from three point five to three point three three. The total overflow rose from five to twenty-two. The oversubscribed count rose from one to six. Peak and total are different measures of one map.</p>
+<h3>The spread map in numbers</h3><p>Divide the spread demands by capacity two. Row zero reads three point zero eight, two point three three, three point three three. Row one reads three point zero eight, two point zero eight, three point zero eight. Six of the eight tiles are oversubscribed. The largest overflow is four point six seven, in column two row zero.</p>
+<h3>Overflow&#x27;s exact rule</h3><p>A tile&#x27;s overflow is demand minus capacity, floored at zero. A tile counts only when its overflow is strictly above zero. At demand equal to capacity, the overflow is exactly zero. Demand zero point five at capacity zero point five counts as zero.</p>
+<h3>The price in wirelength</h3><p>Spreading cooled the peak, but the wires grew longer. The seed&#x27;s total wirelength is seven, and the spread&#x27;s is thirty-four. Placement trades wirelength against room in the tiles.</p>
+<h3>Raising the capacity</h3><p>Capacity is a knob you can turn. On the spread map, capacity five drops the count from six to four. The two tiles of column one fall back under the limit. On the seed, capacity one doubles the ratio to seven, yet still only one tile counts.</p>
+<h3>One feedback pass</h3><p>A feedback pass nudges cells toward cooler tiles. On the seed, one pass splits the demand over two tiles: one point five and two. Divided by two, that is zero point seven five and one. The total overflow falls from five to zero, and the count to zero.</p>
+<h3>Is zero overflow healthy?</h3><p>Pause and guess: after that pass the total overflow is zero. What is the hottest value now, and is the map truly healthy?</p>
+<h3>Cooled, not cold</h3><p>After the pass, no tile is oversubscribed: the count is zero. The hottest tile is column two row zero, at exactly one. It sits right at capacity, not below it. Cooled is not the same as cold.</p>
+<h3>Remember</h3><p>Congestion is demand divided by capacity, per tile. Above one, a tile is oversubscribed. RUDY splits each net&#x27;s wirelength evenly over the tiles its box touches. The hottest tile is the argmax, and the first maximum in scan order wins ties. Overflow is demand minus capacity, counted strictly above zero. Peak and total can move in opposite directions.</p>
+<h3>Your turn in the browser</h3><p>Open the congestion-map lab in your browser. The seed lights one tile at congestion three point five. Drag cell A across the tile boundary and watch the count rise. Press run feedback and watch the total overflow fall to zero.</p>
+<h3>Your turn in Python</h3><p>On the Python track, build the map yourself. Divide a demand matrix by capacity for congestion. Find the hottest tile with the written tie-break. Golden seed hottest: column one row zero at three point five. Golden spread hottest: column two row zero at three point three three.</p>
+<h3>One last question</h3><p>Pause and guess: you spread the cells and the peak congestion fell. Should the router celebrate? Check the total overflow first.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">Lab 06 of the Congestion for EDA course, from the <a href="https://github.com/yongfu-li/eda-learning">EDA Algorithms Platform</a> (CC BY 4.0). Review build, not yet merged into the course repository.</div>
+  </footer>
+  <script>
+    // Keep the reader's place (#section) when switching language.
+    document.querySelectorAll("a.lang-switch").forEach((a) =>
+      a.addEventListener("click", () => { a.href = a.getAttribute("href").split("#")[0] + location.hash; })
+    );
+  </script>
+  <script src="quiz.js"></script>
+</body>
+</html>

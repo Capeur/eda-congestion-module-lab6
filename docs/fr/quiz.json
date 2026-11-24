@@ -1,0 +1,99 @@
+{
+  "id": "module02-05-congestion-map",
+  "title": "Quiz sur la carte de congestion",
+  "passing_score": 0.75,
+  "items": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": "Sur la graine encombrée (capacité 2), la congestion de la GCell (1,0) est…",
+      "choices": [
+        "3,50",
+        "7,00",
+        "5,00",
+        "1,75"
+      ],
+      "answer": 0,
+      "explain": "Les six réseaux déposent dans la tuile (1,0) : HPWL 1 + 1 + 1 + 1 + 2 + 1 = demande 7. Congestion = demande / capacité = 7 / 2 = 3,5. (5,00 est le débordement max(0, 7 − 2), 7,00 est la demande brute.)"
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": "Sur le placement dispersé avec capacité 2, le débordement RUDY TOTAL (somme de max(0, demande − 2) sur les 8 GCells) est…",
+      "choices": [
+        "22",
+        "5",
+        "6",
+        "34"
+      ],
+      "answer": 0,
+      "explain": "Débordements par tuile 4,1667 + 4,1667 + 2,6667 + 2,1667 + 4,6667 + 4,1667 = 22 (le flottant brut vaut 22.000000000000004 ; les résultats de référence comparent avec une tolérance de 1e-9 et --json arrondit à 12 chiffres significatifs, règle R1). 5 est le total de la graine, 6 est le nombre de tuiles sursaturées, 34 est le HPWL dispersé."
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": "Sur le placement dispersé, la GCell la plus chaude (argmax de la matrice de congestion) est…",
+      "choices": [
+        "(2,0) avec congestion 3,33",
+        "(0,0) avec congestion 3,08",
+        "(1,0) avec congestion 2,33",
+        "une égalité entre (0,0) et (2,0), tranchée par le hasard"
+      ],
+      "answer": 0,
+      "explain": "Le balayage est i externe, j interne, strictement supérieur (règle R2) : le PREMIER maximum dans l'ordre ligne par ligne gagne, donc les égalités sont déterministes — (2,0) à 6,6667/2 = 3,3333 bat (0,0) à 3,0833 ici, et une égalité irait à la tuile la plus tôt, p. ex. [[1,2],[0,0],[0,0],[2,0]] -> (0,1)."
+    },
+    {
+      "id": "q4",
+      "type": "true_false",
+      "prompt": "Baisser la capacité de 2 à 1 sur le placement dispersé fait basculer au moins une GCell de non-sursaturée à sursaturée.",
+      "answer": false,
+      "explain": "Aucune tuile ne bascule : chaque tuile sursaturée à capacité 2 (demande au-dessus de 2) l'est encore à capacité 1, et les deux tuiles à zéro restent à zéro. Le compte de sursaturées reste 6 sur la dispersion et 1 sur la graine ; seuls les ratios doublent (3,33 -> 6,67 sur la tuile la plus chaude dispersée). Vérifié avec le balayage de capacité du vérificateur sur examples/cap_one.json."
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": "Monter la capacité de 2 à 5 sur le placement dispersé, le compte de sursaturées devient…",
+      "choices": [
+        "6 -> 6 (rien ne change)",
+        "6 -> 4 : les tuiles (1,0) et (1,1) sortent",
+        "6 -> 0",
+        "4 -> 6"
+      ],
+      "answer": 1,
+      "explain": "Les tuiles (1,0) et (1,1) ont une demande de 4,6667 et 4,1667, au-dessus de 2 mais pas au-dessus de 5, donc leur débordement devient 0 : compte 6 -> 4, total 22 -> 5,1667. C'est le cas visible de bascule (balayage du vérificateur à capacité 5 sur tiny_cong)."
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": "Le débordement de la GCell (1,0) de la graine (demande 7, capacité 2) est…",
+      "choices": [
+        "5",
+        "7",
+        "3,5",
+        "0"
+      ],
+      "answer": 0,
+      "explain": "Débordement par GCell = max(0, demande − capacité) = max(0, 7 − 2) = 5 (règle R7). Le compte de tuiles sursaturées utilise un strictement supérieur à 0, donc une tuile exactement à la capacité (débordement 0) ne compte pas."
+    },
+    {
+      "id": "q7",
+      "type": "true_false",
+      "prompt": "La couleur de chaleur d'une GCell vous dit si elle est sursaturée (congestion au-dessus de 1).",
+      "answer": false,
+      "explain": "La couleur encode t = clamp(congestion / maxC, 0, 1), relatif au maximum COURANT de la carte, pas à la capacité (règle R5) : la sursaturation n'est pas une frontière de couleur. Sur la carte refroidie après une passe de rétroaction (congestion max exactement 1,0 en (2,0)), cette tuile peint encore la borne cramoisie pleine de la palette papier (u = 0, 1/3, 2/3, 1 -> #ffffff, #0f6b5c, #b45309, #9f1239). Ce sont les métriques, pas les couleurs, qui portent les nombres exacts."
+    },
+    {
+      "id": "q8",
+      "type": "multiple_choice",
+      "prompt": "Après une passe de rétroaction de placement sur la graine encombrée (capacité 2), le débordement total est…",
+      "choices": [
+        "5 (inchangé)",
+        "2",
+        "0",
+        "1"
+      ],
+      "answer": 2,
+      "explain": "Chaque cellule de la tuile débordante (1,0) avance de moitié vers un voisin plus calme (règle R4 : voisins essayés (+1,0), (−1,0), (0,+1), (0,−1), le premier strictement plus petit gagne). La demande se répartit en (1,0) = 1,5 et (2,0) = 2,0, toutes deux à la capacité 2 ou en dessous, donc débordement total 5 -> 0, max 0, compte 0 ; la tuile la plus chaude devient (2,0) à exactement 1,0."
+    }
+  ]
+}

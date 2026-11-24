@@ -1,0 +1,99 @@
+{
+  "id": "module02-05-congestion-map",
+  "title": "Congestion heat map check",
+  "passing_score": 0.75,
+  "items": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": "On the congested seed (capacity 2), the congestion of GCell (1,0) is…",
+      "choices": [
+        "3.50",
+        "7.00",
+        "5.00",
+        "1.75"
+      ],
+      "answer": 0,
+      "explain": "All six nets deposit into tile (1,0): HPWL 1 + 1 + 1 + 1 + 2 + 1 = demand 7. Congestion = demand / capacity = 7 / 2 = 3.5. (5.00 is the overflow max(0, 7 − 2), 7.00 is the raw demand.)"
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": "On the spread placement with capacity 2, the TOTAL RUDY overflow (sum of max(0, demand − 2) over all 8 GCells) is…",
+      "choices": [
+        "22",
+        "5",
+        "6",
+        "34"
+      ],
+      "answer": 0,
+      "explain": "Per-tile overflows 4.1667 + 4.1667 + 2.6667 + 2.1667 + 4.6667 + 4.1667 = 22 (the raw float is 22.000000000000004; goldens compare with tol 1e-9 and --json rounds to 12 significant digits, rule R1). 5 is the seed's total, 6 is the count of oversubscribed tiles, 34 is the spread HPWL."
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": "On the spread placement, the hottest GCell (argmax of the congestion matrix) is…",
+      "choices": [
+        "(2,0) with congestion 3.33",
+        "(0,0) with congestion 3.08",
+        "(1,0) with congestion 2.33",
+        "a tie between (0,0) and (2,0), broken by chance"
+      ],
+      "answer": 0,
+      "explain": "The scan is i outer, j inner, strict > (rule R2): the FIRST maximum in row-major order wins, so ties are deterministic — (2,0) at 6.6667/2 = 3.3333 beats (0,0) at 3.0833 here, and a tie would go to the earlier tile, e.g. [[1,2],[0,0],[0,0],[2,0]] -> (0,1)."
+    },
+    {
+      "id": "q4",
+      "type": "true_false",
+      "prompt": "Lowering the capacity from 2 to 1 on the spread placement flips at least one GCell from not-oversubscribed to oversubscribed.",
+      "answer": false,
+      "explain": "No tile flips: every tile that was oversubscribed at capacity 2 (demand above 2) is still above 1 at capacity 1, and the two zero tiles stay at 0. The oversubscribed count stays 6 on spread and 1 on the seed; only the ratios double (3.33 -> 6.67 on the spread hottest tile). Verified with the checker's capacity sweep on examples/cap_one.json."
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": "Raising the capacity from 2 to 5 on the spread placement, the oversubscribed count goes…",
+      "choices": [
+        "6 -> 6 (nothing changes)",
+        "6 -> 4: tiles (1,0) and (1,1) drop out",
+        "6 -> 0",
+        "4 -> 6"
+      ],
+      "answer": 1,
+      "explain": "Tiles (1,0) and (1,1) have demand 4.6667 and 4.1667, which is above 2 but not above 5, so their overflow becomes 0: count 6 -> 4, total 22 -> 5.1667. This is the visible-flip case (checker sweep at capacity 5 on tiny_cong)."
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": "The overflow of the seed's GCell (1,0) (demand 7, capacity 2) is…",
+      "choices": [
+        "5",
+        "7",
+        "3.5",
+        "0"
+      ],
+      "answer": 0,
+      "explain": "Overflow per GCell = max(0, demand − capacity) = max(0, 7 − 2) = 5 (rule R7). The count of oversubscribed tiles uses a strict > 0, so a tile at exactly capacity (overflow 0) does not count."
+    },
+    {
+      "id": "q7",
+      "type": "true_false",
+      "prompt": "A GCell's heat colour tells you whether it is oversubscribed (congestion above 1).",
+      "answer": false,
+      "explain": "The colour encodes t = clamp(congestion / maxC, 0, 1), relative to the CURRENT map maximum, not to the capacity (rule R5): oversubscribed is not a colour boundary. On the cooled map after one feedback pass (max congestion exactly 1.0 at (2,0)), that tile still paints the full crimson stop of the paper palette (u = 0, 1/3, 2/3, 1 -> #ffffff, #0f6b5c, #b45309, #9f1239). The metrics, not the colours, carry the exact numbers."
+    },
+    {
+      "id": "q8",
+      "type": "multiple_choice",
+      "prompt": "After one placement-feedback pass on the congested seed (capacity 2), the total overflow is…",
+      "choices": [
+        "5 (unchanged)",
+        "2",
+        "0",
+        "1"
+      ],
+      "answer": 2,
+      "explain": "Each cell in the overflowing tile (1,0) moves halfway toward a quieter neighbour (rule R4: neighbours tried (+1,0), (−1,0), (0,+1), (0,−1), first strictly smaller wins). The demand splits into (1,0) = 1.5 and (2,0) = 2.0, both at or below capacity 2, so overflow total 5 -> 0, max 0, count 0; the hottest tile becomes (2,0) at exactly 1.0."
+    }
+  ]
+}

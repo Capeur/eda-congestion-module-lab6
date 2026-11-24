@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 06 — Carte de congestion · Congestion pour l'EDA</title>
+  <meta name="description" content="Lab 06 du cours Congestion pour l'EDA : une carte de chaleur demande-sur-capacité sur une petite grille de GCells, racontée en cinq courtes leçons animées, avec un lab interactif dans le navigateur, un vérificateur Python et un quiz.">
+  <link rel="alternate" hreflang="en" href="../index.html">
+  <link rel="preload" href="../fonts/source-sans-3-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../page.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <span class="crumb">Congestion pour l'EDA · <strong>Lab 06</strong></span>
+      <nav class="toc" aria-label="Sur cette page">
+        
+        <a href="#lab">Lab interactif</a>
+        <a href="#implement">Implémentation</a>
+        <a href="#quiz">Quiz</a>
+        <a href="#transcript">Transcription</a>
+        <a class="lang-switch" href="../index.html" hreflang="en" lang="en" title="Read this page in English">English</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="hero">
+      <p class="eyebrow">Lab 06 · Congestion des GCells</p>
+      <h1>Carte de congestion</h1>
+      <p class="lead">Six cellules sont posées sur une petite puce découpée en huit tuiles. Chaque réseau répartit son fil sur les tuiles que sa boîte touche, chaque tuile porte une demande sur une capacité, et la tuile la plus chaude s'allume. Ce lab raconte cette histoire en cinq courtes leçons, puis vous laisse faire glisser les cellules, lire les métriques de débordement et refroidir la carte vous-même.</p>
+    </div>
+
+    
+
+    <section id="lab">
+      <h2>Lab interactif</h2>
+      <div class="card lab-grid">
+        
+        <div>
+          <p>Ouvrez-le et jouez avec, directement dans le navigateur :</p>
+          <ul>
+            <li>Regardez la graine allumer une tuile à congestion 3,5 : les six réseaux y déposent leur fil.</li>
+<li>Faites glisser la cellule A à travers la frontière de tuile x = 6 et regardez le compte de tuiles sursaturées passer de un à deux.</li>
+<li>Lisez le panneau de métriques : tuile la plus chaude, débordement total / max / compte, HPWL — les nombres exacts, pas les couleurs.</li>
+<li>Appuyez une fois sur Lancer la rétroaction et regardez le débordement total de la graine tomber à zéro, la tuile la plus chaude étant à exactement 1,0.</li>
+          </ul>
+          <p>Neuf défis, de l'initiation au défi, vérifient ce que vous avez construit et tapé, pas le bouton sur lequel vous avez cliqué. Rien ne passe au chargement de la page, depuis la graine seule, depuis la révélation, ou depuis un seul clic sur Lancer la rétroaction — et éditer après un bouton de méthode annule le crédit de cette méthode.</p>
+          <div class="btns"><a class="btn primary" href="tools/congestion-map/index.html">Ouvrir le lab</a></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="implement">
+      <h2>Implémentation (parcours A)</h2>
+      <p>Écrivez vous-même les neuf fonctions de la carte de chaleur — <code>rudy_demand</code>, <code>congestion_map</code>, <code>overflow_metrics</code>, <code>hottest</code> et les autres — à partir des règles écrites, et vérifiez-les avec les résultats de référence. Les commandes ci-dessous se lancent dans le <a href="https://github.com/yongfu-li/eda-learning">dépôt du cours</a>, depuis <code>courses/learn_congestion/module02-05-congestion-map/</code>.</p>
+      <div class="files">
+        <a href="../examples/tiny_cong.json" download><code>tiny_cong.json</code><small>L&#x27;instance : puce 12×8, grille de GCells 4×2, capacité 2, cellules A à F, six réseaux, deux placements</small></a>
+<a href="../examples/congestion_map_check.py" download><code>congestion_map_check.py</code><small>Vérificateur ; --impl contrôle votre code, --vs-node compare avec JavaScript, --json est le fichier de relecture des leçons</small></a>
+<a href="../examples/cong_node.mjs" download><code>cong_node.mjs</code><small>Le même cœur numérique en JavaScript (utilisé par --vs-node)</small></a>
+<a href="../examples/cap_one.json" download><code>cap_one.json</code><small>Capacité 2→1 : aucune tuile ne bascule, les ratios doublent</small></a>
+<a href="../examples/boundary_move.json" download><code>boundary_move.json</code><small>Une cellule à travers une frontière de GCell : compte de débordement 1→2</small></a>
+<a href="../examples/cap_below_one.json" download><code>cap_below_one.json</code><small>Capacité sous 1 : compte 0→2</small></a>
+<a href="CHECKLIST.md" download><code>CHECKLIST.md</code><small>La checklist de l&#x27;apprenant (deux parcours)</small></a>
+<a href="README.md" download><code>README.md</code><small>Le README du module</small></a>
+      </div>
+      <div class="card md">
+        <h1>Exemples — Carte de congestion</h1>
+<p>Parcours A (implémentation). L'instance est <code>examples/tiny_cong.json</code> (puce 12×8, GCells 4×2 de 3×4, capacité 2, cellules A–F,
+réseaux A–B, C–D, A–C, B–D, A–B–C–D, E–F). Le corrigé est <code>examples/congestion_map_check.py</code> ; chaque nombre ci-dessous a été
+imprimé par ce vérificateur (<code>python3 examples/congestion_map_check.py --show</code>, <code>--json</code>). Lancez-le depuis le dossier de ce module ;
+il n'a besoin que de la bibliothèque standard de Python (<code>--vs-node</code> demande aussi <code>node</code>). Le module est <strong>entièrement
+déterministe</strong> — les positions viennent du fichier d'instance, rien ne tire de nombre aléatoire — donc il n'y a pas de PRNG et
+Python et JavaScript s'accordent <strong>bit à bit par cellule</strong> (<code>--vs-node</code>).</p>
+<h2>Objectif</h2>
+<p>Construire une <strong>carte de chaleur de congestion</strong> : par GCell, <code>congestion = demande / capacité</code>, plus les métriques de
+débordement (<code>max(0, demande − capacité)</code> par tuile, et total / max / compte sur la grille). Les valeurs au-dessus de 1 sont
+sursaturées. La carte permet de désigner la tuile la plus chaude sans lire de flottants ; les métriques donnent les nombres
+exacts, régressables.</p>
+<h2>Définitions</h2>
+<ul>
+<li><strong>Grille de GCells</strong> : <code>nx × ny</code> tuiles de <code>cellW × cellH</code> sur la puce. Ici 4×2 de 3×4 sur 12×8. <code>cellGcell(x, y)</code> =
+  <code>clamp(floor(x/3), 0, 3)</code>, <code>clamp(floor(y/4), 0, 1)</code> — les coordonnées hors puce se calent dans la tuile du bord (R6) :
+  (12, 8) → (3, 1), (−1, −1) → (0, 0).</li>
+<li><strong>Boîte englobante / HPWL du réseau</strong> : boîte de ses broches ; HPWL = (max x − min x) + (max y − min y).</li>
+<li><strong>Demande RUDY</strong> (R3, l'ordre de remplissage) : les réseaux dans l'ordre du fichier ; un réseau dépose <code>part = HPWL / max(1, #tuiles)</code>
+  dans chaque GCell que sa boîte touche, tuiles remplies <strong>i externe / j interne</strong> ; la demande s'accumule dans cet ordre (l'ordre
+  des flottants compte au dernier ulp).</li>
+<li><strong>Congestion</strong> = demande / capacité. <strong>Débordement</strong> (R7) = <code>max(0, demande − capacité)</code> par tuile ; <code>compte</code> = nombre de tuiles
+  avec débordement <strong>strictement &gt; 0</strong> ; <code>total</code> sommé dans l'ordre de balayage ; <code>max</code> initialisé à 0.</li>
+<li><strong>Plus chaude</strong> (R2) = argmax de la congestion, balayage i externe / j interne, strictement <code>&gt;</code> : le <strong>premier</strong> maximum dans
+  l'ordre ligne par ligne gagne ; tout à zéro → (0, 0, 0). Sonde : <code>[[1,2],[0,0],[0,0],[2,0]]</code> → (0, 1).</li>
+<li><strong>Couleur de chaleur</strong> (R5) : <code>t = clamp(cong / maxC, 0, 1)</code> avec <code>maxC</code> = le max de congestion de la carte <strong>courante</strong> —
+  <strong>relatif au max courant, pas à la capacité</strong> ; la sursaturation (&gt; 1) n'est pas une frontière de couleur. Palette papier :
+  bornes u = 0, 1/3, 2/3, 1 → <code>#ffffff, #0f6b5c, #b45309, #9f1239</code>, alpha 0.15 + 0.7u.</li>
+<li><strong>Arrondi</strong> (R1) : les vérifications comparent les flottants bruts avec une tolérance de 1e-9 ; affichage à 2 décimales,
+  arrondi demi-pair ; <code>--json</code> arrondit à 12 chiffres significatifs. <code>total += v</code> en JS et <code>sum()</code> en Python peuvent différer au
+  dernier ulp, donc le vérificateur accumule <code>total</code> avec une boucle explicite (c'est pourquoi le total brut dispersé vaut
+  22.000000000000004 en JS).</li>
+</ul>
+<h2>Les deux règles de limite dans la puce (gardées telles quelles, non unifiées)</h2>
+<ul>
+<li><strong>Limite de glisser</strong> (déplacer les cellules dans le lab navigateur) : x ∈ [0, 11.5], y ∈ [0, 7.5] — les littéraux codés en dur dans
+  <code>platform/assets/interactive-congestion-lab.js</code> <code>moveSelectedTo</code> (CHIP − 0.5). Sonde : (20, −3) → (11.5, 0).</li>
+<li><strong>Limite de rétroaction</strong> (<code>placementFeedbackLite</code>) : x ∈ [0, chip−1] = [0, 11], y ∈ [0, chip−1] = [0, 7]. Sondes : avec
+  F en (15, 2.5) la rétroaction le déplace à (11, 4.25) ; avec F en (4.5, 20) à (6, 7).</li>
+</ul>
+<p>Ce sont deux règles différentes (11.5/7.5 vs 11/7) ; le vérificateur les teste telles quelles.</p>
+<h2>API (ce que cherche <code>--impl</code>)</h2>
+<p><code>positions</code> est <code>{cell: {"x": .., "y": ..}}</code>, <code>data</code> est le dictionnaire d'instance chargé depuis un fichier <code>examples/*.json</code>.
+Mêmes signatures que <code>common/solvers.py</code>, pour comparer votre fichier avec celui du cours. Les fonctions que vous n'avez pas
+encore écrites sont signalées SKIP ; ne changez jamais les positions, réseaux ou données qu'on vous donne.</p>
+<pre><code class="language-python">def cell_gcell(x, y, nx, ny, cell_w, cell_h)   -&gt; (i, j)
+def net_bbox(net, positions)                   -&gt; (x0, y0, x1, y1)
+def hpwl(net, positions)                       -&gt; float
+def deposit_events(positions, data)            -&gt; [{net, pins, bbox, hpwl, tiles, share}, ...]  # ordre de remplissage
+def rudy_demand(positions, data)               -&gt; demand[i][j]
+def congestion_map(demand, capacity)           -&gt; cong[i][j]
+def overflow_metrics(demand, capacity)         -&gt; {&quot;perCell&quot;, &quot;total&quot;, &quot;max&quot;, &quot;count&quot;}
+def hottest(cong)                              -&gt; (i, j, v)
+def placement_feedback_lite(positions, data)   -&gt; new positions
+</code></pre>
+<h2>Pseudocode</h2>
+<pre><code class="language-text">ENTRÉE : positions, instance (puce, grille de GCells, capacité, réseaux)
+pour chaque réseau, dans l'ordre des réseaux :   # R3
+  bbox  = min/max des positions de ses broches
+  wl    = (max x - min x) + (max y - min y)       # HPWL
+  tiles = GCells des coins du bbox, calées, remplies i externe / j interne
+  part  = wl / max(1, #tiles)
+  pour chaque tuile (i, j) dans cet ordre : demande[i][j] += part
+cong[i][j]     = demande[i][j] / capacité
+débord[i][j]   = max(0, demande[i][j] - capacité)  # R7 ; compte = #tuiles avec &gt; 0 (strict)
+pluschaude     = argmax cong, balayage i externe / j interne, strictement &gt;  # R2 : premier max ligne par ligne
+chaleur t[i][j] = clamp(cong[i][j] / maxC, 0, 1)    # R5 : relatif au max courant, pas à la capacité
+SORTIE : demande, congestion, débordement (perCell/total/max/compte), pluschaude, chaleur t
+</code></pre>
+<h2>Référence 1 — la graine encombrée (capacité 2)</h2>
+<p>Les six cellules sont dans la GCell (1,0) ; chaque réseau y dépose (ordre de remplissage R3) :</p>
+<table>
+<thead>
+<tr>
+<th>réseau</th>
+<th>broches</th>
+<th>bbox</th>
+<th>HPWL</th>
+<th>tuiles</th>
+<th>part</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>A, B</td>
+<td>[4, 2, 5, 2]</td>
+<td>1</td>
+<td>(1,0)</td>
+<td>1</td>
+</tr>
+<tr>
+<td>1</td>
+<td>C, D</td>
+<td>[4, 3, 5, 3]</td>
+<td>1</td>
+<td>(1,0)</td>
+<td>1</td>
+</tr>
+<tr>
+<td>2</td>
+<td>A, C</td>
+<td>[4, 2, 4, 3]</td>
+<td>1</td>
+<td>(1,0)</td>
+<td>1</td>
+</tr>
+<tr>
+<td>3</td>
+<td>B, D</td>
+<td>[5, 2, 5, 3]</td>
+<td>1</td>
+<td>(1,0)</td>
+<td>1</td>
+</tr>
+<tr>
+<td>4</td>
+<td>A, B, C, D</td>
+<td>[4, 2, 5, 3]</td>
+<td>2</td>
+<td>(1,0)</td>
+<td>2</td>
+</tr>
+<tr>
+<td>5</td>
+<td>E, F</td>
+<td>[4.5, 2.5, 5.5, 2.5]</td>
+<td>1</td>
+<td>(1,0)</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>quantité</th>
+<th>valeur</th>
+<th>pourquoi c'est important</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>demande</td>
+<td>(1,0) = <strong>7</strong>, toutes les autres tuiles 0</td>
+<td>1+1+1+1+2+1</td>
+</tr>
+<tr>
+<td>congestion</td>
+<td>(1,0) = <strong>3.50</strong></td>
+<td>7 / 2</td>
+</tr>
+<tr>
+<td>débordement</td>
+<td>perCell (1,0) = <strong>5</strong> ; total <strong>5</strong>, max <strong>5</strong>, compte <strong>1</strong></td>
+<td>max(0, 7−2) ; compte strict &gt; 0</td>
+</tr>
+<tr>
+<td>plus chaude (R2)</td>
+<td><strong>(1,0) @ 3.50</strong></td>
+<td>le centre s'allume en premier</td>
+</tr>
+<tr>
+<td>HPWL</td>
+<td>par réseau [1, 1, 1, 1, 2, 1], total <strong>7</strong></td>
+<td>placement compact, fils courts</td>
+</tr>
+<tr>
+<td>chaleur t (R5)</td>
+<td>(1,0) = 1.00, le reste 0</td>
+<td>maxC = 3.5</td>
+</tr>
+</tbody>
+</table>
+<h2>Référence 2 — le placement dispersé (capacité 2)</h2>
+<table>
+<thead>
+<tr>
+<th>réseau</th>
+<th>broches</th>
+<th>bbox</th>
+<th>HPWL</th>
+<th>tuiles (ordre de remplissage)</th>
+<th>part</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>A, B</td>
+<td>[1, 1, 8, 1]</td>
+<td>7</td>
+<td>(0,0), (1,0), (2,0)</td>
+<td>7/3 = 2.3333</td>
+</tr>
+<tr>
+<td>1</td>
+<td>C, D</td>
+<td>[1, 5, 8, 5]</td>
+<td>7</td>
+<td>(0,1), (1,1), (2,1)</td>
+<td>2.3333</td>
+</tr>
+<tr>
+<td>2</td>
+<td>A, C</td>
+<td>[1, 1, 1, 5]</td>
+<td>4</td>
+<td>(0,0), (0,1)</td>
+<td>2</td>
+</tr>
+<tr>
+<td>3</td>
+<td>B, D</td>
+<td>[8, 1, 8, 5]</td>
+<td>4</td>
+<td>(2,0), (2,1)</td>
+<td>2</td>
+</tr>
+<tr>
+<td>4</td>
+<td>A, B, C, D</td>
+<td>[1, 1, 8, 5]</td>
+<td>11</td>
+<td>(0,0), (0,1), (1,0), (1,1), (2,0), (2,1)</td>
+<td>11/6 = 1.8333</td>
+</tr>
+<tr>
+<td>5</td>
+<td>E, F</td>
+<td>[5, 3, 6, 3]</td>
+<td>1</td>
+<td>(1,0), (2,0)</td>
+<td>0.5</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>quantité</th>
+<th>valeur</th>
+<th>pourquoi c'est important</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>demande</td>
+<td>6.17 6.17 | 4.67 4.17 | 6.67 6.17 | 0 0 (colonnes i = 0..3)</td>
+<td>RUDY réparti sur les tuiles du bbox</td>
+</tr>
+<tr>
+<td>congestion</td>
+<td>3.08 3.08 | 2.33 2.08 | 3.33 3.08 | 0 0</td>
+<td>demande / 2</td>
+</tr>
+<tr>
+<td>débordement</td>
+<td>total <strong>22</strong>, max <strong>4.67</strong>, compte <strong>6</strong></td>
+<td>total brut JS 22.000000000000004 (R1)</td>
+</tr>
+<tr>
+<td>plus chaude (R2)</td>
+<td><strong>(2,0) @ 3.33</strong></td>
+<td>premier max dans l'ordre ligne par ligne</td>
+</tr>
+<tr>
+<td>HPWL</td>
+<td>par réseau [7, 7, 4, 4, 11, 1], total <strong>34</strong></td>
+<td>fils longs</td>
+</tr>
+<tr>
+<td>chaleur t (R5)</td>
+<td>0.93 0.93 | 0.70 0.62 | 1.00 0.93 | 0 0</td>
+<td>maxC = 3.33</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Pic contre total</strong> : la dispersion abaisse la congestion de pic (3.50 → 3.33) mais augmente le débordement total (5 → 22) et le
+compte de sursaturées (1 → 6). Lisez les deux nombres, pas seulement la tuile la plus chaude.</p>
+<h2>Référence 3 — balayage de capacité (les deux placements, RUDY)</h2>
+<table>
+<thead>
+<tr>
+<th>capacité</th>
+<th>total / max / compte dispersé</th>
+<th>total / max / compte graine</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>28.00 / 5.67 / <strong>6</strong></td>
+<td>6 / 6 / <strong>1</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td>22.00 / 4.67 / 6</td>
+<td>5 / 5 / 1</td>
+</tr>
+<tr>
+<td>3</td>
+<td>16.00 / 3.67 / 6</td>
+<td>4 / 4 / 1</td>
+</tr>
+<tr>
+<td>4</td>
+<td>10.00 / 2.67 / 6</td>
+<td>3 / 3 / 1</td>
+</tr>
+<tr>
+<td>5</td>
+<td>5.17 / 1.67 / <strong>4</strong></td>
+<td>2 / 2 / 1</td>
+</tr>
+<tr>
+<td>8</td>
+<td>0 / 0 / <strong>0</strong></td>
+<td>0 / 0 / <strong>0</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Deux réponses vérifiées qui étaient posées vaguement :</p>
+<ul>
+<li><strong>Capacité 2 → 1 : aucune tuile ne bascule sursaturée.</strong> Chaque tuile au-dessus de la capacité 2 l'est encore au-dessus de 1, les
+  tuiles à zéro restent à zéro : le compte reste 6 sur la dispersion et 1 sur la graine ; seuls les ratios doublent (plus chaude
+  dispersée 3.33 → 6.67). Voir <code>examples/cap_one.json</code> (même instance à capacité 1, balayage [2, 1, 5, 8]).</li>
+<li><strong>Capacité 2 → 5 sur la dispersion est la bascule visible : compte 6 → 4.</strong> Les tuiles (1,0) (demande 4.67) et (1,1) (demande 4.17)
+  sont au-dessus de 2 mais pas au-dessus de 5, donc elles sortent ; total 22 → 5.17.</li>
+</ul>
+<h2>Référence 4 — une passe de rétroaction sur la graine (R4 + limite de rétroaction)</h2>
+<p>Les voisins sont essayés (+1,0), (−1,0), (0,+1), (0,−1), strictement <code>&lt;</code> ; la cellule avance au milieu vers le centre de la tuile
+choisie, calée dans [0, 11]×[0, 7] (la limite de rétroaction, pas la limite de glisser).</p>
+<table>
+<thead>
+<tr>
+<th>quantité</th>
+<th>avant</th>
+<th>après</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>positions</td>
+<td>A(4,2) B(5,2) C(4,3) D(5,3) E(4.5,2.5) F(5.5,2.5)</td>
+<td>A(5.75,2) B(6.25,2) C(5.75,2.5) D(6.25,2.5) E(6,2.25) F(6.5,2.25)</td>
+</tr>
+<tr>
+<td>demande</td>
+<td>(1,0) = 7</td>
+<td>(1,0) = 1.5, (2,0) = 2.0</td>
+</tr>
+<tr>
+<td>débordement total / max / compte</td>
+<td>5 / 5 / 1</td>
+<td><strong>0 / 0 / 0</strong></td>
+</tr>
+<tr>
+<td>plus chaude</td>
+<td>(1,0) @ 3.5</td>
+<td>(2,0) @ <strong>exactement 1.0</strong></td>
+</tr>
+</tbody>
+</table>
+<h2>Trois petites instances qui font chacune basculer un résultat</h2>
+<table>
+<thead>
+<tr>
+<th>fichier</th>
+<th>ce qui change</th>
+<th>la bascule (tout vient du vérificateur)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>examples/cap_one.json</code></td>
+<td>petite instance à <strong>capacité 1</strong> (le cas 2→1)</td>
+<td>aucune tuile ne bascule ; les ratios doublent ; le compte est inchangé (6 dispersé / 1 graine). Balayage [2, 1, 5, 8]</td>
+</tr>
+<tr>
+<td><code>examples/boundary_move.json</code></td>
+<td>cellule A de la graine déplacée (4,2) → (6.5,2), à travers la frontière de GCell x = 6</td>
+<td>les réseaux touchant A déposent maintenant dans deux tuiles : compte de débordement <strong>1 → 2</strong>, total 5 → 7.5, HPWL 7 → 11.5, plus chaude (1,0) @ 3.625</td>
+</tr>
+<tr>
+<td><code>examples/cap_below_one.json</code></td>
+<td>grille 2×1, <strong>capacité 0.4</strong> (sous 1)</td>
+<td>le réseau A–B traverse la frontière x = 3 : part 0.5 par tuile ; à capacité 1 compte 0, à 0.5 débordement exactement 0 (strict &gt; 0, R7), à 0.4 compte <strong>0 → 2</strong> (congestion 1.25)</td>
+</tr>
+</tbody>
+</table>
+<p>Lancez l'une d'elles avec <code>python3 examples/congestion_map_check.py --instance examples/boundary_move.json --show</code>.</p>
+<h2>Sondes (règles épinglées par le vérificateur)</h2>
+<ul>
+<li>R2 ex aequo : <code>hottest([[1,2],[0,0],[0,0],[2,0]])</code> = <strong>(0,1)</strong> — premier max dans l'ordre ligne par ligne, pas le dernier ; tout à zéro → (0,0,0).</li>
+<li>R6 limite : <code>cellGcell(12, 8)</code> = (3,1), <code>cellGcell(-1, -1)</code> = (0,0).</li>
+<li>Limite de glisser : (20, −3) → <strong>(11.5, 0)</strong>, (11.7, 7.6) → (11.5, 7.5).</li>
+<li>Limite de rétroaction : F (15, 2.5) → <strong>(11, 4.25)</strong> ; F (4.5, 20) → (6, 7).</li>
+<li>Entrée inversée : réseaux inversés sur la dispersion donnent les mêmes tuiles par réseau, demande à 1e-9 près (différences de
+  dernier ulp permises, R1), même compte 6 et même plus chaude (2,0) ; le dictionnaire de positions dans l'ordre inverse des clés
+  donne la même rétroaction.</li>
+</ul>
+<h2>Essayez ceci</h2>
+<pre><code class="language-bash">python3 examples/congestion_map_check.py                     # tout PASS (chaque examples/*.json)
+python3 examples/congestion_map_check.py --show              # les règles écrites R1–R7 et chaque table de référence
+python3 examples/congestion_map_check.py --instance examples/cap_one.json --show
+python3 examples/congestion_map_check.py --impl my_cong.py   # VOS fonctions (SKIP pour celles qui manquent)
+python3 examples/congestion_map_check.py --impl examples/wrong/tie_last_wins.py   # FAIL volontairement (règle R2)
+python3 examples/congestion_map_check.py --vs-node           # JS et Python s'accordent bit à bit par cellule
+python3 examples/congestion_map_check.py --json &gt; lesson.json  # le fichier de relecture des leçons animées
+</code></pre>
+<p><code>examples/wrong/tie_last_wins.py</code> est un port fidèle en apparence qui casse une règle écrite (<code>&gt;=</code> au lieu de <code>&gt;</code> dans
+<code>hottest</code>) : il doit FAIL sur la sonde d'ex aequo avec <code>got [3, 0, 2.0]</code>.</p>
+<h2>Questions de départ (demandez pourquoi)</h2>
+<ol>
+<li>Chargez <code>placement</code> et <code>congested_seed</code> depuis <code>examples/tiny_cong.json</code> ; imprimez les matrices 4×2 de demande et de congestion
+   avec deux décimales. Quelle tuile est la plus chaude sur chacune, et pourquoi (R2) ?</li>
+<li>Lancez les événements de dépôt du vérificateur pour le placement dispersé. Pourquoi le réseau A–B (HPWL 7) donne-t-il 2.3333 à
+   chacune de (0,0), (1,0), (2,0) au lieu de tout mettre dans une tuile ?</li>
+<li>Comparez dispersé et graine sur le <strong>pic et le total</strong> de débordement. Pourquoi la dispersion abaisse-t-elle le pic (3.50 → 3.33)
+   mais augmente-t-elle le total (5 → 22) ?</li>
+<li>Passez la capacité de 2.0 à 1.0 (voir <code>examples/cap_one.json</code>) : quelles GCells basculent sursaturées ? Vérifiez maintenant la
+   réponse vérifiée : <strong>aucune</strong> — le compte reste 6 sur la dispersion et 1 sur la graine, seuls les ratios doublent. Puis montez la
+   capacité à 5 sur le placement dispersé : le compte tombe de 6 → 4 parce que les tuiles (1,0) et (1,1) repassent sous la capacité.
+   Pourquoi 2→1 ne fait rien basculer tandis que 2→5 fait sortir deux tuiles ?</li>
+<li>Déplacez une cellule à travers une frontière de GCell (<code>examples/boundary_move.json</code> : A de (4,2) à (6.5,2)). Quelles listes de
+   tuiles des réseaux changent, et pourquoi le compte de débordement bascule-t-il de 1 → 2 ?</li>
+<li>Lancez une passe de rétroaction sur la graine. Pourquoi le débordement total atteint-il exactement 0, et pourquoi la nouvelle
+   plus chaude (2,0) à congestion exactement 1.0 est-elle encore peinte avec la couleur du haut (R5) ?</li>
+<li>Écrivez une phrase : pourquoi une carte de congestion appartient-elle <strong>avant</strong> le routage global détaillé ?</li>
+</ol>
+<h2>Livrables attendus</h2>
+<ul>
+<li>Un fichier avec les neuf fonctions de l'API et un run <code>--impl</code> propre (aucun FAIL)</li>
+<li>Les tables demande / congestion / débordement / plus chaude pour les deux placements de <code>examples/tiny_cong.json</code></li>
+<li>Une phrase pour chacune des questions 3, 4, 5 et 7</li>
+</ul>
+      </div>
+    </section>
+
+    <section id="quiz">
+      <h2>Quiz</h2>
+      <p>8 questions rapides sur ce lab. Choisissez une réponse pour chacune, puis vérifiez.</p>
+      <div class="card quiz" id="quiz-root"
+           data-check="Vérifier mes réponses" data-reset="Recommencer" data-pass="réussi"
+           data-fail="réessayez" data-true="Vrai" data-false="Faux"></div>
+      <script type="application/json" id="quiz-data">{"id": "module02-05-congestion-map", "title": "Quiz sur la carte de congestion", "passing_score": 0.75, "items": [{"id": "q1", "type": "multiple_choice", "prompt": "Sur la graine encombrée (capacité 2), la congestion de la GCell (1,0) est…", "choices": ["3,50", "7,00", "5,00", "1,75"], "answer": 0, "explain": "Les six réseaux déposent dans la tuile (1,0) : HPWL 1 + 1 + 1 + 1 + 2 + 1 = demande 7. Congestion = demande / capacité = 7 / 2 = 3,5. (5,00 est le débordement max(0, 7 − 2), 7,00 est la demande brute.)"}, {"id": "q2", "type": "multiple_choice", "prompt": "Sur le placement dispersé avec capacité 2, le débordement RUDY TOTAL (somme de max(0, demande − 2) sur les 8 GCells) est…", "choices": ["22", "5", "6", "34"], "answer": 0, "explain": "Débordements par tuile 4,1667 + 4,1667 + 2,6667 + 2,1667 + 4,6667 + 4,1667 = 22 (le flottant brut vaut 22.000000000000004 ; les résultats de référence comparent avec une tolérance de 1e-9 et --json arrondit à 12 chiffres significatifs, règle R1). 5 est le total de la graine, 6 est le nombre de tuiles sursaturées, 34 est le HPWL dispersé."}, {"id": "q3", "type": "multiple_choice", "prompt": "Sur le placement dispersé, la GCell la plus chaude (argmax de la matrice de congestion) est…", "choices": ["(2,0) avec congestion 3,33", "(0,0) avec congestion 3,08", "(1,0) avec congestion 2,33", "une égalité entre (0,0) et (2,0), tranchée par le hasard"], "answer": 0, "explain": "Le balayage est i externe, j interne, strictement supérieur (règle R2) : le PREMIER maximum dans l'ordre ligne par ligne gagne, donc les égalités sont déterministes — (2,0) à 6,6667/2 = 3,3333 bat (0,0) à 3,0833 ici, et une égalité irait à la tuile la plus tôt, p. ex. [[1,2],[0,0],[0,0],[2,0]] -> (0,1)."}, {"id": "q4", "type": "true_false", "prompt": "Baisser la capacité de 2 à 1 sur le placement dispersé fait basculer au moins une GCell de non-sursaturée à sursaturée.", "answer": false, "explain": "Aucune tuile ne bascule : chaque tuile sursaturée à capacité 2 (demande au-dessus de 2) l'est encore à capacité 1, et les deux tuiles à zéro restent à zéro. Le compte de sursaturées reste 6 sur la dispersion et 1 sur la graine ; seuls les ratios doublent (3,33 -> 6,67 sur la tuile la plus chaude dispersée). Vérifié avec le balayage de capacité du vérificateur sur examples/cap_one.json."}, {"id": "q5", "type": "multiple_choice", "prompt": "Monter la capacité de 2 à 5 sur le placement dispersé, le compte de sursaturées devient…", "choices": ["6 -> 6 (rien ne change)", "6 -> 4 : les tuiles (1,0) et (1,1) sortent", "6 -> 0", "4 -> 6"], "answer": 1, "explain": "Les tuiles (1,0) et (1,1) ont une demande de 4,6667 et 4,1667, au-dessus de 2 mais pas au-dessus de 5, donc leur débordement devient 0 : compte 6 -> 4, total 22 -> 5,1667. C'est le cas visible de bascule (balayage du vérificateur à capacité 5 sur tiny_cong)."}, {"id": "q6", "type": "multiple_choice", "prompt": "Le débordement de la GCell (1,0) de la graine (demande 7, capacité 2) est…", "choices": ["5", "7", "3,5", "0"], "answer": 0, "explain": "Débordement par GCell = max(0, demande − capacité) = max(0, 7 − 2) = 5 (règle R7). Le compte de tuiles sursaturées utilise un strictement supérieur à 0, donc une tuile exactement à la capacité (débordement 0) ne compte pas."}, {"id": "q7", "type": "true_false", "prompt": "La couleur de chaleur d'une GCell vous dit si elle est sursaturée (congestion au-dessus de 1).", "answer": false, "explain": "La couleur encode t = clamp(congestion / maxC, 0, 1), relatif au maximum COURANT de la carte, pas à la capacité (règle R5) : la sursaturation n'est pas une frontière de couleur. Sur la carte refroidie après une passe de rétroaction (congestion max exactement 1,0 en (2,0)), cette tuile peint encore la borne cramoisie pleine de la palette papier (u = 0, 1/3, 2/3, 1 -> #ffffff, #0f6b5c, #b45309, #9f1239). Ce sont les métriques, pas les couleurs, qui portent les nombres exacts."}, {"id": "q8", "type": "multiple_choice", "prompt": "Après une passe de rétroaction de placement sur la graine encombrée (capacité 2), le débordement total est…", "choices": ["5 (inchangé)", "2", "0", "1"], "answer": 2, "explain": "Chaque cellule de la tuile débordante (1,0) avance de moitié vers un voisin plus calme (règle R4 : voisins essayés (+1,0), (−1,0), (0,+1), (0,−1), le premier strictement plus petit gagne). La demande se répartit en (1,0) = 1,5 et (2,0) = 2,0, toutes deux à la capacité 2 ou en dessous, donc débordement total 5 -> 0, max 0, compte 0 ; la tuile la plus chaude devient (2,0) à exactement 1,0."}]}</script>
+    </section>
+
+    <section id="transcript">
+      <details class="card transcript">
+        <summary>Transcription complète de la narration</summary>
+        <h3>Une puce encombrée s&#x27;allume</h3><p>Pourquoi une puce a-t-elle besoin d&#x27;une carte de chaleur ? Imaginez six blocs de logique entassés dans un petit carré de la puce. Les vrais fils ne peuvent pas tous passer par ce carré. Une carte de chaleur de l&#x27;encombrement des fils peint ce carré en rouge, pour voir le bouchon avant le routage. Nous appelons cette carte la carte de congestion.</p>
+<h3>La puce et ses cellules</h3><p>Notre puce est un rectangle de douze unités de large et huit de haut. Elle contient six cellules, nommées A à F. Une cellule est un bloc de logique qui a besoin de sa propre place. Les cellules sont reliées en six groupes appelés réseaux. Un réseau est un ensemble de cellules qu&#x27;un même fil doit connecter. Un placement dit où chaque cellule se trouve.</p>
+<h3>Découper la puce en tuiles</h3><p>Avant le routage, nous coupons la puce en grandes cases appelées GCells. GCell signifie global cell, une grosse tuile de la carte. Notre grille a quatre colonnes et deux lignes, donc huit tuiles. Chaque tuile fait trois unités de large et quatre de haut. Nous nommons une tuile par sa colonne et sa ligne, en comptant à partir de zéro.</p>
+<h3>Demande, capacité et ratio</h3><p>Chaque tuile a une capacité, le fil autorisé à la traverser. Nos tuiles autorisent deux. La demande d&#x27;une tuile est le fil qui veut la traverser. La congestion est la demande divisée par la capacité. Au-dessus de un, une tuile est sursaturée : plus de fil que de place.</p>
+<h3>La carte encombrée de la graine</h3><p>Dans notre premier placement, appelé la graine, les six cellules sont dans une seule tuile. Cette tuile est la colonne un, ligne zéro, près du milieu de la puce. Les six réseaux y déposent leur fil, donc sa demande est sept. Sept divisé par deux donne une congestion de trois virgule cinq. Son débordement, demande moins capacité, vaut cinq. Faites une pause et devinez : d&#x27;où vient une demande de sept ?</p>
+<h3>Le partage égal de RUDY</h3><p>La réponse : chaque réseau partage son fil également entre ses tuiles. Chaque réseau dessine la plus petite boîte autour de ses cellules, sa boîte englobante. La longueur de fil du réseau est la largeur de la boîte plus sa hauteur. La règle qui partage également est RUDY, pour rectangular uniform density.</p>
+<h3>Une part par tuile</h3><p>La part d&#x27;une tuile est la longueur de fil divisée par son nombre de tuiles. Une boîte sur trois tuiles donne à chaque tuile un tiers. Les dépôts se font dans un ordre fixe : les réseaux dans leur ordre de liste. Dans un réseau, les tuiles se remplissent colonne par colonne, puis ligne par ligne.</p>
+<h3>La graine monte à sept</h3><p>Regardez maintenant la carte de la graine se construire, réseau par réseau. Le réseau A B a une longueur de fil de un et ne touche que la tuile un zéro, donc il dépose un. Les réseaux C D, A C et B D déposent un chacun, portant la demande à quatre. Le grand réseau A B C D a une longueur de fil de deux, portant la demande à six. Le réseau E F dépose son un, et la demande finit à sept.</p>
+<h3>Des boîtes plus larges en dispersion</h3><p>Dans le second placement, appelé dispersé, les cellules sont près des coins de la puce. Le réseau A B s&#x27;étend sur toute la puce avec une longueur de fil de sept sur trois tuiles de la ligne zéro. Chacune reçoit sept tiers, environ deux virgule trois trois.</p>
+<h3>Le grand réseau, le petit réseau</h3><p>Le grand réseau A B C D a une longueur de fil de onze sur six tuiles. Chaque tuile reçoit onze sixièmes, environ un virgule huit trois. Le réseau E F a une longueur de fil de un sur deux tuiles, donc zéro virgule cinq chacune. Aucune boîte ne touche la colonne la plus à droite, donc elle reste vide.</p>
+<h3>La demande dispersée</h3><p>Ajoutez les six dépôts et la demande dispersée apparaît. La ligne zéro vaut six virgule un sept, quatre virgule six sept, six virgule six sept. La ligne un vaut six virgule un sept, quatre virgule un sept, six virgule un sept. Faites une pause et devinez : quelle tuile est la plus chaude une fois divisé par deux ?</p>
+<h3>La tuile la plus chaude</h3><p>La tuile la plus chaude est la colonne deux, ligne zéro, à trois virgule trois trois. Pour la trouver, nous balayons chaque tuile et gardons la plus grande valeur. Ce gagnant est l&#x27;argmax, la tuile du maximum.</p>
+<h3>Un ex aequo doit être écrit</h3><p>Deux tuiles peuvent égaler le maximum. Si le code choisit l&#x27;une ou l&#x27;autre, deux programmes corrects peuvent diverger. Alors la règle de départage est écrite. Nous balayons colonne par colonne, puis ligne par ligne. Une tuile ne gagne que si elle est strictement plus grande que la meilleure vue. Le premier maximum dans cet ordre gagne.</p>
+<h3>Un exemple d&#x27;ex aequo</h3><p>Voici un ex aequo. La colonne zéro contient un et deux. Les colonnes un et deux contiennent des zéros. La colonne trois contient deux et zéro. Deux tuiles sont à égalité à deux : colonne zéro ligne un, et colonne trois ligne zéro. Le balayage atteint la colonne zéro en premier, donc cette tuile gagne.</p>
+<h3>La tuile la plus chaude de la graine</h3><p>Sur la carte de la graine, seule la tuile un zéro est non nulle. Sa valeur est trois virgule cinq. Une seule tuile non nulle ne peut pas égaler. L&#x27;argmax de la graine est la colonne un, ligne zéro, à trois virgule cinq.</p>
+<h3>Pourquoi la règle est sur le papier</h3><p>Les résultats de référence du vérificateur ont besoin de la règle de départage, pour que tous les programmes corrects s&#x27;accordent. Faites une pause et devinez : la dispersion a fait baisser le pic. Le débordement total a-t-il aussi baissé ?</p>
+<h3>Non, le total a augmenté</h3><p>Non : le débordement total a augmenté, pas diminué. Le pic est tombé de trois virgule cinq à trois virgule trois trois. Le débordement total est monté de cinq à vingt-deux. Le compte de tuiles sursaturées est monté de un à six. Le pic et le total sont deux mesures différentes d&#x27;une même carte.</p>
+<h3>La carte dispersée en nombres</h3><p>Divisez les demandes dispersées par la capacité deux. La ligne zéro vaut trois virgule zéro huit, deux virgule trois trois, trois virgule trois trois. La ligne un vaut trois virgule zéro huit, deux virgule zéro huit, trois virgule zéro huit. Six des huit tuiles sont sursaturées. Le plus grand débordement est quatre virgule six sept, en colonne deux ligne zéro.</p>
+<h3>La règle exacte du débordement</h3><p>Le débordement d&#x27;une tuile est la demande moins la capacité, borné à zéro. Une tuile ne compte que si son débordement est strictement au-dessus de zéro. À demande égale à la capacité, le débordement est exactement zéro. Une demande de zéro virgule cinq à capacité zéro virgule cinq compte pour zéro.</p>
+<h3>Le prix en longueur de fil</h3><p>La dispersion a refroidi le pic, mais les fils sont devenus plus longs. La longueur de fil totale de la graine est sept, et celle de la dispersion trente-quatre. Le placement échange de la longueur de fil contre de la place dans les tuiles.</p>
+<h3>Monter la capacité</h3><p>La capacité est un bouton que vous pouvez tourner. Sur la carte dispersée, la capacité cinq fait tomber le compte de six à quatre. Les deux tuiles de la colonne un repassent sous la limite. Sur la graine, la capacité un double le ratio à sept, et pourtant une seule tuile compte.</p>
+<h3>Une passe de rétroaction</h3><p>Une passe de rétroaction pousse les cellules vers des tuiles plus fraîches. Sur la graine, une passe répartit la demande sur deux tuiles : un virgule cinq et deux. Divisé par deux, cela fait zéro virgule sept cinq et un. Le débordement total tombe de cinq à zéro, et le compte à zéro.</p>
+<h3>Un débordement nul est-il sain ?</h3><p>Faites une pause et devinez : après cette passe le débordement total est zéro. Quelle est la valeur la plus chaude maintenant, et la carte est-elle vraiment saine ?</p>
+<h3>Refroidie, pas froide</h3><p>Après la passe, aucune tuile n&#x27;est sursaturée : le compte est zéro. La tuile la plus chaude est la colonne deux ligne zéro, à exactement un. Elle est exactement à la capacité, pas en dessous. Refroidie n&#x27;est pas la même chose que froide.</p>
+<h3>Souvenez-vous</h3><p>La congestion est la demande divisée par la capacité, par tuile. Au-dessus de un, une tuile est sursaturée. RUDY répartit la longueur de fil de chaque réseau également sur les tuiles que sa boîte touche. La tuile la plus chaude est l&#x27;argmax, et le premier maximum dans l&#x27;ordre de balayage gagne les ex aequo. Le débordement est la demande moins la capacité, compté strictement au-dessus de zéro. Le pic et le total peuvent évoluer en sens inverse.</p>
+<h3>À vous dans le navigateur</h3><p>Ouvrez le lab congestion-map dans votre navigateur. La graine allume une tuile à congestion trois virgule cinq. Faites glisser la cellule A à travers la frontière de tuile et regardez le compte monter. Lancez la rétroaction et regardez le débordement total tomber à zéro.</p>
+<h3>À vous en Python</h3><p>Sur le parcours Python, construisez la carte vous-même. Divisez une matrice de demande par la capacité pour obtenir la congestion. Trouvez la tuile la plus chaude avec la règle de départage écrite. Référence pour la graine : tuile la plus chaude colonne un ligne zéro à trois virgule cinq. Référence pour la dispersion : colonne deux ligne zéro à trois virgule trois trois.</p>
+<h3>Une dernière question</h3><p>Faites une pause et devinez : vous avez dispersé les cellules et le pic de congestion a baissé. Le routeur devrait-il célébrer ? Vérifiez d&#x27;abord le débordement total.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">Lab 06 du cours Congestion pour l'EDA, issu de l'<a href="https://github.com/yongfu-li/eda-learning">EDA Algorithms Platform</a> (CC BY 4.0). Version de relecture, pas encore intégrée au dépôt du cours.</div>
+  </footer>
+  <script>
+    // Keep the reader's place (#section) when switching language.
+    document.querySelectorAll("a.lang-switch").forEach((a) =>
+      a.addEventListener("click", () => { a.href = a.getAttribute("href").split("#")[0] + location.hash; })
+    );
+  </script>
+  <script src="../quiz.js"></script>
+</body>
+</html>

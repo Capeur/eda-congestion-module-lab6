@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Congestion heat map — EDA Algorithms Platform</title>
+  <link rel="stylesheet" href="../../assets/site.css">
+  <link rel="stylesheet" href="../../assets/tools-shared.css">
+  <link rel="stylesheet" href="../../assets/clustering-lab.css">
+  <style>
+    /* Lab 06 workspace extras (kept local to this tool) */
+    .cm-panel .cm-form { margin-top: 0.6rem; border-top: 1px solid var(--line, #ccc); padding-top: 0.4rem; }
+    .cm-muted { margin: 0 0 0.3rem; font-size: 0.85rem; color: var(--muted, #555); }
+    .cm-field { display: flex; align-items: center; gap: 0.4rem; margin: 0.25rem 0; font-size: 0.85rem; }
+    .cm-field span { min-width: 11rem; }
+    .cm-input { width: 7rem; padding: 0.4rem 0.55rem; font: inherit; border: 1px solid var(--line, #ccc); border-radius: 6px; }
+    .cm-msg { margin: 0.4rem 0 0; padding: 0.4rem 0.6rem; border-radius: 6px; background: rgba(180, 83, 9, 0.1); font-size: 0.88rem; }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <p class="brand"><a href="../../index.html">Congestion for EDA · Lab 06</a></p>
+      <nav class="site-nav" aria-label="Site">
+        <a href="../../index.html">Lab 06 home</a>
+        <a href="../../index.html#lessons">Animated lessons</a>
+        <a href="../../fr/tools/congestion-map/index.html" hreflang="fr" lang="fr">Français</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <div class="eyebrow">Interactive tool</div>
+    <section class="hero">
+      <h1>Congestion heat map</h1>
+      <p class="lead">Drag cells on the 4×2 GCell grid, paint demand/capacity per tile, and find the hottest tile under the written tie-break.</p>
+    </section>
+    <div id="lab-root"></div>
+  </main>
+  <footer class="site-footer">Lab 06 · Congestion heat map — part of the <a href="https://github.com/yongfu-li/eda-learning">EDA Algorithms Platform</a> congestion course (CC BY 4.0).</footer>
+  <script type="module" src="congestion-map.js"></script>
+</body>
+</html>
