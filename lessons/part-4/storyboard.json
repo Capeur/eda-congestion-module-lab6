@@ -1,0 +1,200 @@
+{
+ "scene": "placement",
+ "pageTitle": {
+  "en": "Lab 06 · Part 4 — No, the total went up",
+  "fr": "Lab 06 · Partie 4 — Non, le total a augmenté"
+ },
+ "eyebrow": {
+  "en": "Lab 06 · animated lesson 4 of 5",
+  "fr": "Lab 06 · leçon animée 4 sur 5"
+ },
+ "title": {
+  "en": "No, the total went up",
+  "fr": "Non, le total a augmenté"
+ },
+ "lede": {
+  "en": "Spreading the cells cooled the peak from 3.5 to 3.33, but the total overflow rose from 5 to 22 and the oversubscribed count from 1 to 6. Overflow counts only strictly above zero, the capacity is a knob, and one feedback pass on the seed brings the total to zero — yet the hottest tile then sits exactly at capacity. Drag a cell in the try-it panel and watch the wirelength and overflow readout.",
+  "fr": "Disperser les cellules a refroidi le pic de 3,5 à 3,33, mais le débordement total est monté de 5 à 22 et le compte de tuiles sursaturées de 1 à 6. Le débordement ne compte que strictement au-dessus de zéro, la capacité est un bouton, et une passe de rétroaction sur la graine ramène le total à zéro — et pourtant la tuile la plus chaude vaut alors exactement la capacité. Faites glisser une cellule dans le panneau d'essai et regardez la longueur de fil et le débordement."
+ },
+ "placement": {
+  "run": "spread",
+  "floorBox": [36, 168, 344, 229.3],
+  "claims": [
+   { "run": "spread", "start": 34, "demand": 34, "hottest": { "i": 2, "j": 0, "v": 3.33333333333 }, "ovtotal": 22, "ovmax": 4.66666666667, "ovcount": 6 },
+   { "run": "congested_seed", "start": 7, "demand": 7, "hottest": { "i": 1, "j": 0, "v": 3.5 }, "ovtotal": 5, "ovmax": 5, "ovcount": 1 },
+   { "positions": { "A": { "x": 1, "y": 1 }, "B": { "x": 8, "y": 1 }, "C": { "x": 1, "y": 5 }, "D": { "x": 8, "y": 5 }, "E": { "x": 5, "y": 3 }, "F": { "x": 6, "y": 3 } }, "hpwl": 34 },
+   { "positions": { "A": { "x": 4, "y": 2 }, "B": { "x": 5, "y": 2 }, "C": { "x": 4, "y": 3 }, "D": { "x": 5, "y": 3 }, "E": { "x": 4.5, "y": 2.5 }, "F": { "x": 5.5, "y": 2.5 } }, "hpwl": 7 },
+   { "positions": { "A": { "x": 5.75, "y": 2 }, "B": { "x": 6.25, "y": 2 }, "C": { "x": 5.75, "y": 2.5 }, "D": { "x": 6.25, "y": 2.5 }, "E": { "x": 6, "y": 2.25 }, "F": { "x": 6.5, "y": 2.25 } }, "hpwl": 3.5, "demand": 3.5, "hottest": { "i": 2, "j": 0, "v": 1 }, "ovtotal": 0, "ovmax": 0, "ovcount": 0 }
+  ]
+ },
+ "anchors": {
+  "no17": { "slide": 17, "en": "No:", "fr": "Non" },
+  "peak17": { "slide": 17, "en": "peak", "fr": "pic" },
+  "divide18": { "slide": 18, "en": "Divide", "fr": "Divisez" },
+  "rowzero18": { "slide": 18, "en": "Row zero", "fr": "ligne zéro" },
+  "rowone18": { "slide": 18, "en": "Row one", "fr": "ligne un" },
+  "six18": { "slide": 18, "en": "Six of the eight", "fr": "Six des huit" },
+  "largest18": { "slide": 18, "en": "largest overflow", "fr": "plus grand débordement" },
+  "floored19": { "slide": 19, "en": "floored", "fr": "borné" },
+  "strictly19": { "slide": 19, "en": "strictly", "fr": "strictement" },
+  "equal19": { "slide": 19, "en": "equal", "fr": "égale" },
+  "aszero19": { "slide": 19, "en": "as zero", "fr": "pour zéro" },
+  "cooled20": { "slide": 20, "en": "cooled", "fr": "refroidi" },
+  "seven20": { "slide": 20, "en": "seven", "fr": "sept" },
+  "knob21": { "slide": 21, "en": "knob", "fr": "bouton" },
+  "capfive21": { "slide": 21, "en": "capacity five", "fr": "capacité cinq" },
+  "colone21": { "slide": 21, "en": "column one", "fr": "colonne un" },
+  "capone21": { "slide": 21, "en": "capacity one", "fr": "capacité un" },
+  "feedback22": { "slide": 22, "en": "feedback", "fr": "rétroaction" },
+  "splits22": { "slide": 22, "en": "splits", "fr": "répartit" },
+  "onefive22": { "slide": 22, "en": "one point five", "fr": "un virgule cinq" },
+  "falls22": { "slide": 22, "en": "falls", "fr": "tombe" },
+  "guess23": { "slide": 23, "en": "guess", "fr": "devinez" }
+ },
+ "pausing": { "between": 0.55, "scene": 0.9, "question": 1.3, "tail": 2.6 },
+ "pauses": [
+  { "after": "@largest18", "sec": 1.0 },
+  { "after": "@falls22", "sec": 1.2 }
+ ],
+ "initial": { "run": "spread", "move": 0, "deposit": "all", "side": 0 },
+ "timeline": [
+  { "at": "@peak17", "dim": 0.12 },
+  { "at": "slide:18", "dim": 1 },
+  { "at": "@capone21", "run": "congested_seed" },
+  { "at": "slide:23:end+0.2", "dim": 0.12 }
+ ],
+ "show": [
+  { "show": "heat", "from": "start", "to": "end" },
+  { "show": "nets", "from": "start", "to": "end" },
+  { "show": "netlabels", "from": "start", "to": "end" },
+  { "show": "counter", "from": "start", "to": "@rowzero18", "metric": "hpwl", "label": { "en": "wirelength", "fr": "longueur de fil" } },
+  { "show": "counter", "from": "@rowzero18", "to": "@largest18", "metric": "ovcount" },
+  { "show": "counter", "from": "@largest18", "to": "@floored19", "metric": "ovmax" },
+  { "show": "counter", "from": "@floored19", "to": "@capone21", "metric": "ovtotal" },
+  { "show": "counter", "from": "@capone21", "to": "@splits22", "metric": "hpwl", "label": { "en": "wirelength", "fr": "longueur de fil" } },
+  { "show": "counter", "from": "@splits22", "to": "end", "metric": "ovtotal" },
+  { "show": "highlight", "from": "@no17", "to": "@capone21", "ids": ["t2,0"] },
+  { "show": "highlight", "from": "@capone21", "to": "end", "ids": ["t1,0"] }
+ ],
+ "overlays": [
+  {
+   "from": "start", "to": "slide:18", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "**Peak** is not **total**", "fr": "Le **pic** n'est pas le **total**" },
+   "sub": { "en": "{No@no17}: the total overflow went up, not down", "fr": "{Non@no17} : le débordement total a augmenté, pas diminué" }
+  },
+  {
+   "from": "@peak17", "to": "slide:18", "x": 19, "y": 30, "type": "compare",
+   "rows": [
+    { "tone": "good", "label": { "en": "peak", "fr": "pic" }, "value": { "en": "##3.50## → ##3.33##", "fr": "##3,50## → ##3,33##" }, "note": { "en": "fell", "fr": "a baissé" } },
+    { "tone": "bad", "label": { "en": "total overflow", "fr": "débordement total" }, "value": { "en": "##5## → ##22##", "fr": "##5## → ##22##" }, "note": { "en": "rose", "fr": "a augmenté" } },
+    { "tone": "bad", "label": { "en": "oversubscribed count", "fr": "compte de sursaturation" }, "value": { "en": "##1## → ##6##", "fr": "##1## → ##6##" }, "note": { "en": "rose", "fr": "a augmenté" } }
+   ]
+  },
+  {
+   "from": "slide:18", "to": "slide:19", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "The spread map in **numbers**", "fr": "La carte dispersée en **nombres**" }
+  },
+  {
+   "from": "@divide18", "to": "slide:19", "x": 44, "y": 40, "type": "tags",
+   "items": [
+    { "text": { "en": "row zero: ##3.08##, ##2.33##, ##3.33##", "fr": "ligne zéro : ##3,08##, ##2,33##, ##3,33##" }, "at": "@rowzero18" },
+    { "text": { "en": "row one: ##3.08##, ##2.08##, ##3.08##", "fr": "ligne un : ##3,08##, ##2,08##, ##3,08##" }, "at": "@rowone18" },
+    { "text": { "en": "##6## of ##8## tiles oversubscribed", "fr": "##6## tuiles sur ##8## sursaturées" }, "at": "@six18" },
+    { "text": { "en": "largest overflow ##4.67## at column two row zero", "fr": "plus grand débordement ##4,67## en colonne deux ligne zéro" }, "at": "@largest18" }
+   ]
+  },
+  {
+   "from": "slide:19", "to": "slide:20", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "Overflow's exact **rule**", "fr": "La règle exacte du **débordement**" }
+  },
+  {
+   "from": "@floored19", "to": "slide:20", "x": 44, "y": 40, "type": "tags",
+   "items": [
+    { "text": { "en": "overflow = demand − capacity, floored at zero", "fr": "débordement = demande − capacité, borné à zéro" }, "at": "@floored19" },
+    { "text": { "en": "count only strictly above zero", "fr": "on ne compte que strictement au-dessus de zéro" }, "at": "@strictly19" },
+    { "text": { "en": "demand = capacity → overflow exactly zero", "fr": "demande = capacité → débordement exactement zéro" }, "at": "@equal19" },
+    { "text": { "en": "demand ##0.5## at capacity ##0.5## counts as zero", "fr": "demande ##0,5## à capacité ##0,5## compte pour zéro" }, "at": "@aszero19" }
+   ]
+  },
+  {
+   "from": "slide:20", "to": "slide:21", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "The price in **wirelength**", "fr": "Le prix en **longueur de fil**" }
+  },
+  {
+   "from": "@seven20", "to": "slide:21", "x": 3, "y": 74, "type": "tag",
+   "text": { "en": "the wires grew longer: ##7## → ##34##", "fr": "les fils ont grandi : ##7## → ##34##" }
+  },
+  {
+   "from": "@cooled20", "to": "slide:21", "x": 46, "y": 50, "type": "thumbs",
+   "items": [
+    { "run": "congested_seed", "label": { "en": "seed: ##7##", "fr": "graine : ##7##" } },
+    { "run": "spread", "label": { "en": "spread: ##34##", "fr": "dispersion : ##34##" } }
+   ]
+  },
+  {
+   "from": "slide:21", "to": "slide:22", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "Raising the **capacity**", "fr": "Monter la **capacité**" }
+  },
+  {
+   "from": "@knob21", "to": "slide:22", "x": 44, "y": 40, "type": "tags",
+   "items": [
+    { "text": { "en": "capacity ##5##: count ##6## → ##4##", "fr": "capacité ##5## : compte ##6## → ##4##" }, "at": "@capfive21" },
+    { "text": { "en": "the two tiles of column one fall back under the limit", "fr": "les deux tuiles de la colonne un repassent sous la limite" }, "at": "@colone21" },
+    { "text": { "en": "seed at capacity ##1##: ratio ##7##, still count ##1##", "fr": "graine à capacité ##1## : ratio ##7##, toujours compte ##1##" }, "at": "@capone21" }
+   ]
+  },
+  {
+   "from": "slide:22", "to": "slide:23", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "One **feedback** pass", "fr": "Une passe de **rétroaction**" }
+  },
+  {
+   "from": "@feedback22", "to": "slide:23:end+0.2", "x": 44, "y": 40, "type": "tags",
+   "items": [
+    { "text": { "en": "demand splits: ##1.5## and ##2##", "fr": "la demande se répartit : ##1,5## et ##2##" }, "at": "@onefive22" },
+    { "text": { "en": "congestion ##0.75## and exactly ##1##", "fr": "congestion ##0,75## et exactement ##1##" }, "at": "@splits22" },
+    { "text": { "en": "total overflow ##5## → ##0##, count → ##0##", "fr": "débordement total ##5## → ##0##, compte → ##0##" }, "at": "@falls22" }
+   ]
+  },
+  {
+   "from": "slide:23", "to": "slide:23:end+0.2", "x": 3, "y": 4, "type": "headline",
+   "text": { "en": "Is zero overflow **healthy**?", "fr": "Un débordement nul est-il **sain** ?" },
+   "sub": { "en": "{Pause and guess@guess23}: total overflow zero after the pass", "fr": "{Faites une pause et devinez@guess23} : débordement total nul après la passe" }
+  },
+  {
+   "from": "slide:23:end+0.3", "to": "end", "x": 50, "y": 44, "type": "question"
+  }
+ ],
+ "question": {
+  "at": "slide:23:end+0.3",
+  "text": { "en": "After the pass the total overflow is **zero**. What is the hottest value now?", "fr": "Après la passe le débordement total est **zéro**. Quelle est la valeur la plus chaude maintenant ?" },
+  "hint": { "en": "Divide the new demands by two.", "fr": "Divisez les nouvelles demandes par deux." },
+  "options": [
+   {
+    "label": { "en": "Zero", "fr": "Zéro" },
+    "reply": { "en": "No: the demands are one point five and two; the larger divided by two is exactly one.", "fr": "Non : les demandes sont un virgule cinq et deux ; la plus grande divisée par deux fait exactement un." },
+    "correct": false
+   },
+   {
+    "label": { "en": "Exactly one", "fr": "Exactement un" },
+    "reply": { "en": "Right: column two row zero sits at capacity. Not oversubscribed, but not cold either. Part 5 wraps up.", "fr": "Exact : la colonne deux ligne zéro est à capacité. Pas sursaturée, mais pas froide non plus. La partie 5 conclut." },
+    "correct": true
+   },
+   {
+    "label": { "en": "Two", "fr": "Deux" },
+    "reply": { "en": "No: two is the demand of that tile; the ratio is demand divided by capacity.", "fr": "Non : deux est la demande de cette tuile ; le ratio est la demande divisée par la capacité." },
+    "correct": false
+   }
+  ]
+ },
+ "chapters": [
+  { "at": "start", "title": { "en": "Peak vs total", "fr": "Pic contre total" } },
+  { "at": "slide:18", "title": { "en": "The map", "fr": "La carte" } },
+  { "at": "slide:20", "title": { "en": "Wirelength", "fr": "Longueur de fil" } },
+  { "at": "slide:21", "title": { "en": "Capacity", "fr": "Capacité" } },
+  { "at": "slide:22", "title": { "en": "Feedback", "fr": "Rétroaction" } }
+ ],
+ "note": {
+  "en": "Every number comes from the Lab 06 checker's --json (.cache/congestion-check.json, regenerated read-only from eda-learning-lab6-cg and byte-compared with the skill demo's copy); the engine recomputes every deposit event, and check_lesson.py --data compares every claim with the file at 12 significant digits.",
+  "fr": "Chaque nombre vient du --json du vérificateur du Lab 06 (.cache/congestion-check.json, régénéré en lecture seule depuis eda-learning-lab6-cg et comparé octet par octet avec la copie de la démo de la compétence) ; le moteur recalcule chaque événement de dépôt, et check_lesson.py --data compare chaque affirmation au fichier avec 12 chiffres significatifs."
+ }
+}

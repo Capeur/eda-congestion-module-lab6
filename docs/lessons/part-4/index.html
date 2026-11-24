@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lab 06 · Part 4 — No, the total went up</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>@font-face{font-family:'Fraunces';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/fraunces-latin-700-normal.woff2) format('woff2')}@font-face{font-family:'IBM Plex Mono';font-weight:400;font-style:normal;font-display:swap;src:url(fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2')}@font-face{font-family:'IBM Plex Mono';font-weight:500;font-style:normal;font-display:swap;src:url(fonts/ibm-plex-mono-latin-500-normal.woff2) format('woff2')}@font-face{font-family:'Source Sans 3';font-weight:400;font-style:normal;font-display:swap;src:url(fonts/source-sans-3-latin-400-normal.woff2) format('woff2')}@font-face{font-family:'Source Sans 3';font-weight:600;font-style:normal;font-display:swap;src:url(fonts/source-sans-3-latin-600-normal.woff2) format('woff2')}@font-face{font-family:'Source Sans 3';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/source-sans-3-latin-700-normal.woff2) format('woff2')}</style>
+<meta name="lesson:title" content="No, the total went up">
+<meta name="lesson:duration" content="146.6">
+<meta name="lesson:engine" content="5.1">
+<style>
+/* lesson.css — styles for the animated lesson player (lesson-engine.js).
+   Layout: one reading column. A 16:9 stage carries the lesson; captions and transport sit under it,
+   then chapters and the "your turn" bench. Group colours follow the course labs: the group holding
+   the first node name is blue, the next green, then amber and rose; cut edges are red. */
+:root {
+  --bg: #f3f5f2;
+  --surface: #ffffff;
+  --ink: #17201c;
+  --muted: #56625c;
+  --line: #d6ddd8;
+  --stage: #fbfcfa;
+  --edge: #7a8780;
+  --g0: #1d4ed8;
+  --g1: #0f6b5c;
+  --g2: #b45309;
+  --g3: #9f1239;
+  --cut: #dc2626;
+  --heavy: #b45309;
+  --copper: #a8662a;
+  --unplaced: #94a3b8;
+  --tint0: rgba(29, 78, 216, 0.07);
+  --tint1: rgba(15, 107, 92, 0.08);
+  --said: #17201c;
+  --unsaid: #9aa49f;
+  --mark: #fde68a;
+  --display: "Fraunces", Georgia, "Times New Roman", serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1412; --surface: #151d1a; --ink: #e6ece9; --muted: #9ba7a1; --line: #2a3531;
+    --stage: #111916; --edge: #85938c; --g0: #6f8fff; --g1: #36b39b; --g2: #f59e0b; --g3: #fb7185;
+    --cut: #f87171; --heavy: #f59e0b; --copper: #d39a5c; --unplaced: #66758a;
+    --tint0: rgba(111, 143, 255, 0.10); --tint1: rgba(54, 179, 155, 0.10);
+    --said: #e6ece9; --unsaid: #5f6b66; --mark: #78350f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1412; --surface: #151d1a; --ink: #e6ece9; --muted: #9ba7a1; --line: #2a3531;
+  --stage: #111916; --edge: #85938c; --g0: #6f8fff; --g1: #36b39b; --g2: #f59e0b; --g3: #fb7185;
+  --cut: #f87171; --heavy: #f59e0b; --copper: #d39a5c; --unplaced: #66758a;
+  --tint0: rgba(111, 143, 255, 0.10); --tint1: rgba(54, 179, 155, 0.10);
+  --said: #e6ece9; --unsaid: #5f6b66; --mark: #78350f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 48px; margin: 0;
+}
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 22px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 46px); line-height: 1.05; margin: 0; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 62ch; }
+.lede a, .note a { color: inherit; }
+
+/* ---------- player ---------- */
+.player { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.stage { position: relative; aspect-ratio: 16 / 9; max-width: 100%; background: var(--stage); container-type: inline-size; overflow: hidden; }
+.stage svg.scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.layer { position: absolute; inset: 0; pointer-events: none; }
+.ov { position: absolute; opacity: 0; will-change: opacity, transform; }
+.ov [data-a] { display: inline-block; opacity: 0; }
+
+.hl { font-family: var(--display); font-weight: 700; font-size: 4.3cqw; line-height: 1.08; letter-spacing: -0.01em; max-width: 60cqw; }
+.hl b, .tag b, .sub b, .qcard b { color: var(--g0); font-weight: 700; }
+.red { color: var(--cut); }
+.sub { font-family: var(--body); font-size: 2.1cqw; color: var(--muted); font-weight: 600; margin-top: .6cqw; }
+.term { display: grid; gap: .4cqw; background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 1.4cqw 1.8cqw; box-shadow: 0 .6cqw 2cqw rgba(0,0,0,.06); }
+.term .t { font-family: var(--display); font-size: 3.4cqw; font-weight: 700; }
+.term .d { font-size: 1.9cqw; color: var(--muted); }
+.chip { display: inline-block; font-family: var(--mono); font-size: 2.2cqw; font-weight: 500; padding: .5cqw 1.3cqw; border-radius: 99px; border: 2px solid var(--ink); background: var(--surface); }
+.tag { font-family: var(--body); font-weight: 700; font-size: 2.2cqw; background: var(--surface); border: 1px solid var(--line); border-radius: .9cqw; padding: .6cqw 1.2cqw; }
+.tags { display: grid; gap: 1cqw; justify-items: start; }
+.tag .n, .num { font-family: var(--mono); color: var(--heavy); }
+.label { font-family: var(--display); font-weight: 700; font-size: 2.8cqw; }
+.label.c0 { color: var(--g0); } .label.c1 { color: var(--g1); } .label.c2 { color: var(--g2); } .label.c3 { color: var(--g3); }
+.vocab { display: grid; gap: .8cqw; font-size: 2cqw; }
+.vocab div { background: var(--surface); border: 1px solid var(--line); border-radius: .8cqw; padding: .5cqw 1.1cqw; }
+.vocab b { font-family: var(--display); font-size: 2.3cqw; margin-right: .6cqw; }
+.eq { font-family: var(--mono); font-size: 3.4cqw; font-weight: 500; background: var(--surface); border: 1px solid var(--line); border-radius: 1cqw; padding: 1cqw 1.6cqw; white-space: nowrap; }
+.eq .red { font-weight: 700; }
+.stamp { font-family: var(--display); font-weight: 700; font-size: 6cqw; color: var(--cut); border: .45cqw solid var(--cut); border-radius: 1cqw; padding: .2cqw 1.6cqw; rotate: -9deg; letter-spacing: .06em; text-transform: uppercase; background: color-mix(in srgb, var(--stage) 80%, transparent); }
+.bigq { width: 100cqw; }
+.bigq .q { font-family: var(--display); font-size: 16cqw; font-weight: 700; line-height: 1; color: var(--muted); text-align: center; }
+.bigq .hl { max-width: none; text-align: center; font-size: 3.6cqw; }
+.cmp { display: grid; gap: 1cqw; background: var(--surface); border: 1px solid var(--line); border-radius: 1.4cqw; padding: 2cqw 2.4cqw; width: 62cqw; box-shadow: 0 .8cqw 3cqw rgba(0,0,0,.08); }
+.cmp .row { display: grid; grid-template-columns: 1.4fr .7fr 1.3fr; align-items: baseline; gap: 1.4cqw; font-size: 2.3cqw; }
+.cmp .row .k { font-family: var(--mono); font-size: 3cqw; font-weight: 500; }
+.cmp .bad .k { color: var(--cut); }
+.cmp .good .k { color: var(--g1); }
+.qcard { background: var(--surface); border: 2px solid var(--ink); border-radius: 1.4cqw; padding: 1.6cqw 2.2cqw; width: 44cqw; display: grid; gap: .6cqw; }
+.qcard .e { font-family: var(--mono); font-size: 1.7cqw; letter-spacing: .1em; text-transform: uppercase; color: var(--heavy); }
+.qcard .q { font-family: var(--display); font-size: 3.1cqw; font-weight: 700; line-height: 1.15; }
+.qcard .h { font-size: 1.8cqw; color: var(--muted); }
+.qbtns { display: none; gap: 1cqw; pointer-events: auto; flex-wrap: wrap; }
+.stage.asking .qbtns { display: flex; }
+.qbtns .btn { font-size: 1.8cqw; padding: .6cqw 1.3cqw; }
+.qans { color: var(--ink); font-size: 1.9cqw; }
+.qans:empty { display: none; }
+.thumbs { display: flex; gap: 2cqw; }
+.thumb { background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 1cqw; display: grid; gap: .4cqw; justify-items: center; width: 22cqw; position: relative; }
+.thumb svg { width: 100%; height: auto; display: block; }
+.thumb .c { font-family: var(--mono); font-size: 1.75cqw; font-weight: 500; white-space: nowrap; }
+.thumb.best { border: 2px solid var(--g1); }
+.thumb .ok { position: absolute; top: -1.6cqw; right: -1.2cqw; background: var(--g1); color: #fff; font-weight: 700; font-size: 1.7cqw; border-radius: 99px; padding: .3cqw 1cqw; }
+
+.counter { display: grid; justify-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: .9cqw 1.6cqw; min-width: 15cqw; }
+.counter .l, .balance .l { font-family: var(--mono); font-size: 1.6cqw; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.counter .v { font-family: var(--mono); font-size: 6.2cqw; font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
+.counter.bad .v { color: var(--cut); }
+.counter.good .v { color: var(--g1); }
+.balance { display: grid; gap: .8cqw; background: var(--surface); border: 1px solid var(--line); border-radius: 1.2cqw; padding: 1.2cqw 1.6cqw; width: 19cqw; }
+.bars { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 1.6cqw; height: 15cqw; align-items: end; }
+.bar { background: var(--g0); border-radius: .5cqw .5cqw 0 0; height: 0; display: flex; justify-content: center; align-items: flex-start; color: #fff; font-family: var(--mono); font-size: 2cqw; padding-top: .3cqw; }
+.bar.c1 { background: var(--g1); } .bar.c2 { background: var(--g2); } .bar.c3 { background: var(--g3); }
+.cap { position: absolute; left: -.6cqw; right: -.6cqw; height: 0; border-top: .3cqw dashed var(--cut); opacity: 0; }
+.cap span { position: absolute; right: 0; top: -2.6cqw; font-family: var(--mono); font-size: 1.5cqw; color: var(--cut); }
+.verdict { font-weight: 700; font-size: 1.9cqw; min-height: 1.2em; }
+.verdict.no { color: var(--cut); }
+.verdict.yes { color: var(--g1); }
+.banner { position: absolute; left: 2cqw; top: 2cqw; display: none; gap: 1cqw; align-items: center; pointer-events: auto; font-size: 1.9cqw; }
+.stage.free .banner { display: flex; }
+.banner b { font-family: var(--display); font-size: 2.6cqw; }
+
+/* svg pieces */
+.node rect { transition: fill .45s, stroke .45s; }
+.g0 rect { fill: var(--g0); stroke: var(--g0); }
+.g1 rect { fill: var(--g1); stroke: var(--g1); }
+.g2 rect { fill: var(--g2); stroke: var(--g2); }
+.g3 rect { fill: var(--g3); stroke: var(--g3); }
+.nu rect { fill: var(--unplaced); stroke: var(--unplaced); }
+.ncell rect { fill: var(--surface); stroke: var(--copper); stroke-width: 3; }
+.node text { fill: #fff; font-family: var(--body); font-weight: 700; font-size: 21px; text-anchor: middle; dominant-baseline: central; }
+.ncell text { fill: var(--ink); }
+.node { cursor: pointer; }
+.node:focus-visible rect { stroke: var(--ink); stroke-width: 4; }
+.main { stroke: var(--edge); stroke-linecap: round; transition: stroke .35s; }
+.wire { stroke: var(--copper); stroke-width: 2.2; stroke-linecap: round; }
+.edge.cut .main { stroke: var(--cut); stroke-dasharray: 10 7; }
+.edge.heavy .main { stroke: var(--heavy); }
+.edge.pulse .main { animation: lesson-pulse 1s ease-in-out 2; }
+@keyframes lesson-pulse { 50% { stroke-width: 12; } }
+.wl rect { fill: var(--stage); stroke: var(--line); transition: fill .3s, stroke .3s; }
+.wl text { fill: var(--ink); font-family: var(--mono); font-size: 16px; font-weight: 500; text-anchor: middle; dominant-baseline: central; }
+.edge.cut .wl rect { stroke: var(--cut); }
+.edge.flash .wl rect { fill: var(--mark); stroke: var(--heavy); }
+.chipbody { fill: none; stroke: var(--copper); stroke-width: 3; }
+.pin { fill: var(--copper); }
+.divider { stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 8 8; }
+.tint0 { fill: var(--tint0); }
+.tint1 { fill: var(--tint1); }
+
+/* captions */
+.captions { padding: 14px 18px; border-top: 1px solid var(--line); min-height: 3.6em; font-size: 19px; line-height: 1.45; }
+.captions span { color: var(--unsaid); transition: color .15s; }
+.captions span.said { color: var(--said); }
+.player.nocc .captions { display: none; }
+
+/* transport */
+.transport { display: grid; grid-template-columns: auto 1fr auto; gap: 10px 14px; align-items: center; padding: 12px 16px 14px; border-top: 1px solid var(--line); }
+.play { width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--ink); color: var(--bg); font-size: 18px; cursor: pointer; display: grid; place-items: center; }
+.scrub { display: grid; gap: 4px; min-width: 0; }
+.scrub input { width: 100%; accent-color: var(--g0); }
+.time { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.opts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button, .tbtn { font-family: var(--mono); font-size: 13px; padding: 6px 9px; border: 0; background: var(--surface); color: var(--ink); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.tbtn { border: 1px solid var(--line); border-radius: 8px; }
+.tbtn[aria-pressed="false"] { color: var(--muted); text-decoration: line-through; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--g0); outline-offset: 2px; }
+@media (max-width: 620px) {
+  .transport { grid-template-columns: auto 1fr; }
+  .opts { grid-column: 1 / -1; justify-content: flex-start; }
+  .captions { font-size: 16px; }
+}
+
+/* chapters + bench */
+.chapters { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.chapters button { width: 100%; display: grid; grid-template-columns: 4.5em 1fr; gap: 10px; text-align: left; background: none; border: 0; border-left: 3px solid var(--line); padding: 6px 12px; font: inherit; color: var(--muted); cursor: pointer; }
+.chapters button .ts { font-family: var(--mono); font-size: 14px; font-variant-numeric: tabular-nums; }
+.chapters button[aria-current="true"] { border-left-color: var(--g0); color: var(--ink); font-weight: 600; }
+.cols { display: grid; grid-template-columns: 1fr 1.25fr; gap: 22px; align-items: start; }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+h2 { font-family: var(--display); font-size: 24px; margin: 0 0 8px; }
+.bench { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; gap: 14px; min-width: 0; }
+.bench.pulse { animation: lesson-benchin 1.2s ease 2; }
+@keyframes lesson-benchin { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--g0) 35%, transparent); } }
+.bench p { margin: 0; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn { font: 600 15px var(--body); padding: 8px 14px; border-radius: 9px; border: 1px solid var(--ink); background: var(--surface); color: var(--ink); cursor: pointer; }
+.btn.primary { background: var(--ink); color: var(--bg); }
+.seedbox { width: 5.5em; font: 500 15px var(--mono); padding: 7px 9px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.feedback { border-left: 3px solid var(--g1); padding: 4px 0 4px 12px; }
+.feedback:empty { display: none; }
+.readout { font-family: var(--mono); font-size: 14.5px; background: var(--bg); border-radius: 8px; padding: 10px 12px; font-variant-numeric: tabular-nums; }
+.note { font-size: 14px; color: var(--muted); max-width: 70ch; }
+.ok { color: var(--g1); font-weight: 700; } .no { color: var(--cut); font-weight: 700; }
+.norec .node rect, .norec .main, .norec .wl rect { transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .node rect, .main, .wl rect, .captions span { transition: none !important; }
+  .edge.pulse .main, .bench.pulse { animation: none; }
+}
+
+/* ---------- floorplan scene (B*-tree + floor of blocks) ----------
+   Block colours come from the lab (one fixed colour per block id, the course's paper palette) and are set inline.
+   Tree links: left child = solid ("next door"), right child = dashed ("upstairs"). The skyline is amber. */
+:root { --sky: #d97706; --waste: rgba(220, 38, 38, 0.10); --over: rgba(220, 38, 38, 0.13); --gridline: #e3e8e4; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --sky: #fbbf24; --waste: rgba(248, 113, 113, 0.14); --over: rgba(248, 113, 113, 0.16); --gridline: #1f2a26; } }
+:root[data-theme="dark"] { --sky: #fbbf24; --waste: rgba(248, 113, 113, 0.14); --over: rgba(248, 113, 113, 0.16); --gridline: #1f2a26; }
+.fp-gridlines line { stroke: var(--gridline); stroke-width: 1; }
+.fp-outline { fill: none; stroke: var(--ink); stroke-width: 2; stroke-dasharray: 9 6; opacity: .55; }
+.fp-outline-lab { font-family: var(--mono); font-size: 14px; fill: var(--muted); text-anchor: end; }
+.fp-floorline { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+.fp-axis text { font-family: var(--mono); font-size: 12.5px; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+.fp-axis .fp-axis-y { text-anchor: end; }
+.fp-overzone { fill: url(#fp-over); stroke: none; transition: opacity .3s; }
+.fp-over-line { stroke: var(--cut); stroke-width: 2.4; opacity: .55; }
+.fp-hatch-bg { fill: var(--waste); }
+.fp-hatch-line { stroke: var(--cut); stroke-width: 2; opacity: .35; }
+.fp-waste { fill: url(#fp-hatch); }
+.fpb rect { stroke-width: 2; fill-opacity: .92; }
+.fpb .fp-bid { fill: #fff; font-family: var(--body); font-weight: 700; font-size: 21px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.fpb .fp-dim { fill: #fff; font-family: var(--mono); font-size: 12.5px; text-anchor: middle; dominant-baseline: central; opacity: .9; pointer-events: none; }
+.fpb.out rect { stroke: var(--cut); stroke-width: 4; stroke-dasharray: 7 4; }
+.fpb.hl rect, .fpn.hl circle:not(.fp-ring) { stroke: var(--ink); stroke-width: 4; }
+.fp-sky { fill: none; stroke: var(--sky); stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
+.fp-bbox { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 10 6; }
+.fp-bboxlab rect { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+.fp-bboxlab text { font-family: var(--mono); font-size: 15px; font-weight: 500; fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
+.fp-coords circle { fill: var(--ink); }
+.fp-coords text { font-family: var(--mono); font-size: 13px; font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--stage); stroke-width: 4px; }
+.fp-edge { stroke: var(--edge); stroke-width: 3; stroke-linecap: round; }
+.fp-edge.right { stroke-dasharray: 8 6; }
+.fpn circle { stroke-width: 3; }
+.fpn .fp-ring { fill: none; stroke: var(--ink); stroke-width: 3; opacity: 0; }
+.fpn.hl .fp-ring { opacity: 1; }
+.fpn text { font-family: var(--body); font-weight: 700; font-size: 20px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.fpk { cursor: pointer; }
+.fpk:focus-visible { outline: none; }
+.fpk:focus-visible rect, .fpk:focus-visible circle:not(.fp-ring) { stroke: var(--ink); stroke-width: 4; }
+.fp-badges circle { fill: var(--ink); }
+.fp-badges text { fill: var(--bg); font-family: var(--mono); font-size: 12.5px; font-weight: 500; text-anchor: middle; dominant-baseline: central; }
+.fp-link rect { fill: var(--surface); stroke: var(--line); }
+.fp-link text { font-family: var(--body); font-size: 13px; font-weight: 600; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+.fp-legal { font-family: var(--body); font-weight: 700; font-size: 1.9cqw; background: var(--surface); border: 2px solid var(--line); border-radius: .9cqw; padding: .4cqw 1.1cqw; white-space: nowrap; }
+.fp-legal.yes { color: var(--g1); border-color: var(--g1); }
+.fp-legal.no { color: var(--cut); border-color: var(--cut); }
+.fp-counter { min-width: 17cqw; }
+.fp-thumb svg { max-height: 16cqw; }
+.fp-ops .btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.norec .fp-overzone { transition: none !important; }
+
+/* ---------- placement scene (v5) ---------- */
+.pl-chip { fill: var(--tint0); stroke: none; }
+.pl-gridlines line { stroke: var(--line); stroke-width: 1; opacity: .55; }
+/* v5.1 heat grid: the GCell lattice and one tile per GCell, painted from the deposit replay */
+.pl-glines line { stroke: var(--heavy); stroke-width: 1.4; stroke-dasharray: 6 4; opacity: .6; }
+.pl-tile { stroke: none; }
+.pl-tilering { fill: none; stroke: var(--ink); stroke-width: 3; opacity: 0; }
+.pl-tilering.hl { opacity: 1; }
+.pl-wall { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-dasharray: 10 6; opacity: .5; transition: stroke .15s, opacity .15s; }
+.pl-wall.hit { stroke: var(--cut); opacity: 1; }
+.pl-axis text { font-family: var(--mono); font-size: 12px; fill: var(--muted); text-anchor: middle; dominant-baseline: central; }
+.pl-axis .pl-axis-y { text-anchor: end; }
+.pl-net rect { fill: var(--edge); fill-opacity: .05; stroke: var(--edge); stroke-width: 1.6; }
+.pl-net line { stroke: var(--copper); stroke-width: 2.4; stroke-linecap: round; opacity: .8; }
+.pl-net text { font-family: var(--mono); font-size: 13px; font-weight: 500; fill: var(--ink); text-anchor: middle; dominant-baseline: central; paint-order: stroke; stroke: var(--stage); stroke-width: 4px; }
+.pl-net.hot rect { stroke: var(--heavy); stroke-width: 2.6; fill: var(--heavy); fill-opacity: .08; }
+.pl-trial { fill: none; stroke: var(--heavy); stroke-width: 2; stroke-dasharray: 6 5; }
+.plk { cursor: grab; outline: none; touch-action: none; }
+.plk rect { stroke: var(--surface); stroke-width: 1.5; }
+.plk text, .pl-ghost text { fill: #fff; font-family: var(--body); font-weight: 700; font-size: 16px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.plk .pl-ring { fill: none; stroke: var(--ink); stroke-width: 2.5; opacity: 0; }
+.plk.hl .pl-ring, .plk:focus-visible .pl-ring { opacity: 1; }
+.plk.pad rect:not(.pl-ring) { stroke: var(--ink); stroke-width: 2.5; }
+.pl-ghost rect { fill: var(--heavy); fill-opacity: .35; stroke: var(--heavy); stroke-width: 2; stroke-dasharray: 5 4; }
+.pl-ghost.bad rect { fill: var(--cut); stroke: var(--cut); }
+.pl-ghost text { fill: var(--ink); }
+.pl-bestpos rect { fill: none; stroke-width: 2.2; stroke-dasharray: 4 4; }
+.pl-thermo .tube { fill: var(--surface); stroke: var(--line); stroke-width: 2; }
+.pl-thermo text { font-family: var(--mono); font-size: 13px; fill: var(--muted); text-anchor: middle; }
+.pl-thermo text.v { font-size: 14px; font-weight: 500; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.pl-card text { font-family: var(--body); font-size: 18px; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.pl-card .delta { font-family: var(--mono); font-size: 21px; font-weight: 500; }
+.pl-card .delta.worse, .pl-card .verdict.no { fill: var(--cut); }
+.pl-card .delta.better, .pl-card .verdict.yes { fill: var(--g1); }
+.pl-card .delta.free, .pl-card .verdict.free { fill: var(--muted); }
+.pl-card .verdict { font-weight: 700; font-size: 22px; text-anchor: end; }
+.pl-dice .track { fill: var(--line); fill-opacity: .55; stroke: var(--edge); stroke-width: 1.2; }
+.pl-dice .pfill { fill: var(--g1); opacity: .75; }
+.pl-dice .pfill.sure { opacity: .3; }
+.pl-dice text { font-family: var(--body); font-size: 15.5px; fill: var(--muted); }
+.pl-dice text.u { font-family: var(--mono); font-size: 13.5px; text-anchor: middle; fill: var(--ink); }
+.pl-dice .marker line { stroke: var(--ink); stroke-width: 2.5; }
+.pl-dice .marker circle { fill: var(--ink); stroke: var(--surface); stroke-width: 2; }
+.pl-dice .marker.yes circle { fill: var(--g1); } .pl-dice .marker.no circle { fill: var(--cut); }
+.pl-tally text { font-family: var(--body); font-size: 17px; font-weight: 600; fill: var(--ink); font-variant-numeric: tabular-nums; white-space: pre; }
+.pl-tally text.kinds { font-size: 15px; font-weight: 400; fill: var(--muted); }
+.pl-chart .axis, .pl-spread .axis { stroke: var(--edge); stroke-width: 1.5; }
+.pl-chart .cur { fill: none; stroke: var(--g0); stroke-width: 2.4; stroke-linejoin: round; }
+.pl-chart .best { fill: none; stroke: var(--g1); stroke-width: 2; stroke-dasharray: 5 4; }
+.pl-chart .dot { fill: var(--g0); stroke: var(--surface); stroke-width: 2; }
+.pl-chart .startline { stroke: var(--edge); stroke-width: 1; stroke-dasharray: 3 5; }
+.pl-chart text, .pl-spread text { font-family: var(--mono); font-size: 12.5px; fill: var(--muted); }
+.pl-chart .tick { text-anchor: end; dominant-baseline: central; }
+.pl-chart .tick.x, .pl-spread .tick.x { text-anchor: start; dominant-baseline: auto; }
+.pl-chart .tick.x.end { text-anchor: end; } .pl-spread .tick.x.mid { text-anchor: middle; }
+.pl-chart .lab.start { text-anchor: end; }
+.pl-chart .lab.bestl { fill: var(--g1); font-weight: 500; }
+.pl-spread .d { fill: var(--edge); }
+.pl-spread .d.hot { fill: var(--heavy); stroke: var(--surface); stroke-width: 1.5; }
+.pl-spread .median { stroke: var(--g0); stroke-width: 2; stroke-dasharray: 5 4; }
+.pl-spread .lab.med { fill: var(--g0); }
+.pl-spread .lab.hot { fill: var(--heavy); font-weight: 500; font-size: 13.5px; paint-order: stroke; stroke: var(--stage); stroke-width: 4px; }
+.pl-spread .lab.endl { text-anchor: end; }
+.pl-spread .lead { stroke: var(--heavy); stroke-width: 1.2; }
+.pl-spread .scap { font-family: var(--body); font-size: 15px; fill: var(--ink); }
+.pl-counter { min-width: 17cqw; }
+.pl-ops label { display: inline-flex; gap: 6px; align-items: center; font-size: 14.5px; }
+.pl-seed { width: 5.5em; font: inherit; padding: 5px 7px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.pl-thumb svg { width: 11cqw; }
+.pl-piles rect { fill: none; stroke: var(--cut); stroke-width: 3; }
+.pl-piles circle { fill: var(--cut); stroke: var(--surface); stroke-width: 2; }
+.pl-piles text { fill: #fff; font-family: var(--mono); font-weight: 500; font-size: 13px; text-anchor: middle; dominant-baseline: central; }
+.pl-land .ground { fill: var(--tint1); stroke: none; }
+.pl-land .line { fill: none; stroke: var(--g1); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.pl-land .ball { fill: var(--heavy); stroke: var(--surface); stroke-width: 2.5; }
+.pl-land .lab { font-family: var(--body); font-size: 15.5px; font-weight: 600; fill: var(--ink); text-anchor: middle; }
+
+/* ---------- inside the all-parts player ---------- */
+html.embedded body { background: transparent; padding: 0 2px 6px; margin: 0; }
+html.embedded .wrap > header .eyebrow { display: none; }
+html.embedded .wrap > header h1 { font-size: clamp(20px, 2.6vw, 28px); margin-top: 0; }
+
+/* ---------- subtitles menu ---------- */
+.subsel { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.subsel select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 5px 6px; }
+.captions:lang(zh) { font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif; letter-spacing: .02em; }
+
+/* ---------- sounds button ---------- */
+.sbtn { font-family: var(--mono); font-size: 13px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.sbtn[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.sbtn[aria-pressed="false"] { color: var(--muted); }
+.opts { flex-wrap: wrap; }
+
+</style>
+</head>
+<body>
+<div id="lesson-root"></div>
+<audio id="lesson-audio" preload="metadata" src="lesson-en.m4a"></audio>
+<script src="../lesson-engine.js"></script>
+<script>
+LessonEngine.mount({"sb": {"scene": "placement", "pageTitle": {"en": "Lab 06 · Part 4 — No, the total went up", "fr": "Lab 06 · Partie 4 — Non, le total a augmenté"}, "eyebrow": {"en": "Lab 06 · animated lesson 4 of 5", "fr": "Lab 06 · leçon animée 4 sur 5"}, "title": {"en": "No, the total went up", "fr": "Non, le total a augmenté"}, "lede": {"en": "Spreading the cells cooled the peak from 3.5 to 3.33, but the total overflow rose from 5 to 22 and the oversubscribed count from 1 to 6. Overflow counts only strictly above zero, the capacity is a knob, and one feedback pass on the seed brings the total to zero — yet the hottest tile then sits exactly at capacity. Drag a cell in the try-it panel and watch the wirelength and overflow readout.", "fr": "Disperser les cellules a refroidi le pic de 3,5 à 3,33, mais le débordement total est monté de 5 à 22 et le compte de tuiles sursaturées de 1 à 6. Le débordement ne compte que strictement au-dessus de zéro, la capacité est un bouton, et une passe de rétroaction sur la graine ramène le total à zéro — et pourtant la tuile la plus chaude vaut alors exactement la capacité. Faites glisser une cellule dans le panneau d'essai et regardez la longueur de fil et le débordement."}, "placement": {"run": "spread", "floorBox": [36, 168, 344, 229.3], "claims": [{"run": "spread", "start": 34, "demand": 34, "hottest": {"i": 2, "j": 0, "v": 3.33333333333}, "ovtotal": 22, "ovmax": 4.66666666667, "ovcount": 6}, {"run": "congested_seed", "start": 7, "demand": 7, "hottest": {"i": 1, "j": 0, "v": 3.5}, "ovtotal": 5, "ovmax": 5, "ovcount": 1}, {"positions": {"A": {"x": 1, "y": 1}, "B": {"x": 8, "y": 1}, "C": {"x": 1, "y": 5}, "D": {"x": 8, "y": 5}, "E": {"x": 5, "y": 3}, "F": {"x": 6, "y": 3}}, "hpwl": 34}, {"positions": {"A": {"x": 4, "y": 2}, "B": {"x": 5, "y": 2}, "C": {"x": 4, "y": 3}, "D": {"x": 5, "y": 3}, "E": {"x": 4.5, "y": 2.5}, "F": {"x": 5.5, "y": 2.5}}, "hpwl": 7}, {"positions": {"A": {"x": 5.75, "y": 2}, "B": {"x": 6.25, "y": 2}, "C": {"x": 5.75, "y": 2.5}, "D": {"x": 6.25, "y": 2.5}, "E": {"x": 6, "y": 2.25}, "F": {"x": 6.5, "y": 2.25}}, "hpwl": 3.5, "demand": 3.5, "hottest": {"i": 2, "j": 0, "v": 1}, "ovtotal": 0, "ovmax": 0, "ovcount": 0}], "data": {"runs": {"congested_seed": {"cells": ["A", "B", "C", "D", "E", "F"], "nets": [["A", "B"], ["C", "D"], ["A", "C"], ["B", "D"], ["A", "B", "C", "D"], ["E", "F"]], "start": {"A": {"x": 4.0, "y": 2.0}, "B": {"x": 5.0, "y": 2.0}, "C": {"x": 4.0, "y": 3.0}, "D": {"x": 5.0, "y": 3.0}, "E": {"x": 4.5, "y": 2.5}, "F": {"x": 5.5, "y": 2.5}}, "walls": {"min": 0, "max": 12.0}, "moves": 0, "seed": 0, "t0": 1, "cool": 1, "step": 1, "frozen": [], "events": [{"net": 0, "pins": ["A", "B"], "bbox": [4.0, 2.0, 5.0, 2.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [1.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 1, "pins": ["C", "D"], "bbox": [4.0, 3.0, 5.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [2.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 2, "pins": ["A", "C"], "bbox": [4.0, 2.0, 4.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [3.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 3, "pins": ["B", "D"], "bbox": [5.0, 2.0, 5.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [4.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 4, "pins": ["A", "B", "C", "D"], "bbox": [4.0, 2.0, 5.0, 3.0], "hpwl": 2.0, "tiles": [[1, 0]], "share": 2.0, "demandAfter": [[0.0, 0.0], [6.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, {"net": 5, "pins": ["E", "F"], "bbox": [4.5, 2.5, 5.5, 2.5], "hpwl": 1.0, "tiles": [[1, 0]], "share": 1.0, "demandAfter": [[0.0, 0.0], [7.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}], "demand": [[0.0, 0.0], [7.0, 0.0], [0.0, 0.0], [0.0, 0.0]], "congestion": [[0.0, 0.0], [3.5, 0.0], [0.0, 0.0], [0.0, 0.0]], "overflow": {"perCell": [[0.0, 0.0], [5.0, 0.0], [0.0, 0.0], [0.0, 0.0]], "total": 5.0, "max": 5.0, "count": 1}, "hottest": {"i": 1, "j": 0, "v": 3.5}, "heat": {"mode": "relative-to-max", "maxC": 3.5, "t": [[0.0, 0.0], [1.0, 0.0], [0.0, 0.0], [0.0, 0.0]]}, "capacity": 2.0}, "spread": {"cells": ["A", "B", "C", "D", "E", "F"], "nets": [["A", "B"], ["C", "D"], ["A", "C"], ["B", "D"], ["A", "B", "C", "D"], ["E", "F"]], "start": {"A": {"x": 1.0, "y": 1.0}, "B": {"x": 8.0, "y": 1.0}, "C": {"x": 1.0, "y": 5.0}, "D": {"x": 8.0, "y": 5.0}, "E": {"x": 5.0, "y": 3.0}, "F": {"x": 6.0, "y": 3.0}}, "walls": {"min": 0, "max": 12.0}, "moves": 0, "seed": 0, "t0": 1, "cool": 1, "step": 1, "frozen": [], "events": [{"net": 0, "pins": ["A", "B"], "bbox": [1.0, 1.0, 8.0, 1.0], "hpwl": 7.0, "tiles": [[0, 0], [1, 0], [2, 0]], "share": 2.33333333333, "demandAfter": [[2.33333333333, 0.0], [2.33333333333, 0.0], [2.33333333333, 0.0], [0.0, 0.0]]}, {"net": 1, "pins": ["C", "D"], "bbox": [1.0, 5.0, 8.0, 5.0], "hpwl": 7.0, "tiles": [[0, 1], [1, 1], [2, 1]], "share": 2.33333333333, "demandAfter": [[2.33333333333, 2.33333333333], [2.33333333333, 2.33333333333], [2.33333333333, 2.33333333333], [0.0, 0.0]]}, {"net": 2, "pins": ["A", "C"], "bbox": [1.0, 1.0, 1.0, 5.0], "hpwl": 4.0, "tiles": [[0, 0], [0, 1]], "share": 2.0, "demandAfter": [[4.33333333333, 4.33333333333], [2.33333333333, 2.33333333333], [2.33333333333, 2.33333333333], [0.0, 0.0]]}, {"net": 3, "pins": ["B", "D"], "bbox": [8.0, 1.0, 8.0, 5.0], "hpwl": 4.0, "tiles": [[2, 0], [2, 1]], "share": 2.0, "demandAfter": [[4.33333333333, 4.33333333333], [2.33333333333, 2.33333333333], [4.33333333333, 4.33333333333], [0.0, 0.0]]}, {"net": 4, "pins": ["A", "B", "C", "D"], "bbox": [1.0, 1.0, 8.0, 5.0], "hpwl": 11.0, "tiles": [[0, 0], [0, 1], [1, 0], [1, 1], [2, 0], [2, 1]], "share": 1.83333333333, "demandAfter": [[6.16666666667, 6.16666666667], [4.16666666667, 4.16666666667], [6.16666666667, 6.16666666667], [0.0, 0.0]]}, {"net": 5, "pins": ["E", "F"], "bbox": [5.0, 3.0, 6.0, 3.0], "hpwl": 1.0, "tiles": [[1, 0], [2, 0]], "share": 0.5, "demandAfter": [[6.16666666667, 6.16666666667], [4.66666666667, 4.16666666667], [6.66666666667, 6.16666666667], [0.0, 0.0]]}], "demand": [[6.16666666667, 6.16666666667], [4.66666666667, 4.16666666667], [6.66666666667, 6.16666666667], [0.0, 0.0]], "congestion": [[3.08333333333, 3.08333333333], [2.33333333333, 2.08333333333], [3.33333333333, 3.08333333333], [0.0, 0.0]], "overflow": {"perCell": [[4.16666666667, 4.16666666667], [2.66666666667, 2.16666666667], [4.66666666667, 4.16666666667], [0.0, 0.0]], "total": 22.0, "max": 4.66666666667, "count": 6}, "hottest": {"i": 2, "j": 0, "v": 3.33333333333}, "heat": {"mode": "relative-to-max", "maxC": 3.33333333333, "t": [[0.925, 0.925], [0.7, 0.625], [1.0, 0.925], [0.0, 0.0]]}, "capacity": 2.0}}, "seeds": null, "heat": {"chip": {"W": 12, "H": 8}, "nx": 4, "ny": 2, "cellW": 3.0, "cellH": 4.0, "capacity": 2.0, "palette": [{"u": 0.0, "hex": "#ffffff", "rgb": [255, 255, 255]}, {"u": 0.333333333333, "hex": "#0f6b5c", "rgb": [15, 107, 92]}, {"u": 0.666666666667, "hex": "#b45309", "rgb": [180, 83, 9]}, {"u": 1.0, "hex": "#9f1239", "rgb": [159, 18, 57]}]}}, "heat": {"chip": {"W": 12, "H": 8}, "nx": 4, "ny": 2, "cellW": 3.0, "cellH": 4.0, "capacity": 2.0, "palette": [{"u": 0.0, "hex": "#ffffff", "rgb": [255, 255, 255]}, {"u": 0.333333333333, "hex": "#0f6b5c", "rgb": [15, 107, 92]}, {"u": 0.666666666667, "hex": "#b45309", "rgb": [180, 83, 9]}, {"u": 1.0, "hex": "#9f1239", "rgb": [159, 18, 57]}]}, "sizes": {"A": [2, 1], "B": [2, 1], "C": [2, 1], "D": [2, 1], "E": [1, 1], "F": [1, 1]}}, "anchors": {"no17": {"slide": 17, "en": "No:", "fr": "Non"}, "peak17": {"slide": 17, "en": "peak", "fr": "pic"}, "divide18": {"slide": 18, "en": "Divide", "fr": "Divisez"}, "rowzero18": {"slide": 18, "en": "Row zero", "fr": "ligne zéro"}, "rowone18": {"slide": 18, "en": "Row one", "fr": "ligne un"}, "six18": {"slide": 18, "en": "Six of the eight", "fr": "Six des huit"}, "largest18": {"slide": 18, "en": "largest overflow", "fr": "plus grand débordement"}, "floored19": {"slide": 19, "en": "floored", "fr": "borné"}, "strictly19": {"slide": 19, "en": "strictly", "fr": "strictement"}, "equal19": {"slide": 19, "en": "equal", "fr": "égale"}, "aszero19": {"slide": 19, "en": "as zero", "fr": "pour zéro"}, "cooled20": {"slide": 20, "en": "cooled", "fr": "refroidi"}, "seven20": {"slide": 20, "en": "seven", "fr": "sept"}, "knob21": {"slide": 21, "en": "knob", "fr": "bouton"}, "capfive21": {"slide": 21, "en": "capacity five", "fr": "capacité cinq"}, "colone21": {"slide": 21, "en": "column one", "fr": "colonne un"}, "capone21": {"slide": 21, "en": "capacity one", "fr": "capacité un"}, "feedback22": {"slide": 22, "en": "feedback", "fr": "rétroaction"}, "splits22": {"slide": 22, "en": "splits", "fr": "répartit"}, "onefive22": {"slide": 22, "en": "one point five", "fr": "un virgule cinq"}, "falls22": {"slide": 22, "en": "falls", "fr": "tombe"}, "guess23": {"slide": 23, "en": "guess", "fr": "devinez"}}, "pausing": {"between": 0.55, "scene": 0.9, "question": 1.3, "tail": 2.6}, "pauses": [{"after": "@largest18", "sec": 1.0}, {"after": "@falls22", "sec": 1.2}], "initial": {"run": "spread", "move": 0, "deposit": "all", "side": 0}, "timeline": [{"at": "@peak17", "dim": 0.12}, {"at": "slide:18", "dim": 1}, {"at": "@capone21", "run": "congested_seed"}, {"at": "slide:23:end+0.2", "dim": 0.12}], "show": [{"show": "heat", "from": "start", "to": "end"}, {"show": "nets", "from": "start", "to": "end"}, {"show": "netlabels", "from": "start", "to": "end"}, {"show": "counter", "from": "start", "to": "@rowzero18", "metric": "hpwl", "label": {"en": "wirelength", "fr": "longueur de fil"}}, {"show": "counter", "from": "@rowzero18", "to": "@largest18", "metric": "ovcount"}, {"show": "counter", "from": "@largest18", "to": "@floored19", "metric": "ovmax"}, {"show": "counter", "from": "@floored19", "to": "@capone21", "metric": "ovtotal"}, {"show": "counter", "from": "@capone21", "to": "@splits22", "metric": "hpwl", "label": {"en": "wirelength", "fr": "longueur de fil"}}, {"show": "counter", "from": "@splits22", "to": "end", "metric": "ovtotal"}, {"show": "highlight", "from": "@no17", "to": "@capone21", "ids": ["t2,0"]}, {"show": "highlight", "from": "@capone21", "to": "end", "ids": ["t1,0"]}], "overlays": [{"from": "start", "to": "slide:18", "x": 3, "y": 4, "type": "headline", "text": {"en": "**Peak** is not **total**", "fr": "Le **pic** n'est pas le **total**"}, "sub": {"en": "{No@no17}: the total overflow went up, not down", "fr": "{Non@no17} : le débordement total a augmenté, pas diminué"}}, {"from": "@peak17", "to": "slide:18", "x": 19, "y": 30, "type": "compare", "rows": [{"tone": "good", "label": {"en": "peak", "fr": "pic"}, "value": {"en": "##3.50## → ##3.33##", "fr": "##3,50## → ##3,33##"}, "note": {"en": "fell", "fr": "a baissé"}}, {"tone": "bad", "label": {"en": "total overflow", "fr": "débordement total"}, "value": {"en": "##5## → ##22##", "fr": "##5## → ##22##"}, "note": {"en": "rose", "fr": "a augmenté"}}, {"tone": "bad", "label": {"en": "oversubscribed count", "fr": "compte de sursaturation"}, "value": {"en": "##1## → ##6##", "fr": "##1## → ##6##"}, "note": {"en": "rose", "fr": "a augmenté"}}]}, {"from": "slide:18", "to": "slide:19", "x": 3, "y": 4, "type": "headline", "text": {"en": "The spread map in **numbers**", "fr": "La carte dispersée en **nombres**"}}, {"from": "@divide18", "to": "slide:19", "x": 44, "y": 40, "type": "tags", "items": [{"text": {"en": "row zero: ##3.08##, ##2.33##, ##3.33##", "fr": "ligne zéro : ##3,08##, ##2,33##, ##3,33##"}, "at": "@rowzero18"}, {"text": {"en": "row one: ##3.08##, ##2.08##, ##3.08##", "fr": "ligne un : ##3,08##, ##2,08##, ##3,08##"}, "at": "@rowone18"}, {"text": {"en": "##6## of ##8## tiles oversubscribed", "fr": "##6## tuiles sur ##8## sursaturées"}, "at": "@six18"}, {"text": {"en": "largest overflow ##4.67## at column two row zero", "fr": "plus grand débordement ##4,67## en colonne deux ligne zéro"}, "at": "@largest18"}]}, {"from": "slide:19", "to": "slide:20", "x": 3, "y": 4, "type": "headline", "text": {"en": "Overflow's exact **rule**", "fr": "La règle exacte du **débordement**"}}, {"from": "@floored19", "to": "slide:20", "x": 44, "y": 40, "type": "tags", "items": [{"text": {"en": "overflow = demand − capacity, floored at zero", "fr": "débordement = demande − capacité, borné à zéro"}, "at": "@floored19"}, {"text": {"en": "count only strictly above zero", "fr": "on ne compte que strictement au-dessus de zéro"}, "at": "@strictly19"}, {"text": {"en": "demand = capacity → overflow exactly zero", "fr": "demande = capacité → débordement exactement zéro"}, "at": "@equal19"}, {"text": {"en": "demand ##0.5## at capacity ##0.5## counts as zero", "fr": "demande ##0,5## à capacité ##0,5## compte pour zéro"}, "at": "@aszero19"}]}, {"from": "slide:20", "to": "slide:21", "x": 3, "y": 4, "type": "headline", "text": {"en": "The price in **wirelength**", "fr": "Le prix en **longueur de fil**"}}, {"from": "@seven20", "to": "slide:21", "x": 3, "y": 74, "type": "tag", "text": {"en": "the wires grew longer: ##7## → ##34##", "fr": "les fils ont grandi : ##7## → ##34##"}}, {"from": "@cooled20", "to": "slide:21", "x": 46, "y": 50, "type": "thumbs", "items": [{"run": "congested_seed", "label": {"en": "seed: ##7##", "fr": "graine : ##7##"}}, {"run": "spread", "label": {"en": "spread: ##34##", "fr": "dispersion : ##34##"}}]}, {"from": "slide:21", "to": "slide:22", "x": 3, "y": 4, "type": "headline", "text": {"en": "Raising the **capacity**", "fr": "Monter la **capacité**"}}, {"from": "@knob21", "to": "slide:22", "x": 44, "y": 40, "type": "tags", "items": [{"text": {"en": "capacity ##5##: count ##6## → ##4##", "fr": "capacité ##5## : compte ##6## → ##4##"}, "at": "@capfive21"}, {"text": {"en": "the two tiles of column one fall back under the limit", "fr": "les deux tuiles de la colonne un repassent sous la limite"}, "at": "@colone21"}, {"text": {"en": "seed at capacity ##1##: ratio ##7##, still count ##1##", "fr": "graine à capacité ##1## : ratio ##7##, toujours compte ##1##"}, "at": "@capone21"}]}, {"from": "slide:22", "to": "slide:23", "x": 3, "y": 4, "type": "headline", "text": {"en": "One **feedback** pass", "fr": "Une passe de **rétroaction**"}}, {"from": "@feedback22", "to": "slide:23:end+0.2", "x": 44, "y": 40, "type": "tags", "items": [{"text": {"en": "demand splits: ##1.5## and ##2##", "fr": "la demande se répartit : ##1,5## et ##2##"}, "at": "@onefive22"}, {"text": {"en": "congestion ##0.75## and exactly ##1##", "fr": "congestion ##0,75## et exactement ##1##"}, "at": "@splits22"}, {"text": {"en": "total overflow ##5## → ##0##, count → ##0##", "fr": "débordement total ##5## → ##0##, compte → ##0##"}, "at": "@falls22"}]}, {"from": "slide:23", "to": "slide:23:end+0.2", "x": 3, "y": 4, "type": "headline", "text": {"en": "Is zero overflow **healthy**?", "fr": "Un débordement nul est-il **sain** ?"}, "sub": {"en": "{Pause and guess@guess23}: total overflow zero after the pass", "fr": "{Faites une pause et devinez@guess23} : débordement total nul après la passe"}}, {"from": "slide:23:end+0.3", "to": "end", "x": 50, "y": 44, "type": "question"}], "question": {"at": "slide:23:end+0.3", "text": {"en": "After the pass the total overflow is **zero**. What is the hottest value now?", "fr": "Après la passe le débordement total est **zéro**. Quelle est la valeur la plus chaude maintenant ?"}, "hint": {"en": "Divide the new demands by two.", "fr": "Divisez les nouvelles demandes par deux."}, "options": [{"label": {"en": "Zero", "fr": "Zéro"}, "reply": {"en": "No: the demands are one point five and two; the larger divided by two is exactly one.", "fr": "Non : les demandes sont un virgule cinq et deux ; la plus grande divisée par deux fait exactement un."}, "correct": false}, {"label": {"en": "Exactly one", "fr": "Exactement un"}, "reply": {"en": "Right: column two row zero sits at capacity. Not oversubscribed, but not cold either. Part 5 wraps up.", "fr": "Exact : la colonne deux ligne zéro est à capacité. Pas sursaturée, mais pas froide non plus. La partie 5 conclut."}, "correct": true}, {"label": {"en": "Two", "fr": "Deux"}, "reply": {"en": "No: two is the demand of that tile; the ratio is demand divided by capacity.", "fr": "Non : deux est la demande de cette tuile ; le ratio est la demande divisée par la capacité."}, "correct": false}]}, "chapters": [{"at": "start", "title": {"en": "Peak vs total", "fr": "Pic contre total"}}, {"at": "slide:18", "title": {"en": "The map", "fr": "La carte"}}, {"at": "slide:20", "title": {"en": "Wirelength", "fr": "Longueur de fil"}}, {"at": "slide:21", "title": {"en": "Capacity", "fr": "Capacité"}}, {"at": "slide:22", "title": {"en": "Feedback", "fr": "Rétroaction"}}], "note": {"en": "Every number comes from the Lab 06 checker's --json (.cache/congestion-check.json, regenerated read-only from eda-learning-lab6-cg and byte-compared with the skill demo's copy); the engine recomputes every deposit event, and check_lesson.py --data compares every claim with the file at 12 significant digits.", "fr": "Chaque nombre vient du --json du vérificateur du Lab 06 (.cache/congestion-check.json, régénéré en lecture seule depuis eda-learning-lab6-cg et comparé octet par octet avec la copie de la démo de la compétence) ; le moteur recalcule chaque événement de dépôt, et check_lesson.py --data compare chaque affirmation au fichier avec 12 chiffres significatifs."}}, "timing": {"lang": "en", "slides": [17, 23], "source": "edge-tts", "voice": "en-US-AndrewMultilingualNeural", "rate": "-4%", "words": "exact", "duration": 146.568, "sentences": [{"slide": 17, "text": "No: the total overflow went up, not down.", "start": 0.104, "end": 3.451, "pause_after": 0.55, "words": [{"w": "No", "t": 0.104}, {"w": "the", "t": 0.898}, {"w": "total", "t": 0.99}, {"w": "overflow", "t": 1.315}, {"w": "went", "t": 2.109}, {"w": "up", "t": 2.305}, {"w": "not", "t": 2.839}, {"w": "down", "t": 3.086}]}, {"slide": 17, "text": "The peak fell from three point five to three point three three.", "start": 4.507, "end": 8.713, "pause_after": 0.55, "words": [{"w": "The", "t": 4.507}, {"w": "peak", "t": 4.572}, {"w": "fell", "t": 4.807}, {"w": "from", "t": 5.132}, {"w": "three", "t": 5.38}, {"w": "point", "t": 5.757}, {"w": "five", "t": 6.096}, {"w": "to", "t": 6.903}, {"w": "three", "t": 7.02}, {"w": "point", "t": 7.476}, {"w": "three", "t": 7.814}, {"w": "three", "t": 8.244}]}, {"slide": 17, "text": "The total overflow rose from five to twenty-two.", "start": 9.761, "end": 12.587, "pause_after": 0.55, "words": [{"w": "The", "t": 9.761}, {"w": "total", "t": 9.826}, {"w": "overflow", "t": 10.243}, {"w": "rose", "t": 10.894}, {"w": "from", "t": 11.324}, {"w": "five", "t": 11.467}, {"w": "to", "t": 11.91}, {"w": "twenty-two", "t": 11.975}]}, {"slide": 17, "text": "The oversubscribed count rose from one to six.", "start": 13.634, "end": 16.746, "pause_after": 0.55, "words": [{"w": "The", "t": 13.634}, {"w": "oversubscribed", "t": 13.738}, {"w": "count", "t": 14.858}, {"w": "rose", "t": 15.249}, {"w": "from", "t": 15.665}, {"w": "one", "t": 15.848}, {"w": "to", "t": 16.03}, {"w": "six", "t": 16.108}]}, {"slide": 17, "text": "Peak and total are different measures of one map.", "start": 17.76, "end": 20.338, "pause_after": 1.4500000000000002, "words": [{"w": "Peak", "t": 17.76}, {"w": "and", "t": 18.203}, {"w": "total", "t": 18.32}, {"w": "are", "t": 18.815}, {"w": "different", "t": 18.945}, {"w": "measures", "t": 19.349}, {"w": "of", "t": 19.7}, {"w": "one", "t": 19.765}, {"w": "map", "t": 19.948}]}, {"slide": 18, "text": "Divide the spread demands by capacity two.", "start": 22.258, "end": 25.774, "pause_after": 0.55, "words": [{"w": "Divide", "t": 22.258}, {"w": "the", "t": 22.623}, {"w": "spread", "t": 22.701}, {"w": "demands", "t": 23.43}, {"w": "by", "t": 24.042}, {"w": "capacity", "t": 24.602}, {"w": "two", "t": 25.318}]}, {"slide": 18, "text": "Row zero reads three point zero eight, two point three three, three point three three.", "start": 26.816, "end": 33.092, "pause_after": 0.55, "words": [{"w": "Row", "t": 26.816}, {"w": "zero", "t": 27.103}, {"w": "reads", "t": 27.571}, {"w": "three", "t": 28.157}, {"w": "point", "t": 28.561}, {"w": "zero", "t": 28.899}, {"w": "eight", "t": 29.316}, {"w": "two", "t": 29.928}, {"w": "point", "t": 30.123}, {"w": "three", "t": 30.436}, {"w": "three", "t": 30.788}, {"w": "three", "t": 31.66}, {"w": "point", "t": 31.985}, {"w": "three", "t": 32.298}, {"w": "three", "t": 32.663}]}, {"slide": 18, "text": "Row one reads three point zero eight, two point zero eight, three point zero eight.", "start": 34.11, "end": 39.735, "pause_after": 0.55, "words": [{"w": "Row", "t": 34.11}, {"w": "one", "t": 34.397}, {"w": "reads", "t": 34.644}, {"w": "three", "t": 35.178}, {"w": "point", "t": 35.529}, {"w": "zero", "t": 35.803}, {"w": "eight", "t": 36.181}, {"w": "two", "t": 36.858}, {"w": "point", "t": 37.053}, {"w": "zero", "t": 37.313}, {"w": "eight", "t": 37.743}, {"w": "three", "t": 38.342}, {"w": "point", "t": 38.654}, {"w": "zero", "t": 38.954}, {"w": "eight", "t": 39.449}]}, {"slide": 18, "text": "Six of the eight tiles are oversubscribed.", "start": 40.756, "end": 43.035, "pause_after": 0.55, "words": [{"w": "Six", "t": 40.756}, {"w": "of", "t": 40.965}, {"w": "the", "t": 41.03}, {"w": "eight", "t": 41.069}, {"w": "tiles", "t": 41.316}, {"w": "are", "t": 41.811}, {"w": "oversubscribed", "t": 42.058}]}, {"slide": 18, "text": "The largest overflow is four point six seven, in column two row zero.", "start": 44.066, "end": 48.975, "pause_after": 1.0, "words": [{"w": "The", "t": 44.066}, {"w": "largest", "t": 44.144}, {"w": "overflow", "t": 44.613}, {"w": "is", "t": 45.368}, {"w": "four", "t": 45.485}, {"w": "point", "t": 45.798}, {"w": "six", "t": 46.071}, {"w": "seven", "t": 46.371}, {"w": "in", "t": 47.178}, {"w": "column", "t": 47.321}, {"w": "two", "t": 47.972}, {"w": "row", "t": 48.233}, {"w": "zero", "t": 48.441}]}, {"slide": 19, "text": "A tile's overflow is demand minus capacity, floored at zero.", "start": 50.442, "end": 54.973, "pause_after": 0.55, "words": [{"w": "A", "t": 50.442}, {"w": "tile's", "t": 50.494}, {"w": "overflow", "t": 50.924}, {"w": "is", "t": 51.809}, {"w": "demand", "t": 51.901}, {"w": "minus", "t": 52.434}, {"w": "capacity", "t": 52.955}, {"w": "floored", "t": 53.958}, {"w": "at", "t": 54.348}, {"w": "zero", "t": 54.414}]}, {"slide": 19, "text": "A tile counts only when its overflow is strictly above zero.", "start": 55.995, "end": 60.279, "pause_after": 0.55, "words": [{"w": "A", "t": 55.995}, {"w": "tile", "t": 56.047}, {"w": "counts", "t": 56.425}, {"w": "only", "t": 56.972}, {"w": "when", "t": 57.258}, {"w": "its", "t": 57.375}, {"w": "overflow", "t": 57.506}, {"w": "is", "t": 58.274}, {"w": "strictly", "t": 58.417}, {"w": "above", "t": 59.342}, {"w": "zero", "t": 59.693}]}, {"slide": 19, "text": "At demand equal to capacity, the overflow is exactly zero.", "start": 61.284, "end": 66.284, "pause_after": 0.55, "words": [{"w": "At", "t": 61.284}, {"w": "demand", "t": 61.388}, {"w": "equal", "t": 62.131}, {"w": "to", "t": 62.43}, {"w": "capacity", "t": 62.547}, {"w": "the", "t": 63.745}, {"w": "overflow", "t": 63.849}, {"w": "is", "t": 64.813}, {"w": "exactly", "t": 64.943}, {"w": "zero", "t": 65.62}]}, {"slide": 19, "text": "Demand zero point five at capacity zero point five counts as zero.", "start": 67.345, "end": 72.449, "pause_after": 1.4500000000000002, "words": [{"w": "Demand", "t": 67.345}, {"w": "zero", "t": 67.775}, {"w": "point", "t": 68.113}, {"w": "five", "t": 68.426}, {"w": "at", "t": 69.025}, {"w": "capacity", "t": 69.103}, {"w": "zero", "t": 69.793}, {"w": "point", "t": 70.132}, {"w": "five", "t": 70.47}, {"w": "counts", "t": 70.9}, {"w": "as", "t": 71.603}, {"w": "zero", "t": 71.863}]}, {"slide": 20, "text": "Spreading cooled the peak, but the wires grew longer.", "start": 74.398, "end": 77.849, "pause_after": 0.55, "words": [{"w": "Spreading", "t": 74.398}, {"w": "cooled", "t": 74.971}, {"w": "the", "t": 75.323}, {"w": "peak", "t": 75.401}, {"w": "but", "t": 76.117}, {"w": "the", "t": 76.247}, {"w": "wires", "t": 76.364}, {"w": "grew", "t": 76.924}, {"w": "longer", "t": 77.211}]}, {"slide": 20, "text": "The seed's total wirelength is seven, and the spread's is thirty-four.", "start": 78.884, "end": 83.572, "pause_after": 0.55, "words": [{"w": "The", "t": 78.884}, {"w": "seed's", "t": 78.975}, {"w": "total", "t": 79.405}, {"w": "wirelength", "t": 79.835}, {"w": "is", "t": 80.694}, {"w": "seven", "t": 80.876}, {"w": "and", "t": 81.892}, {"w": "the", "t": 81.931}, {"w": "spread's", "t": 81.996}, {"w": "is", "t": 82.699}, {"w": "thirty-four", "t": 82.856}]}, {"slide": 20, "text": "Placement trades wirelength against room in the tiles.", "start": 84.594, "end": 88.266, "pause_after": 1.4500000000000002, "words": [{"w": "Placement", "t": 84.594}, {"w": "trades", "t": 84.972}, {"w": "wirelength", "t": 85.584}, {"w": "against", "t": 86.651}, {"w": "room", "t": 87.081}, {"w": "in", "t": 87.485}, {"w": "the", "t": 87.563}, {"w": "tiles", "t": 87.615}]}, {"slide": 21, "text": "Capacity is a knob you can turn.", "start": 90.183, "end": 92.227, "pause_after": 0.55, "words": [{"w": "Capacity", "t": 90.183}, {"w": "is", "t": 91.121}, {"w": "a", "t": 91.212}, {"w": "knob", "t": 91.238}, {"w": "you", "t": 91.642}, {"w": "can", "t": 91.733}, {"w": "turn", "t": 91.837}]}, {"slide": 21, "text": "On the spread map, capacity five drops the count from six to four.", "start": 93.253, "end": 97.667, "pause_after": 0.55, "words": [{"w": "On", "t": 93.253}, {"w": "the", "t": 93.331}, {"w": "spread", "t": 93.383}, {"w": "map", "t": 93.774}, {"w": "capacity", "t": 94.36}, {"w": "five", "t": 95.167}, {"w": "drops", "t": 95.649}, {"w": "the", "t": 96.04}, {"w": "count", "t": 96.157}, {"w": "from", "t": 96.534}, {"w": "six", "t": 96.704}, {"w": "to", "t": 97.107}, {"w": "four", "t": 97.198}]}, {"slide": 21, "text": "The two tiles of column one fall back under the limit.", "start": 98.712, "end": 102.137, "pause_after": 0.55, "words": [{"w": "The", "t": 98.712}, {"w": "two", "t": 98.79}, {"w": "tiles", "t": 99.012}, {"w": "of", "t": 99.467}, {"w": "column", "t": 99.546}, {"w": "one", "t": 100.262}, {"w": "fall", "t": 100.574}, {"w": "back", "t": 100.939}, {"w": "under", "t": 101.525}, {"w": "the", "t": 101.655}, {"w": "limit", "t": 101.746}]}, {"slide": 21, "text": "On the seed, capacity one doubles the ratio to seven, yet still only one tile counts.", "start": 103.161, "end": 110.101, "pause_after": 1.4500000000000002, "words": [{"w": "On", "t": 103.161}, {"w": "the", "t": 103.265}, {"w": "seed", "t": 103.356}, {"w": "capacity", "t": 104.398}, {"w": "one", "t": 105.375}, {"w": "doubles", "t": 105.7}, {"w": "the", "t": 106.078}, {"w": "ratio", "t": 106.156}, {"w": "to", "t": 106.755}, {"w": "seven", "t": 106.859}, {"w": "yet", "t": 107.797}, {"w": "still", "t": 107.953}, {"w": "only", "t": 108.5}, {"w": "one", "t": 108.799}, {"w": "tile", "t": 109.112}, {"w": "counts", "t": 109.463}]}, {"slide": 22, "text": "A feedback pass nudges cells toward cooler tiles.", "start": 112.027, "end": 115.439, "pause_after": 0.55, "words": [{"w": "A", "t": 112.027}, {"w": "feedback", "t": 112.092}, {"w": "pass", "t": 112.613}, {"w": "nudges", "t": 112.991}, {"w": "cells", "t": 113.342}, {"w": "toward", "t": 114.137}, {"w": "cooler", "t": 114.423}, {"w": "tiles", "t": 114.814}]}, {"slide": 22, "text": "On the seed, one pass splits the demand over two tiles: one point five and two.", "start": 116.465, "end": 122.155, "pause_after": 0.55, "words": [{"w": "On", "t": 116.465}, {"w": "the", "t": 116.569}, {"w": "seed", "t": 116.66}, {"w": "one", "t": 117.559}, {"w": "pass", "t": 117.793}, {"w": "splits", "t": 118.236}, {"w": "the", "t": 118.666}, {"w": "demand", "t": 118.757}, {"w": "over", "t": 119.395}, {"w": "two", "t": 119.642}, {"w": "tiles", "t": 119.929}, {"w": "one", "t": 120.853}, {"w": "point", "t": 121.075}, {"w": "five", "t": 121.335}, {"w": "and", "t": 121.674}, {"w": "two", "t": 121.726}]}, {"slide": 22, "text": "Divided by two, that is zero point seven five and one.", "start": 123.185, "end": 127.013, "pause_after": 0.55, "words": [{"w": "Divided", "t": 123.185}, {"w": "by", "t": 123.55}, {"w": "two", "t": 123.706}, {"w": "that", "t": 124.748}, {"w": "is", "t": 124.865}, {"w": "zero", "t": 125.125}, {"w": "point", "t": 125.49}, {"w": "seven", "t": 125.815}, {"w": "five", "t": 126.141}, {"w": "and", "t": 126.558}, {"w": "one", "t": 126.662}]}, {"slide": 22, "text": "The total overflow falls from five to zero, and the count to zero.", "start": 128.042, "end": 132.795, "pause_after": 1.2, "words": [{"w": "The", "t": 128.042}, {"w": "total", "t": 128.133}, {"w": "overflow", "t": 128.511}, {"w": "falls", "t": 129.514}, {"w": "from", "t": 129.956}, {"w": "five", "t": 130.152}, {"w": "to", "t": 130.607}, {"w": "zero", "t": 130.738}, {"w": "and", "t": 131.636}, {"w": "the", "t": 131.714}, {"w": "count", "t": 131.805}, {"w": "to", "t": 132.157}, {"w": "zero", "t": 132.274}]}, {"slide": 23, "text": "Pause and guess: after that pass the total overflow is zero.", "start": 134.474, "end": 138.836, "pause_after": 0.55, "words": [{"w": "Pause", "t": 134.474}, {"w": "and", "t": 134.826}, {"w": "guess", "t": 134.917}, {"w": "after", "t": 135.959}, {"w": "that", "t": 136.206}, {"w": "pass", "t": 136.388}, {"w": "the", "t": 136.766}, {"w": "total", "t": 136.87}, {"w": "overflow", "t": 137.274}, {"w": "is", "t": 138.146}, {"w": "zero", "t": 138.302}]}, {"slide": 23, "text": "What is the hottest value now, and is the map truly healthy?", "start": 139.872, "end": 143.57, "pause_after": 2.6, "words": [{"w": "What", "t": 139.872}, {"w": "is", "t": 139.937}, {"w": "the", "t": 140.015}, {"w": "hottest", "t": 140.094}, {"w": "value", "t": 140.588}, {"w": "now", "t": 140.94}, {"w": "and", "t": 141.76}, {"w": "is", "t": 141.877}, {"w": "the", "t": 141.969}, {"w": "map", "t": 142.034}, {"w": "truly", "t": 142.594}, {"w": "healthy", "t": 143.036}]}]}, "lang": "en", "subs": {"fr": ["Non : le débordement total a augmenté, pas diminué.", "Le pic est tombé de trois virgule cinq à trois virgule trois trois.", "Le débordement total est monté de cinq à vingt-deux.", "Le compte de tuiles sursaturées est monté de un à six.", "Le pic et le total sont deux mesures différentes d'une même carte.", "Divisez les demandes dispersées par la capacité deux.", "La ligne zéro vaut trois virgule zéro huit, deux virgule trois trois, trois virgule trois trois.", "La ligne un vaut trois virgule zéro huit, deux virgule zéro huit, trois virgule zéro huit.", "Six des huit tuiles sont sursaturées.", "Le plus grand débordement est quatre virgule six sept, en colonne deux ligne zéro.", "Le débordement d'une tuile est la demande moins la capacité, borné à zéro.", "Une tuile ne compte que si son débordement est strictement au-dessus de zéro.", "À demande égale à la capacité, le débordement est exactement zéro.", "Une demande de zéro virgule cinq à capacité zéro virgule cinq compte pour zéro.", "La dispersion a refroidi le pic, mais les fils sont devenus plus longs.", "La longueur de fil totale de la graine est sept, et celle de la dispersion trente-quatre.", "Le placement échange de la longueur de fil contre de la place dans les tuiles.", "La capacité est un bouton que vous pouvez tourner.", "Sur la carte dispersée, la capacité cinq fait tomber le compte de six à quatre.", "Les deux tuiles de la colonne un repassent sous la limite.", "Sur la graine, la capacité un double le ratio à sept, et pourtant une seule tuile compte.", "Une passe de rétroaction pousse les cellules vers des tuiles plus fraîches.", "Sur la graine, une passe répartit la demande sur deux tuiles : un virgule cinq et deux.", "Divisé par deux, cela fait zéro virgule sept cinq et un.", "Le débordement total tombe de cinq à zéro, et le compte à zéro.", "Faites une pause et devinez : après cette passe le débordement total est zéro.", "Quelle est la valeur la plus chaude maintenant, et la carte est-elle vraiment saine ?"], "zh": ["不是：总溢出上升了，而不是下降了。", "峰值从三点五降到三点三三。", "总溢出从五升到二十二。", "超载格子数从一升到六。", "峰值和总量是同一张地图的两种不同度量。", "把分散布局的需求除以容量二。", "第 0 行是三点零八、二点三三、三点三三。", "第 1 行是三点零八、二点零八、三点零八。", "八个格子中有六个超载。", "最大溢出是四点六七，位于第 2 列第 0 行。", "格子的溢出等于需求减容量，下限为零。", "只有溢出严格大于零时，格子才被计入。", "需求等于容量时，溢出恰好为零。", "容量零点五时需求零点五，计为零。", "分散布局降低了峰值，但导线变长了。", "种子的总线长是七，分散布局的是三十四。", "布局是在格子空间和线长之间做权衡。", "容量是你可以调节的旋钮。", "在分散地图上，容量五使计数从六降到四。", "第 1 列的两个格子回到了限制以下。", "在种子上，容量一使比率翻倍到七，但仍只有一个格子被计入。", "一次反馈通过会把单元推向较凉的格子。", "在种子上，一次通过把需求分摊到两个格子：一点五和二。", "除以二后，就是零点七五和一。", "总溢出从五降到零，计数也降到零。", "暂停并猜一猜：那次通过之后总溢出为零。", "现在最热的值是多少，地图真的健康吗？"]}, "storageKey": "lab6-lesson-speed"});
+</script>
+</body>
+</html>
